@@ -129,7 +129,21 @@ Using a VEVOR postal scale platform provides a cost-effective and robust solutio
 * VEVOR scale : https://s.click.aliexpress.com/e/_c3xr1w7n
 * RJ9 cable : https://s.click.aliexpress.com/e/_c2u5O1C5
 
+## Spunding valve
+This project is based on a mechanical spunding valve with a physical pressure gauge, chosen for reliability and simplicity.
 
+The spunding valve is only required for the keg filler function.
+
+A 12V solenoid valve is added to the system to allow automated control while using the same power supply as the controller. The solenoid valve is normally closed for safety: if the system loses power or stops unexpectedly, the filling process is immediately shut off.
+
+This design combines the robustness of purely mechanical pressure regulation with the flexibility of electronic control, ensuring safe and reliable operation.
+
+* Spunding valve : https://s.click.aliexpress.com/e/_c3Ccjltr
+* Solenoid valve : https://s.click.aliexpress.com/e/_c2Q1v85j
+* 1/8 Adapter : https://s.click.aliexpress.com/e/_c3iy7LDR
+
+## Integration Box
+TODO
 
 
 
