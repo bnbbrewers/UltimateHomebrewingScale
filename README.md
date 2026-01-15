@@ -143,7 +143,10 @@ This design combines the robustness of purely mechanical pressure regulation wit
 * 1/8 Adapter : https://s.click.aliexpress.com/e/_c3iy7LDR
 
 ## Integration Box
-TODO
+* Waterproof ABS enclosure (REF: F200-120-75): https://s.click.aliexpress.com/e/_c2w8dSkf
+* Cable gland (REF: PG7 White): https://s.click.aliexpress.com/e/_c4UINtHd
+* Jack connectors: https://s.click.aliexpress.com/e/_c3Z0z0F5
+* Power supply (REF: EU plug, 12V 3A): https://s.click.aliexpress.com/e/_c353g2MJ
 
 
 
