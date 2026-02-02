@@ -1,28 +1,29 @@
+
 # Cursor rules (configuration locale de l'IDE)
 .cursorrules
 
 #conf
 scale_calibration.json
+=======
+ScaleCalibration/scale_calibration.json
+
+# Configuration files with credentials
+config.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
 
 # IDE
 .vscode/
 .idea/
 
-# Build files
-build/
-*.bin
-*.elf
-*.map
 
-# Dependencies
-.pio/
-.pioenvs/
-.piolibdeps/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Secrets
-secrets.h
-credentials.h

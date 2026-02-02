@@ -10,6 +10,22 @@ The system is designed to be **modular, affordable, and evolutive**, allowing ne
 
 ---
 
+## Project Structure
+
+```
+UltimateHomebrewingScale/
+├── api/                    # Python API module for brewing software integration
+│   ├── brewing_software_api.py   # Abstract API interface
+│   ├── brewfather_api.py         # Brewfather implementation
+│   └── ...                       # Examples, tests, documentation
+├── ScaleCalibration/       # Scale calibration tools
+└── README.md              # This file
+```
+
+See [api/README.md](api/README.md) for API documentation.
+
+---
+
 ## Main Features
 
 ---
@@ -143,7 +159,10 @@ This design combines the robustness of purely mechanical pressure regulation wit
 * 1/8 Adapter : https://s.click.aliexpress.com/e/_c3iy7LDR
 
 ## Integration Box
-TODO
+* Waterproof ABS enclosure (REF: F200-120-75): https://s.click.aliexpress.com/e/_c2w8dSkf
+* Cable gland (REF: PG7 White): https://s.click.aliexpress.com/e/_c4UINtHd
+* Jack connectors: https://s.click.aliexpress.com/e/_c3Z0z0F5
+* Power supply (REF: EU plug, 12V 3A): https://s.click.aliexpress.com/e/_c353g2MJ
 
 
 
