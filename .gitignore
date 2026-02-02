@@ -1,4 +1,10 @@
+
+# Cursor rules (configuration locale de l'IDE)
 .cursorrules
+
+#conf
+scale_calibration.json
+=======
 ScaleCalibration/scale_calibration.json
 
 # Configuration files with credentials
@@ -15,12 +21,9 @@ env/
 ENV/
 .venv
 
+
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS
-.DS_Store
-Thumbs.db
+
