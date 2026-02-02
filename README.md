@@ -10,6 +10,22 @@ The system is designed to be **modular, affordable, and evolutive**, allowing ne
 
 ---
 
+## Project Structure
+
+```
+UltimateHomebrewingScale/
+├── api/                    # Python API module for brewing software integration
+│   ├── brewing_software_api.py   # Abstract API interface
+│   ├── brewfather_api.py         # Brewfather implementation
+│   └── ...                       # Examples, tests, documentation
+├── ScaleCalibration/       # Scale calibration tools
+└── README.md              # This file
+```
+
+See [api/README.md](api/README.md) for API documentation.
+
+---
+
 ## Main Features
 
 ---
