@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Traductions françaises pour Ultimate Homebrewing Scale
 """
@@ -122,6 +123,16 @@ TRANSLATIONS = {
         'complete': 'Calibration terminée !',
         'error': 'Erreur de calibration',
         'save': 'Sauvegarder calibration',
+    },
+    
+    # Menu launcher
+    'launcher': {
+        'home': 'Accueil',
+        'scale': 'Balance',
+        'malt': 'Malt',
+        'hop': 'Houblon',
+        'keg': 'Fût',
+        'settings': 'Paramètres',
     },
     
     # À propos
