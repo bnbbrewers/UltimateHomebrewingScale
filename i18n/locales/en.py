@@ -124,6 +124,16 @@ TRANSLATIONS = {
         'save': 'Save calibration',
     },
     
+    # Launcher menu
+    'launcher': {
+        'home': 'Home',
+        'scale': 'Scale',
+        'malt': 'Malt',
+        'hop': 'Hop',
+        'keg': 'Keg',
+        'settings': 'Settings',
+    },
+    
     # About
     'about': {
         'title': 'About',
