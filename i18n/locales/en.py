@@ -34,9 +34,14 @@ TRANSLATIONS = {
     # Grain Assistant
     'grain': {
         'title': 'Grain Assistant',
+        'select_recipe': 'Select a recipe',
         'select_batch': 'Select batch',
+        'select_malt': 'Select a malt',
         'no_batches': 'No batches found',
+        'no_malts': 'No malts found',
         'loading_batches': 'Loading batches...',
+        'loading_malts': 'Loading malts...',
+        'all_malts_done': 'All malts weighed!',
         'current_grain': 'Current grain',
         'target': 'Target: {0}g',
         'remaining': 'Remaining: {0}g',

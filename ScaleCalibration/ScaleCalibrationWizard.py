@@ -131,7 +131,7 @@ def setup():
 
 def is_button_pressed():
     """Check if button is pressed"""
-    return M5.BtnA.wasPressed()
+    return M5.BtnA.isPressed()
 
 
 def update_display():

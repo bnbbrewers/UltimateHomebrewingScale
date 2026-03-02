@@ -19,36 +19,42 @@ import m5ui
 import lvgl as lv
 from hardware import Rotary
 
-# Import configuration
-try:
-    from launcher_config import LAUNCHER_ITEMS, LAUNCHER_CONFIG, SCREEN_CONFIG
-except ImportError:
-    print("Error: launcher_config.py not found!")
-    print("Please create launcher_config.py with LAUNCHER_ITEMS configuration")
-    sys.exit(1)
-
-# Import i18n for translations
+# Import DEBUG mode
 try:
     import config
-    from i18n import I18n
-    language = getattr(config, 'LANGUAGE', 'en')  # Default to English if not set
-    i18n = I18n(language)
-except (ImportError, AttributeError) as e:
-    print(f"Warning: i18n not available ({e}), using default labels")
-    i18n = None
+    DEBUG = getattr(config, 'DEBUG', False)
+except:
+    DEBUG = False
+
+# Import configuration
+try:
+    from .launcher_config import LAUNCHER_ITEMS, LAUNCHER_CONFIG, SCREEN_CONFIG
+except ImportError:
+    print("Error: ui/launcher_config.py not found!")
+    print("Please create ui/launcher_config.py with LAUNCHER_ITEMS configuration")
+    sys.exit(1)
+
+# Note: i18n is now passed to launcher via main.py
 
 
 class CircularLauncher:
     """Circular menu launcher for M5Stack Dial"""
     
-    def __init__(self):
-        """Initialize the launcher"""
+    def __init__(self, i18n_instance=None):
+        """
+        Initialize the launcher
+        
+        Args:
+            i18n_instance: I18n instance for translations (optional)
+        
+        Note:
+            M5Stack should already be initialized by main.py
+        """
         # Free memory before starting
         gc.collect()
         
-        # Initialize M5Stack
-        M5.begin()
-        m5ui.init()
+        # Store i18n instance
+        self.i18n_instance = i18n_instance
         
         # Configuration
         self.items = sorted(LAUNCHER_ITEMS, key=lambda x: x['order'])
@@ -59,6 +65,7 @@ class CircularLauncher:
         self.selected_index = 0
         self.is_running = True
         self.rotary = None
+        self._selected_module = None
         
         # Animation state for smooth indicator movement
         self.indicator_target_x = 0
@@ -78,11 +85,12 @@ class CircularLauncher:
         # Initialize encoder
         self._init_encoder()
         
-        print(f"Launcher initialized with {len(self.items)} items")
+        if DEBUG:
+            print(f"Launcher initialized with {len(self.items)} items")
     
     def _get_translated_label(self, label):
         """Get translated label for menu item"""
-        if not i18n:
+        if not self.i18n_instance:
             return label
         
         # Map label to i18n key
@@ -97,17 +105,42 @@ class CircularLauncher:
         
         key = label_map.get(label, None)
         if key:
-            return i18n.t(key)
+            return self.i18n_instance.t(key)
         return label
+    
+    def show(self):
+        """Show the launcher UI"""
+        if self.page:
+            self.page.screen_load()
+            self.is_running = True
+    
+    def cleanup(self):
+        """Destroy all LVGL objects and release memory.
+
+        The LVGL page is NOT deleted here — the app's create_ui() will call
+        screen_load() which replaces it naturally. Deleting it first and then
+        calling M5.update() causes a LVGL deadlock on M5Stack Dial.
+        Python-side references are cleared so GC can reclaim the objects once
+        the new screen is loaded.
+        """
+        # Release Python references (LVGL objects stay alive until the app
+        # loads its own page and LVGL discards the previous one)
+        self.page                = None
+        self.center_label        = None
+        self.selection_indicator = None
+        self.icon_objects        = []
+        gc.collect()
     
     def _init_encoder(self):
         """Initialize rotary encoder"""
         try:
             self.rotary = Rotary()
             self.rotary.reset_rotary_value()
-            print("Encoder initialized")
+            if DEBUG:
+                print("Encoder initialized")
         except Exception as e:
-            print(f"Warning: Could not initialize encoder: {e}")
+            if DEBUG:
+                print(f"Warning: Could not initialize encoder: {e}")
             self.rotary = None
     
     def _create_ui(self):
@@ -130,13 +163,15 @@ class CircularLauncher:
         # Load page
         self.page.screen_load()
         
-        print("UI created successfully")
+        if DEBUG:
+            print("UI created successfully")
     
     def _create_circular_icons(self):
         """Create icons arranged in an arc"""
         num_items = len(self.items)
         if num_items == 0:
-            print("Warning: No launcher items configured!")
+            if DEBUG:
+                print("Warning: No launcher items configured!")
             return
         
         # Get arc configuration
@@ -171,7 +206,8 @@ class CircularLauncher:
                 'angle': angle_deg
             })
             
-            print(f"Item {i}: {item['label']} at ({x}, {y})")
+            if DEBUG:
+                print(f"Item {i}: {item['label']} at ({x}, {y})")
         
         # Free memory after creating all icons
         gc.collect()
@@ -189,7 +225,8 @@ class CircularLauncher:
             img.set_size(size, size)
             return img
         except Exception as e:
-            print(f"Icon error: {e}")
+            if DEBUG:
+                print(f"Icon error: {e}")
             return None
     
     def _create_selection_indicator(self):
@@ -204,8 +241,9 @@ class CircularLauncher:
     
     def _create_placeholder_icon(self, x, y, size):
         """Create a placeholder icon when image is missing"""
-        # Just return None - icon will be skipped
-        print(f"Placeholder at ({x}, {y})")
+        # Just return None - icon will be skipped        
+        if DEBUG:
+            print(f"Placeholder at ({x}, {y})")
         return None
     
     def _create_center_label(self):
@@ -271,7 +309,8 @@ class CircularLauncher:
         if old_index != new_index:
             self._play_selection_beep()
         
-        print(f"Selected: {translated_label}")
+        if DEBUG:
+            print(f"Selected: {translated_label}")
     
     def _update_selection_indicator(self):
         """Move the white dot indicator to the selected icon position"""
@@ -344,12 +383,14 @@ class CircularLauncher:
                 self._update_selection(new_index)
                 
         except Exception as e:
-            print(f"Encoder error: {e}")
+            if DEBUG:
+                print(f"Encoder error: {e}")
     
     def _check_button(self):
-        """Check if center button was pressed"""
-        if M5.BtnA.wasPressed():
-            self._launch_selected_app()
+        """Check if center button is pressed – store selection and exit loop."""
+        if M5.BtnA.isPressed():
+            self._selected_module = self.items[self.selected_index]['module']
+            self.is_running = False
     
     def _animate_indicator(self):
         """Smoothly animate the indicator to target position"""
@@ -375,51 +416,6 @@ class CircularLauncher:
             int(self.indicator_current_y)
         )
     
-    def _launch_selected_app(self):
-        """Launch the selected application"""
-        selected_item = self.items[self.selected_index]
-        module_name = selected_item['module']
-        
-        print(f"\nLaunching: {selected_item['label']}")
-        print(f"Module: {module_name}")
-        
-        try:
-            # Import and run the module
-            # Note: This is a simplified version
-            # In production, you might want to:
-            # 1. Hide the launcher UI
-            # 2. Import and execute the module
-            # 3. Handle return to launcher
-            
-            # Example: import scale and run
-            if module_name == 'scale':
-                import scale
-                # Assuming scale has a main() or run() function
-                if hasattr(scale, 'ScaleApp'):
-                    app = scale.ScaleApp()
-                    app.run()
-            else:
-                print(f"Module {module_name} not yet implemented")
-                print("Add implementation for this module")
-        
-        except ImportError as e:
-            print(f"Error: Could not import module {module_name}: {e}")
-            self._show_error(f"Module not found:\n{module_name}")
-        except Exception as e:
-            print(f"Error launching app: {e}")
-            self._show_error(f"Launch error:\n{str(e)}")
-    
-    def _show_error(self, message):
-        """Show error message temporarily"""
-        self.center_label.setText(message)
-        
-        # Wait 2 seconds
-        import time
-        time.sleep(2)
-        
-        # Restore selected item text
-        selected_item = self.items[self.selected_index]
-        self.center_label.setText(selected_item['label'])
     
     def update(self):
         """Update loop - check encoder, button, and animate indicator"""
@@ -428,45 +424,52 @@ class CircularLauncher:
         self._animate_indicator()
     
     def run(self):
-        """Main application loop"""
-        print("\nLauncher running...")
-        print("- Rotate encoder to navigate")
-        print("- Press center button to launch")
-        print("- Press and hold to exit launcher\n")
-        
+        """
+        Run the launcher loop.
+
+        Returns
+        -------
+        str or None
+            The 'module' key of the selected item when the user confirms,
+            or None if the loop exits without a selection.
+        """
+        import time
+        self._selected_module = None
+
+        if DEBUG:
+            print("\nLauncher running...")
+
         try:
             while self.is_running:
-                # Update M5 system
                 M5.update()
-                
-                # Update launcher logic
                 self.update()
-                
-                # Small delay
-                import time
                 time.sleep_ms(50)
-        
+
         except KeyboardInterrupt:
-            print("\nLauncher stopped by user")
+            raise   # propagate to main.py's while loop so it can break cleanly
         except Exception as e:
-            print(f"Launcher error: {e}")
-            import sys
+            if DEBUG:
+                print(f"Launcher error: {e}")
             sys.print_exception(e)
+
+        return self._selected_module
 
 
 # Entry point
 if __name__ == "__main__":
     try:
-        print("=" * 50)
-        print("Ultimate Homebrewing Scale - Launcher")
-        print("=" * 50)
+        if DEBUG:
+            print("=" * 50)
+            print("Ultimate Homebrewing Scale - Launcher")
+            print("=" * 50)
         
         # Create and run launcher
         launcher = CircularLauncher()
         launcher.run()
     
     except KeyboardInterrupt:
-        print("\nExiting...")
+        if DEBUG:
+            print("\nExiting...")
     except Exception as e:
         print(f"Fatal error: {e}")
         import sys
