@@ -349,7 +349,7 @@ class ScaleApp:
     
     def _check_button(self):
         """Check if button was pressed and handle tare"""
-        if M5.BtnA.wasPressed() and not self.is_taring:
+        if M5.BtnA.isPressed() and not self.is_taring:
             self.is_taring = True
             self.tare_start_time = time.ticks_ms()
             self.status_label.set_text("Taring...")

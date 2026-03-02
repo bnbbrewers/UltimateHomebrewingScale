@@ -9,36 +9,42 @@ LAUNCHER_ITEMS = [
         'label': 'Home',
         'icon': '/flash/assets/icons/Home.png',
         'module': 'scale',
+        'color': 0x00A8E8,   # cyan
         'order': 0,
     },
     {
         'label': 'Scale',
         'icon': '/flash/assets/icons/Scale.png',
         'module': 'scale',
+        'color': 0x00A8E8,   # cyan
         'order': 1,
     },
     {
         'label': 'Malt',
         'icon': '/flash/assets/icons/Malt.png',
         'module': 'grain_assistant',
+        'color': 0xD4840A,   # golden amber (wheat / malt)
         'order': 2,
     },
     {
         'label': 'Hop',
         'icon': '/flash/assets/icons/Hop.png',
         'module': 'hop_assistant',
+        'color': 0x388E3C,   # green (hops)
         'order': 3,
     },
     {
         'label': 'Keg',
         'icon': '/flash/assets/icons/Keg.png',
         'module': 'keg_filler',
+        'color': 0x607D8B,   # steel blue-grey (stainless keg)
         'order': 4,
     },
     {
         'label': 'Settings',
         'icon': '/flash/assets/icons/Parameters.png',
         'module': 'settings',
+        'color': 0x546E7A,   # dark blue-grey
         'order': 5,
     },
 ]
