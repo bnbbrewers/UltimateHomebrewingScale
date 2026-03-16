@@ -62,7 +62,7 @@ def main():
         app_manager.tick()
         hardware.tick()
         lv.task_handler()
-        time.sleep_ms(30)
+        #time.sleep_ms(30)
 
 try:
     main()
