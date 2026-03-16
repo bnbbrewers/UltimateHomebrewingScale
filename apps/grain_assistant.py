@@ -5,12 +5,14 @@ Memory-safe grain assistant app (business logic only).
 import gc
 import time
 
+import config
+
 from .base_app import BaseApp
 from ui import screen_ids
 
 _STATE_RECIPE = 1
 _STATE_MALT = 2
-_STATE_WEIGH = 3
+_STATE_WEIGHT = 3
 _STATE_DONE = 4
 _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
@@ -48,7 +50,7 @@ class GrainAssistantApp(BaseApp):
             self._tick_recipe()
         elif self._state == _STATE_MALT:
             self._tick_malt()
-        elif self._state == _STATE_WEIGH:
+        elif self._state == _STATE_WEIGHT:
             self._tick_weigh()
         elif self._state == _STATE_DONE:
             if time.ticks_diff(time.ticks_ms(), self._done_at) >= 2000:
@@ -187,12 +189,12 @@ class GrainAssistantApp(BaseApp):
             mode="countdown_g",
             target=self._target_g,
             title_bg_color=0xD4840A,
-            tolerance=10,
+            tolerance=config.GRAIN_WEIGHT_TOLERANCE,
         )
         self._weigh_screen.set_status(self.t("scale.tare_ready"))
         if self._scale:
             self._scale.tare()
-        self._state = _STATE_WEIGH
+        self._state = _STATE_WEIGHT
 
     def _tick_weigh(self):
         if self._scale is None:
@@ -205,13 +207,13 @@ class GrainAssistantApp(BaseApp):
 
         self._weigh_screen.update_from_weight(weight)
         remaining = self._target_g - weight
-        in_range = abs(remaining) <= 10
+        in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
         if in_range:
             self._weigh_screen.set_status(self.t("common.ok"))
         else:
             self._weigh_screen.set_status("")
 
-        if in_range and self.hardware.button.wasPressed():
+        if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
             self._malts.pop(self._malt_idx)
             if self._malts:
                 if self._malt_idx >= len(self._malts):
