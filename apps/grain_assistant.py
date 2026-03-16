@@ -1,326 +1,239 @@
 """
-Grain Assistant - Weighing assistant for malt/grain with Brewfather integration
-
-State machine
--------------
-    LOADING_RECIPES  ->  SELECT_RECIPE
-                              |
-                         (button press)
-                              |
-                         LOADING_MALTS  ->  SELECT_MALT
-                                                |
-                                           (button press)
-                                                |
-                                            WEIGHING
-                                          (isPressed -> back to SELECT_MALT)
-                                          (long press  -> launcher)
+Memory-safe grain assistant app (business logic only).
 """
 
 import gc
 import time
-import M5
-from M5 import *
-import m5ui
-import lvgl as lv
-from hardware import Rotary
 
 from .base_app import BaseApp
-from ui.selectable_list import SelectableList
+from ui import screen_ids
 
-# ---------------------------------------------------------------------------
-# States
-# ---------------------------------------------------------------------------
-_STATE_LOADING_RECIPES = 0
-_STATE_SELECT_RECIPE   = 1
-_STATE_LOADING_MALTS   = 2
-_STATE_SELECT_MALT     = 3
-_STATE_WEIGHING        = 4
-_STATE_ALL_DONE        = 5
-
-# ---------------------------------------------------------------------------
-# Accent colour – read from the launcher config entry for this module so the
-# app always matches its icon.  Falls back to amber if the config is missing.
-# ---------------------------------------------------------------------------
-def _app_color():
-    try:
-        from ui.launcher_config import LAUNCHER_ITEMS
-        for item in LAUNCHER_ITEMS:
-            if item.get('module') == 'grain_assistant':
-                return item['color']
-    except Exception:
-        pass
-    return 0xD4840A   # golden amber fallback
-
-_APP_COLOR = _app_color()
+_STATE_RECIPE = 1
+_STATE_MALT = 2
+_STATE_WEIGH = 3
+_STATE_DONE = 4
+_COLOR_MALT = 0xD4840A
+_COLOR_RECIPE = _COLOR_MALT
 
 
 class GrainAssistantApp(BaseApp):
-    """Grain weighing assistant with API integration."""
+    APP_ID = "grain_assistant"
 
-    def __init__(self, i18n=None):
-        super().__init__(i18n)
+    def __init__(self, screen_manager, hardware, apis, i18n=None):
+        super().__init__(screen_manager, hardware, apis, i18n=i18n)
+        self._api = self.apis.get("brewing")
+        self._scale = self.hardware.scale
+        self._rotary = self.hardware.rotary
 
-        # Scale: initialised lazily when weighing starts, not at app launch.
-        # CalibratedScale() does I2C communication that can block for 30+ s
-        # if the hardware is not connected.
-        self.scale = None
+        self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
+        self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
 
-        # Rotary encoder
-        self.encoder = Rotary()
-        self.encoder.reset_rotary_value()
+        self._state = _STATE_RECIPE
+        self._batches = []
+        self._batch_idx = 0
+        self._malts = []
+        self._malt_idx = 0
+        self._target_g = 0
+        self._done_at = 0
 
-        # Data
-        self._batches         = []   # List[Batch]
-        self._malts           = []   # List[Malt]
-        self._selected_batch  = None
-        self._selected_malt   = None
+    def on_enter(self):
+        super().on_enter()
+        self._load_batches()
 
-        # UI
-        self._status_lbl     = None
-        self._sel_list       = None
-        self._weight_display = None
+    def tick(self):
+        if self._check_return_to_launcher():
+            return "launcher"
 
-        # State
-        self._state     = _STATE_LOADING_RECIPES
-        self._done_at   = None   # ticks_ms timestamp set when all malts are done
+        if self._state == _STATE_RECIPE:
+            self._tick_recipe()
+        elif self._state == _STATE_MALT:
+            self._tick_malt()
+        elif self._state == _STATE_WEIGH:
+            self._tick_weigh()
+        elif self._state == _STATE_DONE:
+            if time.ticks_diff(time.ticks_ms(), self._done_at) >= 2000:
+                return "launcher"
+        return None
 
-    # -----------------------------------------------------------------------
-    # BaseApp interface
-    # -----------------------------------------------------------------------
-
-    def create_ui(self):
-        """Create the page and show the initial loading message."""
-        self.page = m5ui.M5Page(bg_c=0x000000)
-
-        # Centred status / loading label – reused throughout the app
-        self._status_lbl = m5ui.M5Label(
-            self.t('grain.loading_batches'),
-            x=40, y=103,
-            text_c=0x9CA3AF,
-            bg_c=0x000000, bg_opa=0,
-            font=lv.font_montserrat_14,
-            parent=self.page
+    def _load_batches(self):
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
+        self._select_screen.configure(
+            title=self.t("grain.loading_batches"),
+            items=[],
+            accent_color=_COLOR_RECIPE,
+            selected_index=0,
         )
-        self._status_lbl.set_width(160)
-        self._status_lbl.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
-        self.page.screen_load()
-        self._state = _STATE_LOADING_RECIPES
+        self._batches = self._api.get_batches() if self._api else []
+        names = []
+        for batch in self._batches:
+            names.append(batch.name)
+        self._batch_idx = 0
 
-    def update(self):
-        """Called every frame by the base run() loop."""
-        if self._state == _STATE_LOADING_RECIPES:
-            self._load_recipes()
-
-        elif self._state == _STATE_SELECT_RECIPE:
-            self._handle_recipe_selection()
-
-        elif self._state == _STATE_LOADING_MALTS:
-            self._load_malts()
-
-        elif self._state == _STATE_SELECT_MALT:
-            self._handle_malt_selection()
-
-        elif self._state == _STATE_WEIGHING:
-            self._handle_weighing()
-
-        elif self._state == _STATE_ALL_DONE:
-            if time.ticks_diff(time.ticks_ms(), self._done_at) >= 3000:
-                self.exit()   # returns to launcher
-
-    def cleanup(self):
-        if self._sel_list:
-            self._sel_list.cleanup()
-            self._sel_list = None
-        if self._weight_display:
-            self._weight_display.cleanup()
-            self._weight_display = None
-        super().cleanup()
-
-    # -----------------------------------------------------------------------
-    # Loading steps (blocking – happen on first relevant update() call)
-    # -----------------------------------------------------------------------
-
-    def _load_recipes(self):
-        """Fetch batches from the API, then transition to SELECT_RECIPE."""
-        self._batches = self.api.get_batches() if self.api else []
-        self._build_recipe_list()
-        self._state = _STATE_SELECT_RECIPE
-
-    def _load_malts(self):
-        """Fetch malts for the selected batch, then transition to SELECT_MALT."""
-        if self.api and self._selected_batch:
-            self._malts = self.api.get_malts(self._selected_batch.batch_id)
+        if names:
+            self._select_screen.configure(
+                title=self.t("grain.select_recipe"),
+                items=names,
+                accent_color=_COLOR_RECIPE,
+                selected_index=0,
+            )
         else:
-            self._malts = []
-        self._build_malt_list()
-        self._state = _STATE_SELECT_MALT
+            self._select_screen.configure(
+                title=self.t("grain.no_batches"),
+                items=[],
+                accent_color=_COLOR_RECIPE,
+                selected_index=0,
+            )
 
-    # -----------------------------------------------------------------------
-    # List builders
-    # -----------------------------------------------------------------------
-
-    def _build_recipe_list(self):
-        """Replace loading label with the recipe SelectableList."""
-        self._hide_status()
-
-        if not self._batches:
-            self._show_status(self.t('grain.no_batches'))
-            return
-
-        names = [b.name for b in self._batches]
-        self._sel_list = SelectableList(
-            parent=self.page,
-            items=names,
-            title=self.t('grain.select_recipe'),
-            accent_color=_APP_COLOR,
-        )
-        self.encoder.reset_rotary_value()
-
-    def _build_malt_list(self):
-        """Replace loading label with the malt SelectableList."""
-        self._hide_status()
-
-        if not self._malts:
-            self._show_status(self.t('grain.no_malts'))
-            return
-
-        # Display each malt as "Name  NNNg"
-        items = [
-            m.name
-            for m in self._malts
-        ]
-        self._sel_list = SelectableList(
-            parent=self.page,
-            items=items,
-            title=self.t('grain.select_malt'),
-            accent_color=_APP_COLOR,
-        )
-        self.encoder.reset_rotary_value()
-
-    # -----------------------------------------------------------------------
-    # Input handlers
-    # -----------------------------------------------------------------------
-
-    def _handle_recipe_selection(self):
-        if self._sel_list is None:
-            return
-
-        delta = self.encoder.get_rotary_value()
-        if delta:
-            self.encoder.reset_rotary_value()
-            self._sel_list.handle_encoder(delta)
-
-        if M5.BtnA.wasPressed():
-            result = self._sel_list.handle_button()
-            if result is not None:
-                idx, _ = result
-                self._selected_batch = self._batches[idx]
-
-                # Tear down recipe list, show loading
-                self._sel_list.cleanup()
-                self._sel_list = None
-                gc.collect()
-
-                self._show_status(self.t('grain.loading_malts'))
-                self._state = _STATE_LOADING_MALTS
-
-    def _handle_malt_selection(self):
-        if self._sel_list is None:
-            return
-
-        delta = self.encoder.get_rotary_value()
-        if delta:
-            self.encoder.reset_rotary_value()
-            self._sel_list.handle_encoder(delta)
-
-        if M5.BtnA.wasPressed():
-            result = self._sel_list.handle_button()
-            if result is not None:
-                idx, _ = result
-                self._selected_malt = self._malts[idx]
-
-                self._sel_list.cleanup()
-                self._sel_list = None
-                gc.collect()
-
-                self._start_weighing()
-
-    # -----------------------------------------------------------------------
-    # Weighing
-    # -----------------------------------------------------------------------
-
-    def _start_weighing(self):
-        """Initialise scale (lazy) and show WeightDisplay for the selected malt."""
-        malt = self._selected_malt
-        target_g = int(malt.amount * 1000)   # amount is in kg → convert to g
-
-        # Lazy scale init – may take a moment on first call
-        if self.scale is None:
-            try:
-                from devices.scale import CalibratedScale
-                self.scale = CalibratedScale()
-            except Exception as e:
-                self._show_status("Scale error: {}".format(e))
-                return
-
-        from ui.weight_display import WeightDisplay
-        self._weight_display = WeightDisplay(
-            parent=self.page,
-            title=malt.name,
-            mode="countdown_g",
-            target=target_g,
-            title_bg_color=_APP_COLOR,
-            scale=self.scale,
-            tolerance=10,
-            on_confirm=self._on_malt_confirmed,
-        )
-        self.encoder.reset_rotary_value()
-        self._state = _STATE_WEIGHING
-
-    def _handle_weighing(self):
-        """Tick the WeightDisplay – it fires on_confirm itself when ready."""
-        if self._weight_display is not None:
-            self._weight_display.update()
-
-    def _on_malt_confirmed(self):
-        """Called by WeightDisplay when the user confirms the weight."""
-        if self._selected_malt in self._malts:
-            self._malts.remove(self._selected_malt)
-        self._selected_malt = None
-
-        self._weight_display.cleanup()
-        self._weight_display = None
+        if self._rotary:
+            self._rotary.reset_rotary_value()
+        self._state = _STATE_RECIPE
         gc.collect()
 
-        if self._malts:
-            self._build_malt_list()
-            self._state = _STATE_SELECT_MALT
+    def _tick_recipe(self):
+        if not self._batches:
+            return
+        if self._rotary:
+            delta = self._rotary.get_rotary_value()
+            if delta:
+                self._rotary.reset_rotary_value()
+                if delta > 0:
+                    self._batch_idx += 1
+                else:
+                    self._batch_idx -= 1
+                if self._batch_idx < 0:
+                    self._batch_idx = 0
+                if self._batch_idx >= len(self._batches):
+                    self._batch_idx = len(self._batches) - 1
+                self._select_screen.set_selected_index(self._batch_idx)
+        if self.hardware.button.wasPressed():
+            self._load_malts()
+
+    def _load_malts(self):
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
+        self._select_screen.configure(
+            title=self.t("grain.loading_malts"),
+            items=[],
+            accent_color=_COLOR_MALT,
+            selected_index=0,
+        )
+
+        # Extract only what's needed, then release all batch objects before
+        # the second API call to recover heap space and reduce fragmentation.
+        batch_id = self._batches[self._batch_idx].batch_id
+        self._batches = []
+        gc.collect()
+
+        try:
+            _buf = bytearray(40000)
+            del _buf
+        except MemoryError:
+            pass
+        gc.collect()
+
+        if self._api:
+            self._malts = self._api.get_malts(batch_id)
         else:
-            self._show_status(self.t('grain.all_malts_done'))
-            self._done_at = time.ticks_ms()
-            self._state = _STATE_ALL_DONE
+            self._malts = []
+        self._malt_idx = 0
 
-    # -----------------------------------------------------------------------
-    # Status label helpers
-    # -----------------------------------------------------------------------
+        names = []
+        for malt in self._malts:
+            names.append(malt.name)
 
-    def _show_status(self, text):
-        """Display a centred status message (hides list if any)."""
-        if self._status_lbl:
-            self._status_lbl.set_text(text)
+        if names:
+            self._select_screen.configure(
+                title=self.t("grain.select_malt"),
+                items=names,
+                accent_color=_COLOR_MALT,
+                selected_index=0,
+            )
+        else:
+            self._select_screen.configure(
+                title=self.t("grain.no_malts"),
+                items=[],
+                accent_color=_COLOR_MALT,
+                selected_index=0,
+            )
+        if self._rotary:
+            self._rotary.reset_rotary_value()
+        self._state = _STATE_MALT
 
-    def _hide_status(self):
-        """Clear the status label text."""
-        if self._status_lbl:
-            self._status_lbl.set_text("")
+    def _tick_malt(self):
+        if not self._malts:
+            return
+        if self._rotary:
+            delta = self._rotary.get_rotary_value()
+            if delta:
+                self._rotary.reset_rotary_value()
+                if delta > 0:
+                    self._malt_idx += 1
+                else:
+                    self._malt_idx -= 1
+                if self._malt_idx < 0:
+                    self._malt_idx = 0
+                if self._malt_idx >= len(self._malts):
+                    self._malt_idx = len(self._malts) - 1
+                self._select_screen.set_selected_index(self._malt_idx)
+        if self.hardware.button.wasPressed():
+            self._start_weighing()
 
+    def _start_weighing(self):
+        self.screen_manager.show(screen_ids.WEIGHT)
+        malt = self._malts[self._malt_idx]
+        self._target_g = int(malt.amount * 1000)
+        self._weigh_screen.configure(
+            title=malt.name,
+            mode="countdown_g",
+            target=self._target_g,
+            title_bg_color=0xD4840A,
+            tolerance=10,
+        )
+        self._weigh_screen.set_status(self.t("scale.tare_ready"))
+        if self._scale:
+            self._scale.tare()
+        self._state = _STATE_WEIGH
 
-# ---------------------------------------------------------------------------
-# Standalone entry point
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    M5.begin()
-    m5ui.init()
-    app = GrainAssistantApp(i18n=None)
-    app.run()
+    def _tick_weigh(self):
+        if self._scale is None:
+            self._weigh_screen.set_status("Scale not found")
+            return
+
+        weight = self._scale.read_weight()
+        if weight is None:
+            return
+
+        self._weigh_screen.update_from_weight(weight)
+        remaining = self._target_g - weight
+        in_range = abs(remaining) <= 10
+        if in_range:
+            self._weigh_screen.set_status(self.t("common.ok"))
+        else:
+            self._weigh_screen.set_status("")
+
+        if in_range and self.hardware.button.wasPressed():
+            self._malts.pop(self._malt_idx)
+            if self._malts:
+                if self._malt_idx >= len(self._malts):
+                    self._malt_idx = len(self._malts) - 1
+                names = []
+                for malt in self._malts:
+                    names.append(malt.name)
+                self.screen_manager.show(screen_ids.SELECT_ITEM)
+                self._select_screen.configure(
+                    title=self.t("grain.select_malt"),
+                    items=names,
+                    accent_color=_COLOR_MALT,
+                    selected_index=self._malt_idx,
+                )
+                self._state = _STATE_MALT
+            else:
+                self.screen_manager.show(screen_ids.SELECT_ITEM)
+                self._select_screen.configure(
+                    title=self.t("grain.all_malts_done"),
+                    items=[],
+                    accent_color=_COLOR_MALT,
+                    selected_index=0,
+                )
+                self._done_at = time.ticks_ms()
+                self._state = _STATE_DONE

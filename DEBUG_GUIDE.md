@@ -32,7 +32,8 @@ DEBUG = True   # Activer les traces
 Tous les `print()` sont conditionnés par `DEBUG` :
 
 - `main.py` — Initialisation système
-- `launcher.py` — Navigation et sélection
+- `apps/launcher_app.py` — Logique de navigation launcher
+- `ui/launcher_screen.py` — UI du launcher
 - `apps/base_app.py` — Détection appui long
 - `apps/scale.py` — Calibration et pesée
 - Autres apps (grain, hop, keg, settings)
@@ -80,7 +81,8 @@ Uploadez ces fichiers modifiés sur le M5Dial :
 
 - `config.py` (avec DEBUG = False/True)
 - `main.py`
-- `launcher.py`
+- `apps/launcher_app.py`
+- `ui/launcher_screen.py`
 - `apps/base_app.py`
 - `apps/scale.py`
 

@@ -1,97 +1,58 @@
 """
-Settings - Application settings menu
+Memory-safe settings app (business logic only).
 """
 
-import gc
-import time
-import M5
-from M5 import *
-import m5ui
-import lvgl as lv
-from hardware import Rotary
 from .base_app import BaseApp
+from ui import screen_ids
 
 
 class SettingsApp(BaseApp):
-    """Settings menu application"""
-    
-    def __init__(self, i18n=None):
-        """Initialize settings app"""
-        super().__init__(i18n)
-        
-        # UI elements
-        self.title_label = None
-        self.menu_labels = []
-        
-        # State
-        self.rotary = None
-        self.selected_index = 0
-        self.menu_items = [
-            {'key': 'language', 'label': 'settings.language'},
-            {'key': 'calibration', 'label': 'settings.calibration'},
-            {'key': 'about', 'label': 'settings.about'},
+    APP_ID = "settings"
+
+    def __init__(self, screen_manager, hardware, apis, i18n=None):
+        super().__init__(screen_manager, hardware, apis, i18n=i18n)
+        self._screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
+        self._rotary = self.hardware.rotary
+        self._selected = 0
+        self._item_keys = [
+            "settings.language",
+            "settings.calibration",
+            "settings.about",
         ]
-    
-    def create_ui(self):
-        """Create the settings UI"""
-        # Initialize rotary
-        try:
-            self.rotary = Rotary()
-            self.rotary.reset_rotary_value()
-        except:
-            pass
-        
-        # Create page
-        self.page = m5ui.M5Page(bg_c=0x000000)
-        
-        # Title
-        self.title_label = m5ui.M5Label(
-            self.t('settings.title'),
-            x=60,
-            y=30,
-            text_c=0x9CA3AF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=lv.font_montserrat_16,
-            parent=self.page
+        self._item_labels = []
+
+    def on_enter(self):
+        super().on_enter()
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
+        self._selected = 0
+        self._item_labels = []
+        for key in self._item_keys:
+            self._item_labels.append(self.t(key))
+        self._screen.configure(
+            title=self.t("settings.title"),
+            items=self._item_labels,
+            accent_color=0x546E7A,
+            selected_index=self._selected,
         )
-        
-        # Menu items
-        y_pos = 80
-        for i, item in enumerate(self.menu_items):
-            color = 0xFFFFFF if i == 0 else 0x888888
-            label = m5ui.M5Label(
-                f"> {self.t(item['label'])}",
-                x=40,
-                y=y_pos,
-                text_c=color,
-                bg_c=0x000000,
-                bg_opa=0,
-                font=lv.font_montserrat_14,
-                parent=self.page
-            )
-            self.menu_labels.append(label)
-            y_pos += 35
-        
-        # Load page
-        self.page.screen_load()
-    
-    def check_return_to_launcher(self):
-        """Long press to return"""
-        # TODO: Implement return gesture
-        return False
-    
-    def update(self):
-        """Update settings menu"""
-        # TODO: Handle rotary encoder for menu navigation
-        # TODO: Handle button press for selection
-        # TODO: Implement language change
-        pass
+        if self._rotary:
+            self._rotary.reset_rotary_value()
 
-
-# Standalone entry point
-if __name__ == "__main__":
-    M5.begin()
-    m5ui.init()
-    app = SettingsApp(i18n=None)
-    app.run()
+    def tick(self):
+        if self._check_return_to_launcher():
+            return "launcher"
+        if self._rotary:
+            delta = self._rotary.get_rotary_value()
+            if delta:
+                self._rotary.reset_rotary_value()
+                if delta > 0:
+                    self._selected += 1
+                else:
+                    self._selected -= 1
+                if self._selected < 0:
+                    self._selected = 0
+                if self._selected >= len(self._item_labels):
+                    self._selected = len(self._item_labels) - 1
+                self._screen.set_selected_index(self._selected)
+        if self.hardware.button.wasPressed():
+            self._screen.set_title("Not implemented")
+        return None

@@ -95,8 +95,8 @@ class Hop:
         return f"Hop(name='{self.name}', amount={self.amount}, use='{self.use}', time={self.time})"
 
 
-class BrewingSoftwareAPI:
-    """Base class for brewing software API implementations"""
+class ApiBase:
+    """Abstract base class for brewing software API implementations."""
 
     def _get(self, url, headers, retries=2):
         """
@@ -110,21 +110,11 @@ class BrewingSoftwareAPI:
         if not _ensure_wifi():
             raise OSError("WiFi not connected")
 
-        gc.collect()
-        if _DEBUG:
-            free  = gc.mem_free()
-            alloc = gc.mem_alloc()
-            print(f"[MEM] before request  free={free}  alloc={alloc}  total={free+alloc}")
-            try:
-                import micropython
-                micropython.mem_info()
-            except Exception:
-                pass
-
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
-                return requests.get(url, headers=headers)
+                resp = requests.get(url, headers=headers)
+                return resp
             except Exception as e:
                 last_exc = e
                 if _DEBUG:
@@ -166,3 +156,7 @@ class BrewingSoftwareAPI:
             List[Hop]: List of hops with name, amount, use and time
         """
         raise NotImplementedError("Subclass must implement get_hops()")
+
+
+# Backward compatibility with existing modules.
+BrewingSoftwareAPI = ApiBase
