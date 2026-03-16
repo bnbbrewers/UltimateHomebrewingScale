@@ -24,6 +24,9 @@ SDA_PIN = 13
 # Moving average for stable reading
 MOVING_AVERAGE_SIZE = 10
 
+# Minimum interval between actual hardware reads (ms)
+READ_INTERVAL_MS = 100
+
 
 class CalibratedScale:
     """
@@ -33,12 +36,13 @@ class CalibratedScale:
     for accurate weight measurements across the full range.
     """
     
-    def __init__(self, calibration_file=None):
+    def __init__(self, calibration_file=None, read_interval_ms=READ_INTERVAL_MS):
         """
         Initialize the scale with calibration
-        
+
         Args:
             calibration_file: Path to calibration JSON file (optional)
+            read_interval_ms: Minimum ms between actual hardware reads (default 100)
         """
         self.calibration_file = calibration_file or CALIBRATION_FILE
         self.weight_unit = None
@@ -46,6 +50,9 @@ class CalibratedScale:
         self.tare_offset = 0
         self.adc_buffer = []
         self._adc_sum = 0
+        self._read_interval_ms = read_interval_ms
+        self._last_read_ms = None
+        self._cached_weight = None
         
         # Initialize Weight Unit
         self._init_weight_unit()
@@ -161,16 +168,25 @@ class CalibratedScale:
     
     def read_weight(self):
         """
-        Read current weight with moving average for stability
-        
+        Read current weight with moving average for stability.
+
+        Hardware is only queried once per _read_interval_ms; calls within
+        that window return the last cached value immediately (non-blocking).
+
         Returns:
-            Weight in grams (float), or None on error
+            Weight in grams (float), or None if no valid reading yet
         """
+        now = time.ticks_ms()
+        if (self._last_read_ms is not None and
+                time.ticks_diff(now, self._last_read_ms) < self._read_interval_ms):
+            return self._cached_weight
+
+        self._last_read_ms = now
         adc_value = self.read_raw_adc()
-        
+
         if adc_value is None:
-            return None
-        
+            return self._cached_weight
+
         # Add to moving average
         self.adc_buffer.append(adc_value)
         self._adc_sum += adc_value
@@ -179,18 +195,15 @@ class CalibratedScale:
 
         # Calculate average without re-summing full list each tick
         adc_avg = self._adc_sum / len(self.adc_buffer)
-        
-        # Convert to weight
-        weight = self._adc_to_weight(adc_avg)
-        
-        # Apply tare offset
-        weight -= self.tare_offset
-        
+
+        # Convert to weight and apply tare offset
+        weight = self._adc_to_weight(adc_avg) - self.tare_offset
+
         if DEBUG_MODE and len(self.adc_buffer) == MOVING_AVERAGE_SIZE:
-            # Debug every 10 samples to avoid overload
             if int(time.time() * 10) % 10 == 0:
                 print(f"ADC: {adc_avg:.0f} | Weight: {weight:.1f}g | Tare: {self.tare_offset:.1f}g")
-        
+
+        self._cached_weight = weight
         return weight
     
     def tare(self):
@@ -200,15 +213,18 @@ class CalibratedScale:
         Returns:
             True if successful, False otherwise
         """
-        # Read multiple samples for stable tare
+        # Read multiple samples for stable tare.
+        # _last_read_ms is reset before each call to bypass rate-limiting
+        # and guarantee a fresh hardware read every iteration.
         samples = []
-        for _ in range(20):
+        for _ in range(10):
+            self._last_read_ms = None
             weight = self.read_weight()
             if weight is not None:
                 # Temporarily remove old offset to get actual weight
                 weight += self.tare_offset
                 samples.append(weight)
-            time.sleep_ms(50)
+            time.sleep_ms(self._read_interval_ms)
         
         if samples:
             # Average samples
