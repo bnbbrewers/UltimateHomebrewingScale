@@ -45,6 +45,7 @@ class CalibratedScale:
         self.calibration_points = []
         self.tare_offset = 0
         self.adc_buffer = []
+        self._adc_sum = 0
         
         # Initialize Weight Unit
         self._init_weight_unit()
@@ -172,11 +173,12 @@ class CalibratedScale:
         
         # Add to moving average
         self.adc_buffer.append(adc_value)
+        self._adc_sum += adc_value
         if len(self.adc_buffer) > MOVING_AVERAGE_SIZE:
-            self.adc_buffer.pop(0)
-        
-        # Calculate average
-        adc_avg = sum(self.adc_buffer) / len(self.adc_buffer)
+            self._adc_sum -= self.adc_buffer.pop(0)
+
+        # Calculate average without re-summing full list each tick
+        adc_avg = self._adc_sum / len(self.adc_buffer)
         
         # Convert to weight
         weight = self._adc_to_weight(adc_avg)

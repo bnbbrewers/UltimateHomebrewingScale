@@ -4,10 +4,10 @@ For UIFlow2.0 / MicroPython on M5Stack
 """
 
 import binascii
-from .brewing_software_api import BrewingSoftwareAPI, Batch, Malt, Hop
+from .brewing_software_api import ApiBase, Batch, Malt, Hop
 
 
-class BrewfatherAPI(BrewingSoftwareAPI):
+class BrewfatherAPI(ApiBase):
     """Implementation of BrewingSoftwareAPI for Brewfather"""
 
     BASE_URL = "https://api.brewfather.app/v2"

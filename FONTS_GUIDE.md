@@ -143,7 +143,7 @@ for char in str(weight):
 
 Le projet utilise déjà cette stratégie dans :
 - `apps/scale.py` → `_get_font()`
-- `ui/weight_display.py` → `_get_font()`
+- `ui/weight_screen.py` → fallback intégré
 
 ### Tailles Utilisées
 

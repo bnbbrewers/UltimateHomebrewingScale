@@ -1,27 +1,21 @@
 """
-Applications module for Ultimate Homebrewing Scale
-
-All applications inherit from BaseApp and follow the same pattern:
-- __init__(i18n=None): Initialize app with optional i18n
-- create_ui(): Create LVGL UI elements
-- update(): Update app state (called every frame)
-- check_return_to_launcher(): Check if user wants to exit
-- run(): Main loop (inherited from BaseApp)
-- cleanup(): Clean up resources (inherited from BaseApp)
+Application package for persistent app instances.
 """
 
 from .base_app import BaseApp
-from . import scale
-from . import grain_assistant
-from . import hop_assistant
-from . import keg_filler
-from . import settings
+from .launcher_app import LauncherApp
+from .scale import ScaleApp
+from .grain_assistant import GrainAssistantApp
+from .hop_assistant import HopAssistantApp
+from .keg_filler import KegFillerApp
+from .settings import SettingsApp
 
 __all__ = [
-    'BaseApp',
-    'scale',
-    'grain_assistant',
-    'hop_assistant',
-    'keg_filler',
-    'settings',
+    "BaseApp",
+    "LauncherApp",
+    "ScaleApp",
+    "GrainAssistantApp",
+    "HopAssistantApp",
+    "KegFillerApp",
+    "SettingsApp",
 ]
