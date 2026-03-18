@@ -77,6 +77,10 @@ class ApiBase:
                     gc.collect()
         raise last_exc
 
+    def warmup(self):
+        """Pre-establish TLS connection while the C-heap is clean."""
+        pass
+
     def get_batches(self):
         """
         Retrieve all batches from the brewing software

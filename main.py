@@ -46,15 +46,17 @@ def main():
         apis=apis,
         i18n=i18n_instance,
     )
-     # TLS warmup: idf heap is at its maximum here (before icons load).
-    # Subsequent API calls benefit from the cached TLS session.
+    # TLS warmup: open the persistent TLS socket now, while the IDF C-heap
+    # is still contiguous (before LVGL icon bitmaps fragment it).
+    # Subsequent API calls reuse this socket via HTTP/1.1 keep-alive,
+    # avoiding a new TLS handshake (and its ~40 KB X.509 allocation).
     brewing_api = apis.get("brewing")
     if brewing_api is not None:
         try:
-            brewing_api.get_batches()
+            brewing_api.warmup()
         except Exception as e:
             if DEBUG:
-                print("[BOOT] warmup failed:", e)
+                print("[BOOT] TLS warmup failed:", e)
     gc.collect()
 
     while True:
