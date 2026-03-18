@@ -2,8 +2,6 @@
 Launcher app controller (business logic only).
 """
 
-import lvgl as lv
-
 from .base_app import BaseApp
 from ui import screen_ids
 
@@ -65,10 +63,6 @@ class LauncherApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
-        try:
-            lv.image_cache_drop(None)
-        except Exception:
-            pass
 
     def on_enter(self):
         super().on_enter()
