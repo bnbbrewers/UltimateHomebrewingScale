@@ -5,7 +5,6 @@ For UIFlow2.0 / MicroPython on M5Stack
 
 import gc
 import time
-import requests
 
 try:
     import config as _config
@@ -66,6 +65,7 @@ class ApiBase:
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
+                import requests
                 resp = requests.get(url, headers=headers)
                 return resp
             except Exception as e:
