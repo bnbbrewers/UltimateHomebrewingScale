@@ -38,6 +38,11 @@ class GrainAssistantApp(BaseApp):
         self._target_g = 0
         self._done_at = 0
 
+    def on_exit(self):
+        super().on_exit()
+        self._batches = []
+        self._malts = []
+
     def on_enter(self):
         super().on_enter()
         self._load_batches()

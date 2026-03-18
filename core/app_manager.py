@@ -2,6 +2,8 @@
 App manager with persistent one-time app instances.
 """
 
+import gc
+
 from apps.launcher_app import LauncherApp
 from apps.scale import ScaleApp
 from apps.grain_assistant import GrainAssistantApp
@@ -29,6 +31,7 @@ class AppManager:
         if app_id == self._active_app_id:
             return
         self._apps[self._active_app_id].on_exit()
+        gc.collect()
         self._active_app_id = app_id
         self._apps[self._active_app_id].on_enter()
 
