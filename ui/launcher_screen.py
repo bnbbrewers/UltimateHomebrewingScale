@@ -7,6 +7,16 @@ import m5ui
 import lvgl as lv
 
 
+_LABEL_I18N_MAP = {
+    "Home": "launcher.home",
+    "Scale": "launcher.scale",
+    "Malt": "launcher.malt",
+    "Hop": "launcher.hop",
+    "Keg": "launcher.keg",
+    "Settings": "launcher.settings",
+}
+
+
 class LauncherScreen:
     _MAX_ITEMS = 6
     _SCREEN_W = 240
@@ -93,15 +103,7 @@ class LauncherScreen:
     def _label_text(self, raw):
         if self._i18n is None:
             return raw
-        mapping = {
-            "Home": "launcher.home",
-            "Scale": "launcher.scale",
-            "Malt": "launcher.malt",
-            "Hop": "launcher.hop",
-            "Keg": "launcher.keg",
-            "Settings": "launcher.settings",
-        }
-        key = mapping.get(raw)
+        key = _LABEL_I18N_MAP.get(raw)
         if key is None:
             return raw
         return self._i18n.t(key)

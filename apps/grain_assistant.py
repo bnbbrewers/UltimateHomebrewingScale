@@ -37,11 +37,13 @@ class GrainAssistantApp(BaseApp):
         self._malt_idx = 0
         self._target_g = 0
         self._done_at = 0
+        self._last_in_range = None
 
     def on_exit(self):
         super().on_exit()
         self._batches = []
         self._malts = []
+        self._select_screen.set_items([])
 
     def on_enter(self):
         super().on_enter()
@@ -197,6 +199,7 @@ class GrainAssistantApp(BaseApp):
             tolerance=config.GRAIN_WEIGHT_TOLERANCE,
         )
         self._weigh_screen.set_status(self.t("scale.tare_ready"))
+        self._last_in_range = None
         if self._scale:
             self._scale.tare()
         self._state = _STATE_WEIGHT
@@ -213,10 +216,12 @@ class GrainAssistantApp(BaseApp):
         self._weigh_screen.update_from_weight(weight)
         remaining = self._target_g - weight
         in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
-        if in_range:
-            self._weigh_screen.set_status(self.t("common.ok"))
-        else:
-            self._weigh_screen.set_status("")
+        if in_range != self._last_in_range:
+            self._last_in_range = in_range
+            if in_range:
+                self._weigh_screen.set_status(self.t("common.ok"))
+            else:
+                self._weigh_screen.set_status("")
 
         if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
             self._malts.pop(self._malt_idx)

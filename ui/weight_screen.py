@@ -21,6 +21,9 @@ class WeightScreen:
         self._density = 1.005
         self._tolerance = 0
         self._ok_visible = False
+        self._last_raw_weight = None
+        self._last_progress_pct = -1
+        self._last_overloaded = None
 
         self._title_bg = lv.obj(self.page)
         self._title_bg.set_size(240, 50)
@@ -117,6 +120,9 @@ class WeightScreen:
         self._target = target
         self._tolerance = tolerance
         self._ok_visible = False
+        self._last_raw_weight = None
+        self._last_progress_pct = -1
+        self._last_overloaded = None
         self.set_title(title)
         self.set_title_color(title_bg_color)
         self._percent.set_text("")
@@ -145,8 +151,13 @@ class WeightScreen:
             percent = 0
         if percent > 100:
             percent = 100
-        self._progress.set_value(int(percent), False)
-        self._percent.set_text(str(int(percent)) + "%")
+        pct = int(percent)
+        if pct == self._last_progress_pct and overloaded == self._last_overloaded:
+            return
+        self._last_progress_pct = pct
+        self._last_overloaded = overloaded
+        self._progress.set_value(pct, False)
+        self._percent.set_text("{}%".format(pct))
         if overloaded:
             self._progress.set_style_bg_color(lv.color_hex(0xF44336), lv.PART.INDICATOR)
             self._percent.set_style_text_color(lv.color_hex(0xF44336), 0)
@@ -164,13 +175,21 @@ class WeightScreen:
         """Format weight as kg (>=1000g) or g (<1000g)."""
         if weight is None:
             return "---"
-        sign = "-" if weight < 0 else ""
         abs_w = abs(weight)
         if abs_w >= 1000:
-            return sign + "{:.2f} kg".format(abs_w / 1000.0)
-        return sign + str(int(round(abs_w))) + " g"
+            if weight < 0:
+                return "-{:.2f} kg".format(abs_w / 1000.0)
+            return "{:.2f} kg".format(abs_w / 1000.0)
+        g = int(round(abs_w))
+        if weight < 0:
+            return "-{} g".format(g)
+        return "{} g".format(g)
 
     def update_from_weight(self, weight):
+        if weight == self._last_raw_weight:
+            return
+        self._last_raw_weight = weight
+
         if self._mode == self.MODE_SIMPLE:
             self.set_weight_text(self._format_weight(weight))
             self._percent.set_text("")

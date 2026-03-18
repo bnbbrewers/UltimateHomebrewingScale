@@ -58,7 +58,7 @@ class LauncherApp(BaseApp):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
         self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
         self._rotary = self.hardware.rotary
-        self._items = sorted(LAUNCHER_ITEMS, key=lambda item: item.get("order", 0))
+        self._items = LAUNCHER_ITEMS
         self._selected = 0
 
     def on_exit(self):
