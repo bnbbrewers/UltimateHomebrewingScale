@@ -34,6 +34,41 @@ class WifiDevice:
                 self._last_log_ms = now
                 print("[WiFi] Connecting...")
 
+    def ensure_connected(self, timeout_s=30):
+        """
+        Blocking connect: starts the connection if needed and waits until the
+        interface is up or timeout_s seconds have elapsed.
+
+        The interface is never cycled down so the UIFlow2 cloud WebSocket stays
+        alive throughout.  Returns True if connected, False on timeout/error.
+        """
+        if self._done:
+            return True
+        if not self._started:
+            self._start_connect()
+        if self._done:
+            return True
+        if self._failed or self._wlan is None:
+            return False
+        deadline = time.ticks_add(time.ticks_ms(), timeout_s * 1000)
+        while not self._wlan.isconnected():
+            if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+                if self._debug:
+                    print("[WiFi] Timeout after {}s".format(timeout_s))
+                return False
+            try:
+                import M5
+                M5.update()
+            except Exception:
+                pass
+            time.sleep_ms(200)
+        self._done = True
+        # DNS/routing may not be ready immediately after DHCP; 500 ms is enough.
+        time.sleep_ms(500)
+        if self._debug:
+            print("[WiFi] Connected:", self._wlan.ifconfig()[0])
+        return True
+
     def _start_connect(self):
         self._started = True
         try:
