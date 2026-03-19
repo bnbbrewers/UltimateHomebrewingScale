@@ -81,6 +81,10 @@ class ApiBase:
         """Pre-establish TLS connection while the C-heap is clean."""
         pass
 
+    def release_session(self):
+        """Close network session to free C-heap. Reconnects lazily on next call."""
+        pass
+
     def get_batches(self):
         """
         Retrieve all batches from the brewing software

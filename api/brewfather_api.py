@@ -71,6 +71,11 @@ class BrewfatherAPI(ApiBase):
         if not self._session.is_connected:
             self._session.connect()
 
+    def release_session(self):
+        """Close the TLS socket to free ~32 KB of IDF C-heap (SSL buffers)."""
+        if self._session is not None:
+            self._session.close()
+
     def get_batches(self):
         try:
             status, data = self._get_json(

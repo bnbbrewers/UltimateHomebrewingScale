@@ -30,8 +30,16 @@ class AppManager:
             app_id = "launcher"
         if app_id == self._active_app_id:
             return
-        self._apps[self._active_app_id].on_exit()
+        old = self._active_app_id
+        self._apps[old].on_exit()
         gc.collect()
+        gc.collect()
+        try:
+            import config
+            if getattr(config, "DEBUG", False):
+                print("[MEM] switch {}->{} free={}".format(old, app_id, gc.mem_free()))
+        except Exception:
+            pass
         self._active_app_id = app_id
         self._apps[self._active_app_id].on_enter()
 
