@@ -199,9 +199,9 @@ class CalibratedScale:
         # Convert to weight and apply tare offset
         weight = self._adc_to_weight(adc_avg) - self.tare_offset
 
-        if DEBUG_MODE and len(self.adc_buffer) == MOVING_AVERAGE_SIZE:
-            if int(time.time() * 10) % 10 == 0:
-                print(f"ADC: {adc_avg:.0f} | Weight: {weight:.1f}g | Tare: {self.tare_offset:.1f}g")
+        # if DEBUG_MODE and len(self.adc_buffer) == MOVING_AVERAGE_SIZE:
+        #     if int(time.time() * 10) % 10 == 0:
+        #         print(f"ADC: {adc_avg:.0f} | Weight: {weight:.1f}g | Tare: {self.tare_offset:.1f}g")
 
         self._cached_weight = weight
         return weight

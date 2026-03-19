@@ -66,6 +66,13 @@ class LauncherApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        try:
+            import gc, config
+            if getattr(config, "DEBUG", False):
+                gc.collect()
+                print("[MEM] launcher.on_enter free={}".format(gc.mem_free()))
+        except Exception:
+            pass
         self.screen_manager.show(screen_ids.LAUNCHER)
         self._screen.set_items(self._items)
         self._selected = 0

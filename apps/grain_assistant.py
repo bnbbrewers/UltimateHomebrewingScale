@@ -41,9 +41,14 @@ class GrainAssistantApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
+        if config.DEBUG:
+            gc.collect()
+            print("[MEM] grain.on_exit before_cleanup free={}".format(gc.mem_free()))
         self._batches = []
         self._malts = []
         self._select_screen.set_items([])
+        if self._api:
+            self._api.release_session()
 
     def on_enter(self):
         super().on_enter()
@@ -98,6 +103,8 @@ class GrainAssistantApp(BaseApp):
             self._rotary.reset_rotary_value()
         self._state = _STATE_RECIPE
         gc.collect()
+        if config.DEBUG:
+            print("[MEM] grain.batches_loaded free={}".format(gc.mem_free()))
 
     def _tick_recipe(self):
         if not self._batches:
@@ -167,6 +174,9 @@ class GrainAssistantApp(BaseApp):
         if self._rotary:
             self._rotary.reset_rotary_value()
         self._state = _STATE_MALT
+        if config.DEBUG:
+            gc.collect()
+            print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
 
     def _tick_malt(self):
         if not self._malts:
@@ -203,6 +213,10 @@ class GrainAssistantApp(BaseApp):
         if self._scale:
             self._scale.tare()
         self._state = _STATE_WEIGHT
+        if config.DEBUG:
+            gc.collect()
+            print("[MEM] grain.start_weigh '{}' target={}g free={}".format(
+                malt.name, self._target_g, gc.mem_free()))
 
     def _tick_weigh(self):
         if self._scale is None:
@@ -225,6 +239,10 @@ class GrainAssistantApp(BaseApp):
 
         if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
             self._malts.pop(self._malt_idx)
+            if config.DEBUG:
+                gc.collect()
+                print("[MEM] grain.malt_validated remaining={} free={}".format(
+                    len(self._malts), gc.mem_free()))
             if self._malts:
                 if self._malt_idx >= len(self._malts):
                     self._malt_idx = len(self._malts) - 1
