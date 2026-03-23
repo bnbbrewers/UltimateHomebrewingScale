@@ -34,16 +34,24 @@ class Malt:
         return f"Malt(name='{self.name}', ebc={self.ebc}, amount={self.amount})"
 
 
-class Hop:
-    """Represents a hop ingredient"""
-    def __init__(self, name, amount, use, time):
-        self.name = name
-        self.amount = amount  # in grams
-        self.use = use  # Boil, Whirlpool, Dry Hop, etc.
-        self.time = time  # in minutes
-    
+class HopStep:
+    """Represents a single hop addition step"""
+    def __init__(self, step_name, step_amount):
+        self.step_name = step_name
+        self.step_amount = step_amount  # in grams
+
     def __repr__(self):
-        return f"Hop(name='{self.name}', amount={self.amount}, use='{self.use}', time={self.time})"
+        return f"HopStep(step_name='{self.step_name}', step_amount={self.step_amount})"
+
+
+class Hop:
+    """Represents a hop grouped with all its addition steps"""
+    def __init__(self, hop_name, steps=None):
+        self.hop_name = hop_name
+        self.steps = steps or []
+
+    def __repr__(self):
+        return f"Hop(hop_name='{self.hop_name}', steps={self.steps})"
 
 
 class ApiBase:
@@ -108,13 +116,14 @@ class ApiBase:
     
     def get_hops(self, batch_id):
         """
-        Retrieve hops for a specific batch
-        
+        Retrieve hops for a specific batch, grouped by hop name.
+
         Args:
             batch_id: The unique identifier of the batch
-            
+
         Returns:
-            List[Hop]: List of hops with name, amount, use and time
+            List[Hop]: Each entry has .hop_name and .steps,
+            a list of HopStep(step_name, step_amount).
         """
         raise NotImplementedError("Subclass must implement get_hops()")
 

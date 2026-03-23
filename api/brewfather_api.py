@@ -6,7 +6,7 @@ For UIFlow2.0 / MicroPython on M5Stack
 import gc
 import json
 import binascii
-from .brewing_software_api import ApiBase, Batch, Malt, Hop
+from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
 from .tls_session import TlsSession
 
 try:
@@ -135,15 +135,22 @@ class BrewfatherAPI(ApiBase):
                 return []
 
             hops_data = data.get('recipe', {}).get('hops', [])
-            hops = []
+            groups = {}
+            order = []
             for h in hops_data:
-                hops.append(Hop(
-                    name=h.get('name', 'Unknown Hop'),
-                    amount=h.get('amount', 0.0),
-                    use=h.get('use', ''),
-                    time=h.get('time', 0),
-                ))
-            return hops
+                name = h.get('name', 'Unknown Hop')
+                use = h.get('use', '')
+                t = h.get('time', 0)
+                amount = h.get('amount', 0.0)
+                step = HopStep(
+                    step_name="{} - {}".format(use, t),
+                    step_amount=amount,
+                )
+                if name not in groups:
+                    groups[name] = Hop(hop_name=name)
+                    order.append(name)
+                groups[name].steps.append(step)
+            return [groups[n] for n in order]
 
         except Exception as e:
             print("Error: {}".format(e))

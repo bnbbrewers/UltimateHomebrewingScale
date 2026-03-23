@@ -2,5 +2,5 @@
 Brewing Software API for UIFlow2.0
 """
 
-from .brewing_software_api import ApiBase, BrewingSoftwareAPI, Batch, Malt, Hop
+from .brewing_software_api import ApiBase, BrewingSoftwareAPI, Batch, Malt, Hop, HopStep
 from .brewfather_api import BrewfatherAPI
