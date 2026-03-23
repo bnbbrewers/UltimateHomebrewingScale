@@ -30,9 +30,21 @@ class ScaleApp(BaseApp):
             title_bg_color=0x1E40AF,
             tolerance=0,
         )
-        self._screen.set_status(self.t("scale.tare_ready"))
+        if self._scale:
+            self._screen.set_status(self.t("scale.taring"))
+            if self._scale.tare():
+                self._screen.set_status(self.t("scale.tare_done"))
+                self._last_weight = None
+                self._status_reset_at = time.ticks_add(time.ticks_ms(), 1200)
+            else:
+                self._screen.set_status(self.t("scale.tare_error"))
+                self._status_reset_at = time.ticks_add(time.ticks_ms(), 1200)
+        else:
+            self._screen.set_status(self.t("scale.tare_ready"))
 
     def tick(self):
+        was_pressing = self._btn_is_pressed
+
         if self._check_return_to_launcher():
             return "launcher"
 
@@ -40,7 +52,7 @@ class ScaleApp(BaseApp):
             self._screen.set_status("Scale not found")
             return None
 
-        if self.hardware.button.wasPressed():
+        if was_pressing and not self._btn_is_pressed:
             self._screen.set_status(self.t("scale.taring"))
             ok = self._scale.tare()
             if ok:

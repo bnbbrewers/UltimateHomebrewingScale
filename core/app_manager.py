@@ -14,6 +14,7 @@ from apps.settings import SettingsApp
 
 class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None):
+        self._apis = apis
         self._apps = {
             "launcher": LauncherApp(screen_manager, hardware, apis, i18n=i18n),
             "scale": ScaleApp(screen_manager, hardware, apis, i18n=i18n),
