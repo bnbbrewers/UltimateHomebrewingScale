@@ -59,6 +59,8 @@ class BrewfatherAPI(ApiBase):
                 print("[API] HTTP {}".format(status))
             return status, None
         data = json.loads(body)
+        del body
+        gc.collect()
         return status, data
 
     # ── public API ─────────────────────────────────────────────────

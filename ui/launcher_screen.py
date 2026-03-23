@@ -23,7 +23,7 @@ class LauncherScreen:
     _SCREEN_H = 240
     _CENTER_X = 120
     _CENTER_Y = 120
-    _ICON_SIZE = 58
+    _ICON_SIZE = 32
     _ICON_RADIUS = 90
     _ARC_START = 105
     _ARC_TOTAL = 135

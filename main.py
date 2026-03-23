@@ -46,17 +46,14 @@ def main():
         apis=apis,
         i18n=i18n_instance,
     )
-    # TLS warmup: establish the connection now while the GC heap has maximum
-    # contiguous space.  The SSL buffers (~22 KB) are allocated on the GC heap
-    # via m_malloc.  The session stays alive through grain_assistant and is
-    # released in on_exit() to recover those 22 KB before the launcher re-enters.
     brewing_api = apis.get("brewing")
     if brewing_api is not None:
         try:
             brewing_api.warmup()
+            brewing_api.get_batches()
         except Exception as e:
             if DEBUG:
-                print("[BOOT] TLS warmup failed:", e)
+                print("[BOOT] warmup failed:", e)
     gc.collect()
     if DEBUG:
         print("[MEM] boot_done free={}".format(gc.mem_free()))

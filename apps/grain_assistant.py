@@ -47,11 +47,15 @@ class GrainAssistantApp(BaseApp):
         self._batches = []
         self._malts = []
         self._select_screen.set_items([])
-        if self._api:
-            self._api.release_session()
 
     def on_enter(self):
         super().on_enter()
+        try:
+            import lvgl as lv
+            lv.image_cache_drop(None)
+        except Exception:
+            pass
+        gc.collect()
         self._load_batches()
 
     def tick(self):

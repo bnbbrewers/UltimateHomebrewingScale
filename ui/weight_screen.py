@@ -59,11 +59,13 @@ class WeightScreen:
         self._value.set_width(240)
         self._value.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
-        self._progress = lv.bar(self.page)
-        self._progress.set_size(200, 20)
-        self._progress.set_pos(20, 162)
-        self._progress.set_range(0, 100)
-        self._progress.set_value(0, False)
+        self._progress = m5ui.M5Bar(
+            x=30, y=162, w=180, h=20,
+            min_value=0, max_value=100, value=0,
+            bg_c=0x3A3A3A, color=0x4CAF50,
+            parent=self.page,
+        )
+        self._progress.set_bg_color(lv.color_hex(0x3A3A3A), 255, lv.PART.MAIN | lv.STATE.DEFAULT)
 
         self._percent = m5ui.M5Label(
             "",
@@ -125,14 +127,26 @@ class WeightScreen:
         self._last_overloaded = None
         self.set_title(title)
         self.set_title_color(title_bg_color)
-        self._percent.set_text("")
-        self.set_status("")
         self.set_ok_visible(False)
-        self.set_progress(0, overloaded=False)
-        if mode == self.MODE_COUNTDOWN_L:
-            self._value.set_text("0.00 L")
-        else:
+
+        if mode == self.MODE_SIMPLE:
+            self._progress.set_flag(lv.obj.FLAG.HIDDEN, True)
+            self._percent.set_flag(lv.obj.FLAG.HIDDEN, True)
+            self._status.set_pos(0, 162)
+            self._status.set_flag(lv.obj.FLAG.HIDDEN, False)
+            self._status.set_text("")
             self._value.set_text("0 g")
+        else:
+            self._progress.set_flag(lv.obj.FLAG.HIDDEN, False)
+            self._percent.set_flag(lv.obj.FLAG.HIDDEN, False)
+            self._percent.set_text("")
+            self._status.set_pos(0, 210)
+            self._status.set_flag(lv.obj.FLAG.HIDDEN, True)
+            self.set_progress(0, overloaded=False)
+            if mode == self.MODE_COUNTDOWN_L:
+                self._value.set_text("0.00 L")
+            else:
+                self._value.set_text("0 g")
 
     def set_title(self, text):
         self._title.set_text(text)
@@ -142,6 +156,8 @@ class WeightScreen:
 
     def set_status(self, text):
         self._status.set_text(text)
+        if self._mode == self.MODE_SIMPLE:
+            self._status.set_flag(lv.obj.FLAG.HIDDEN, False)
 
     def set_weight_text(self, text):
         self._value.set_text(text)
@@ -159,10 +175,10 @@ class WeightScreen:
         self._progress.set_value(pct, False)
         self._percent.set_text("{}%".format(pct))
         if overloaded:
-            self._progress.set_style_bg_color(lv.color_hex(0xF44336), lv.PART.INDICATOR)
+            self._progress.set_bg_color(lv.color_hex(0xF44336), 255, lv.PART.INDICATOR | lv.STATE.DEFAULT)
             self._percent.set_style_text_color(lv.color_hex(0xF44336), 0)
         else:
-            self._progress.set_style_bg_color(lv.color_hex(0x4CAF50), lv.PART.INDICATOR)
+            self._progress.set_bg_color(lv.color_hex(0x4CAF50), 255, lv.PART.INDICATOR | lv.STATE.DEFAULT)
             self._percent.set_style_text_color(lv.color_hex(0x888888), 0)
 
     def set_ok_visible(self, visible):
