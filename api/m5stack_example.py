@@ -95,10 +95,10 @@ def main():
         hops = api.get_hops(first_batch.batch_id)
         
         if hops:
-            for hop in hops:
-                print(f"  {hop.name}")
-                print(f"  {hop.amount} g")
-                print(f"  {hop.use} - {hop.time} min")
+            for group in hops:
+                print(f"  {group.hop_name}")
+                for step in group.steps:
+                    print(f"    {step.step_name}: {step.step_amount} g")
         else:
             print("  No hops")
         
