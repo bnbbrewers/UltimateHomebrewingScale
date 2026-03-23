@@ -23,7 +23,7 @@ class LauncherScreen:
     _SCREEN_H = 240
     _CENTER_X = 120
     _CENTER_Y = 120
-    _ICON_SIZE = 32
+    _ICON_SIZE = 26
     _ICON_RADIUS = 90
     _ARC_START = 105
     _ARC_TOTAL = 135
@@ -172,6 +172,8 @@ class LauncherScreen:
                 y=y,
                 parent=self.page,
             )
+            img.set_scale(1.3, 1.3)
+            img.set_pivot(10, 10)
             img.set_size(self._ICON_SIZE, self._ICON_SIZE)
             self._icon_slots[i]["img"] = img
             self._icon_slots[i]["x"] = x
@@ -192,7 +194,7 @@ class LauncherScreen:
 
         angle_deg = float(self._ARC_START + self._ARC_TOTAL) - (float(self._selected_index) * angle_step)
         angle_rad = math.radians(angle_deg)
-        indicator_radius = self._ICON_RADIUS - (self._ICON_SIZE // 2) - 3
+        indicator_radius = self._ICON_RADIUS - (self._ICON_SIZE // 2) - 13
         ix = int(self._CENTER_X + indicator_radius * math.cos(angle_rad) - 5)
         iy = int(self._CENTER_Y + indicator_radius * math.sin(angle_rad) - 5)
         if self._indicator_current_x == 0.0 and self._indicator_current_y == 0.0:

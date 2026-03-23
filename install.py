@@ -91,6 +91,8 @@ def _should_download(repo_path):
         return False
     if _is_example_path(repo_path):
         return False
+    if "/icons/origin/" in lp or lp.startswith("assets/icons/origin/"):
+        return False
     return True
 
 
