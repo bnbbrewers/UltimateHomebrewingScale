@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Traductions françaises pour Ultimate Homebrewing Scale
+Traductions francaises pour Ultimate Homebrewing Scale
 """
 
 TRANSLATIONS = {
-    # Chaînes communes
+    # Chaines communes
     'common': {
-        'ready': 'Prêt',
+        'ready': 'Pret',
         'error': 'Erreur',
         'ok': 'OK',
         'cancel': 'Annuler',
@@ -24,7 +24,7 @@ TRANSLATIONS = {
         'title': 'Balance',
         'tare_ready': 'Appuyer pour tarer',
         'taring': 'Tarage...',
-        'tare_done': 'Tarage effectué !',
+        'tare_done': 'Tarage effectue !',
         'tare_error': 'Erreur de tarage',
         'initial_tare': 'Tarage initial...',
         'weight': 'Poids',
@@ -55,77 +55,77 @@ TRANSLATIONS = {
     # Assistant Houblons
     'hop': {
         'title': 'Assistant Houblons',
-        'select_batch': 'Sélectionner brassin',
-        'no_batches': 'Aucun brassin trouvé',
+        'select_batch': 'Selectionner brassin',
+        'no_batches': 'Aucun brassin trouve',
         'loading_batches': 'Chargement des brassins...',
         'current_hop': 'Houblon actuel',
         'target': 'Cible : {0}g',
         'remaining': 'Restant : {0}g',
-        'complete': 'Terminé !',
+        'complete': 'Termine !',
         'next_hop': 'Houblon suivant',
-        'all_done': 'Tous les houblons pesés !',
+        'all_done': 'Tous les houblons peses !',
         'hop_number': 'Houblon {0}/{1}',
         'addition_time': 'Ajout : {0} min',
     },
     
-    # Remplisseur de Fûts
+    # Remplisseur de Futs
     'keg': {
-        'title': 'Remplisseur de Fûts',
-        'select_keg': 'Sélectionner fût',
-        'no_kegs': 'Aucun fût enregistré',
-        'add_keg': 'Ajouter un fût',
-        'keg_name': 'Nom du fût',
-        'empty_weight': 'Poids à vide : {0}g',
+        'title': 'Remplisseur de Futs',
+        'select_keg': 'Selectionner fut',
+        'no_kegs': 'Aucun fut enregistre',
+        'add_keg': 'Ajouter un fut',
+        'keg_name': 'Nom du fut',
+        'empty_weight': 'Poids a vide : {0}g',
         'current_weight': 'Actuel : {0}g',
         'target_weight': 'Cible : {0}g',
         'filling': 'Remplissage...',
         'filling_progress': 'Rempli : {percent}%',
-        'complete': 'Remplissage terminé !',
-        'stopped': 'Remplissage arrêté',
+        'complete': 'Remplissage termine !',
+        'stopped': 'Remplissage arrete',
         'connect_lines': 'Connecter liquide et spunding',
-        'press_to_start': 'Appuyer pour démarrer',
-        'press_to_stop': 'Appuyer pour arrêter',
+        'press_to_start': 'Appuyer pour demarrer',
+        'press_to_stop': 'Appuyer pour arreter',
         'valve_open': 'Vanne : OUVERTE',
-        'valve_closed': 'Vanne : FERMÉE',
+        'valve_closed': 'Vanne : FERMEE',
     },
     
-    # Menu / Paramètres
+    # Menu / Parametres
     'menu': {
         'title': 'Menu',
         'scale_mode': 'Balance',
         'grain_assistant': 'Assistant Malts',
         'hop_assistant': 'Assistant Houblons',
-        'keg_filler': 'Remplisseur de Fûts',
-        'settings': 'Paramètres',
+        'keg_filler': 'Remplisseur de Futs',
+        'settings': 'Parametres',
         'calibration': 'Calibration',
-        'about': 'À propos',
+        'about': 'A propos',
     },
     
     'settings': {
-        'title': 'Paramètres',
+        'title': 'Parametres',
         'language': 'Langue',
-        'units': 'Unités',
+        'units': 'Unites',
         'wifi': 'Wi-Fi',
-        'wifi_connected': 'Connecté',
-        'wifi_disconnected': 'Déconnecté',
+        'wifi_connected': 'Connecte',
+        'wifi_disconnected': 'Deconnecte',
         'brewfather': 'API Brewfather',
-        'brewfather_configured': 'Configuré',
-        'brewfather_not_configured': 'Non configuré',
+        'brewfather_configured': 'Configure',
+        'brewfather_not_configured': 'Non configure',
         'display': 'Affichage',
-        'brightness': 'Luminosité',
-        'about': 'À propos',
+        'brightness': 'Luminosite',
+        'about': 'A propos',
     },
     
     # Calibration
     'calibration': {
         'title': 'Calibration',
-        'start': 'Démarrer calibration',
+        'start': 'Demarrer calibration',
         'instructions': 'Suivre les instructions',
         'place_weight': 'Placer poids de {0}g',
         'remove_weight': 'Retirer tout poids',
-        'press_when_ready': 'Appuyer quand prêt',
+        'press_when_ready': 'Appuyer quand pret',
         'reading': 'Lecture...',
-        'complete': 'Calibration terminée !',
+        'complete': 'Calibration terminee !',
         'error': 'Erreur de calibration',
         'save': 'Sauvegarder calibration',
     },
@@ -136,13 +136,13 @@ TRANSLATIONS = {
         'scale': 'Balance',
         'malt': 'Malt',
         'hop': 'Houblon',
-        'keg': 'Fût',
-        'settings': 'Paramètres',
+        'keg': 'Fut',
+        'settings': 'Parametres',
     },
     
-    # À propos
+    # A propos
     'about': {
-        'title': 'À propos',
+        'title': 'A propos',
         'app_name': 'Ultimate Homebrewing Scale',
         'version': 'Version',
         'author': 'Projet Open Source',
