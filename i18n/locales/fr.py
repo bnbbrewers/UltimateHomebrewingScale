@@ -42,6 +42,8 @@ TRANSLATIONS = {
         'no_malts': 'Aucun malt trouve',
         'loading_batches': 'Chargement brassins...',
         'loading_malts': 'Chargement malts...',
+        'loading_recipes': 'Chargement des recettes...',
+        'loading_grains': 'Chargement des grains...',
         'all_malts_done': 'Tous les malts peses !',
         'current_grain': 'Malt actuel',
         'target': 'Cible : {0}g',

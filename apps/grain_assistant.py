@@ -14,6 +14,7 @@ _STATE_RECIPE = 1
 _STATE_MALT = 2
 _STATE_WEIGHT = 3
 _STATE_DONE = 4
+_STATE_MESSAGE_ACK = 5
 _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
 
@@ -29,6 +30,7 @@ class GrainAssistantApp(BaseApp):
 
         self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
         self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
+        self._message_screen = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)
 
         self._state = _STATE_RECIPE
         self._batches = []
@@ -71,16 +73,45 @@ class GrainAssistantApp(BaseApp):
         elif self._state == _STATE_DONE:
             if time.ticks_diff(time.ticks_ms(), self._done_at) >= 2000:
                 return "launcher"
+        elif self._state == _STATE_MESSAGE_ACK:
+            if self.hardware.button.wasPressed():
+                return "launcher"
         return None
 
-    def _load_batches(self):
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
-            title=self.t("grain.loading_batches"),
-            items=[],
-            accent_color=_COLOR_RECIPE,
-            selected_index=0,
+    def _flush_lvgl(self):
+        try:
+            import lvgl as lv
+
+            lv.task_handler()
+        except Exception:
+            pass
+
+    def _show_loading_message(self, message_key, bar_color):
+        if self._message_screen:
+            self._message_screen.configure(
+                title=self.t("grain.title"),
+                message=self.t(message_key),
+                title_bg_color=bar_color,
+            )
+            self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
+            self._flush_lvgl()
+
+    def _show_ack_message(self, message_key, bar_color=_COLOR_MALT):
+        if not self._message_screen:
+            return False
+        self._message_screen.configure(
+            title=self.t("grain.title"),
+            message=self.t(message_key),
+            title_bg_color=bar_color,
+            show_ok_button=True,
         )
+        self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
+        self._flush_lvgl()
+        self._state = _STATE_MESSAGE_ACK
+        return True
+
+    def _load_batches(self):
+        self._show_loading_message("grain.loading_recipes", _COLOR_RECIPE)
 
         self._batches = self._api.get_batches() if self._api else []
         names = []
@@ -88,6 +119,7 @@ class GrainAssistantApp(BaseApp):
             names.append(batch.name)
         self._batch_idx = 0
 
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
         if names:
             self._select_screen.configure(
                 title=self.t("grain.select_recipe"),
@@ -130,13 +162,7 @@ class GrainAssistantApp(BaseApp):
             self._load_malts()
 
     def _load_malts(self):
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
-            title=self.t("grain.loading_malts"),
-            items=[],
-            accent_color=_COLOR_MALT,
-            selected_index=0,
-        )
+        self._show_loading_message("grain.loading_grains", _COLOR_MALT)
 
         # Extract only what's needed, then release all batch objects before
         # the second API call to recover heap space and reduce fragmentation.
@@ -162,22 +188,27 @@ class GrainAssistantApp(BaseApp):
             names.append(malt.name)
 
         if names:
+            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._select_screen.configure(
                 title=self.t("grain.select_malt"),
                 items=names,
                 accent_color=_COLOR_MALT,
                 selected_index=0,
             )
+            self._state = _STATE_MALT
+        elif self._show_ack_message("grain.no_malts"):
+            pass
         else:
+            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._select_screen.configure(
                 title=self.t("grain.no_malts"),
                 items=[],
                 accent_color=_COLOR_MALT,
                 selected_index=0,
             )
+            self._state = _STATE_MALT
         if self._rotary:
             self._rotary.reset_rotary_value()
-        self._state = _STATE_MALT
         if config.DEBUG:
             gc.collect()
             print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
@@ -262,12 +293,13 @@ class GrainAssistantApp(BaseApp):
                 )
                 self._state = _STATE_MALT
             else:
-                self.screen_manager.show(screen_ids.SELECT_ITEM)
-                self._select_screen.configure(
-                    title=self.t("grain.all_malts_done"),
-                    items=[],
-                    accent_color=_COLOR_MALT,
-                    selected_index=0,
-                )
-                self._done_at = time.ticks_ms()
-                self._state = _STATE_DONE
+                if not self._show_ack_message("grain.all_malts_done"):
+                    self.screen_manager.show(screen_ids.SELECT_ITEM)
+                    self._select_screen.configure(
+                        title=self.t("grain.all_malts_done"),
+                        items=[],
+                        accent_color=_COLOR_MALT,
+                        selected_index=0,
+                    )
+                    self._done_at = time.ticks_ms()
+                    self._state = _STATE_DONE

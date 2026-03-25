@@ -41,6 +41,8 @@ TRANSLATIONS = {
         'no_malts': 'No malts found',
         'loading_batches': 'Loading batches...',
         'loading_malts': 'Loading malts...',
+        'loading_recipes': 'Loading recipes...',
+        'loading_grains': 'Loading grains...',
         'all_malts_done': 'All malts weighed!',
         'current_grain': 'Current grain',
         'target': 'Target: {0}g',
