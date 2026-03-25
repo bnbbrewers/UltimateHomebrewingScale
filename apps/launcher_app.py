@@ -89,7 +89,7 @@ class LauncherApp(BaseApp):
                 self._selected = self._screen.get_selected_index()
         self._screen.animate_indicator()
 
-        if self.hardware.button.isPressed():
+        if self.hardware.button.wasPressed():
             if not self._items:
                 return None
             return self._items[self._selected].get("module")
