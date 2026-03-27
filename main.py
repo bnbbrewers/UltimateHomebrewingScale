@@ -51,7 +51,6 @@ def main():
     if brewing_api is not None:
         try:
             brewing_api.warmup()
-            brewing_api.get_batches()
         except Exception as e:
             if DEBUG:
                 print("[BOOT] warmup failed:", e)

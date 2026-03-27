@@ -111,7 +111,7 @@ class GrainAssistantApp(BaseApp):
         return True
 
     def _load_batches(self):
-        self._show_loading_message("grain.loading_recipes", _COLOR_RECIPE)
+        self._show_loading_message("recipe.loading_recipes", _COLOR_RECIPE)
 
         self._batches = self._api.get_batches() if self._api else []
         names = []
@@ -122,14 +122,14 @@ class GrainAssistantApp(BaseApp):
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         if names:
             self._select_screen.configure(
-                title=self.t("grain.select_recipe"),
+                title=self.t("recipe.select_recipe"),
                 items=names,
                 accent_color=_COLOR_RECIPE,
                 selected_index=0,
             )
         else:
             self._select_screen.configure(
-                title=self.t("grain.no_batches"),
+                title=self.t("recipe.no_recipe"),
                 items=[],
                 accent_color=_COLOR_RECIPE,
                 selected_index=0,
@@ -168,13 +168,6 @@ class GrainAssistantApp(BaseApp):
         # the second API call to recover heap space and reduce fragmentation.
         batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
-        gc.collect()
-
-        try:
-            _buf = bytearray(40000)
-            del _buf
-        except MemoryError:
-            pass
         gc.collect()
 
         if self._api:
