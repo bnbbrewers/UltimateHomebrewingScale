@@ -30,8 +30,8 @@ def _load_i18n():
 
 def main():
     M5.begin()
-    Speaker.begin()
     m5ui.init()
+    Speaker.begin()
     gc.collect()
 
  

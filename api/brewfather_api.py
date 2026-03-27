@@ -142,8 +142,9 @@ class BrewfatherAPI(ApiBase):
                 use = h.get('use', '')
                 t = h.get('time', 0)
                 amount = h.get('amount', 0.0)
+                unit = "d" if h.get('timeUnit') == "days" else "min"
                 step = HopStep(
-                    step_name="{} - {}".format(use, t),
+                    step_name="{} - {}{}".format(use, t, unit),
                     step_amount=amount,
                 )
                 if name not in groups:
