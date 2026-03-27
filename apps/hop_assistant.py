@@ -361,8 +361,8 @@ class HopAssistantApp(BaseApp):
         hop = self._hop_sessions[self._current_hop_idx]
         hop_name = hop["name"]
         hop["steps"].pop(self._step_idx)
+        gc.collect()
         if config.DEBUG:
-            gc.collect()
             print("[MEM] hop.step_done hop={} remaining_steps={} free={}".format(
                 hop_name, len(hop["steps"]), gc.mem_free()))
 
