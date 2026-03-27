@@ -267,8 +267,8 @@ class GrainAssistantApp(BaseApp):
 
         if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
             self._malts.pop(self._malt_idx)
+            gc.collect()
             if config.DEBUG:
-                gc.collect()
                 print("[MEM] grain.malt_validated remaining={} free={}".format(
                     len(self._malts), gc.mem_free()))
             if self._malts:

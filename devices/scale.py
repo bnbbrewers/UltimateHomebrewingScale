@@ -206,31 +206,34 @@ class CalibratedScale:
         self._cached_weight = weight
         return weight
     
-    def tare(self):
+    def tare(self, num_samples=5, settle_ms=50):
         """
-        Perform tare (zero current weight)
-        
-        Returns:
-            True if successful, False otherwise
+        Perform tare (zero current weight).
+
+        Uses fewer samples with shorter settle time than the full moving
+        average to keep blocking time under 300 ms.  Calls M5.update()
+        between reads to prevent the system watchdog from rebooting.
         """
-        # Read multiple samples for stable tare.
-        # _last_read_ms is reset before each call to bypass rate-limiting
-        # and guarantee a fresh hardware read every iteration.
+        self.adc_buffer.clear()
+        self._adc_sum = 0
         samples = []
-        for _ in range(10):
+        for _ in range(num_samples):
             self._last_read_ms = None
             weight = self.read_weight()
             if weight is not None:
-                # Temporarily remove old offset to get actual weight
                 weight += self.tare_offset
                 samples.append(weight)
-            time.sleep_ms(self._read_interval_ms)
-        
+            try:
+                import M5
+                M5.update()
+            except Exception:
+                pass
+            time.sleep_ms(settle_ms)
+
         if samples:
-            # Average samples
             self.tare_offset = sum(samples) / len(samples)
             if DEBUG_MODE:
-                print(f"Tare set to: {self.tare_offset:.1f}g")
+                print("Tare set to: {:.1f}g".format(self.tare_offset))
             return True
         return False
     
