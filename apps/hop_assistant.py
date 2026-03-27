@@ -143,8 +143,6 @@ class HopAssistantApp(BaseApp):
         return None
 
     def _enter_hop_weighing_flow(self):
-        self._show_loading_message("hop.loading_hops")
-        self._reload_hop_sessions()
         if not self._hop_sessions:
             if self._show_no_hops_ack():
                 pass
@@ -165,7 +163,7 @@ class HopAssistantApp(BaseApp):
         for h in hops:
             steps = []
             for s in h.steps:
-                steps.append([s.step_name, float(s.step_amount)])
+                steps.append((s.step_name, float(s.step_amount)))
             if steps:
                 self._hop_sessions.append({"name": h.hop_name, "steps": steps})
         hops = []
@@ -437,13 +435,6 @@ class HopAssistantApp(BaseApp):
         if self.hardware.button.wasPressed():
             self._load_hops()
 
-    @staticmethod
-    def _count_hop_steps(hops):
-        n = 0
-        for h in hops:
-            n += len(h.steps)
-        return n
-
     def _load_hops(self):
         self._show_loading_message("hop.loading_hops")
 
@@ -456,7 +447,15 @@ class HopAssistantApp(BaseApp):
         else:
             hops = []
 
-        recipient_count = self._count_hop_steps(hops)
+        self._hop_sessions = []
+        recipient_count = 0
+        for h in hops:
+            steps = []
+            for s in h.steps:
+                steps.append((s.step_name, float(s.step_amount)))
+                recipient_count += 1
+            if steps:
+                self._hop_sessions.append({"name": h.hop_name, "steps": steps})
         hops = []
         gc.collect()
 
