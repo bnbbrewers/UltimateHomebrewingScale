@@ -4,7 +4,6 @@
 
 #conf
 scale_calibration.json
-=======
 ScaleCalibration/scale_calibration.json
 
 # Configuration files with credentials
@@ -13,6 +12,7 @@ config.py
 # Python
 __pycache__/
 *.py[cod]
+*.py[cod].*
 *$py.class
 *.so
 .Python
@@ -20,10 +20,12 @@ venv/
 env/
 ENV/
 .venv
+.tmp_pyc/
 
 
 # IDE
 .vscode/
 .idea/
+AGENT.md
 
 
