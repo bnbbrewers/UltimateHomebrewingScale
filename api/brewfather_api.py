@@ -8,6 +8,7 @@ import json
 import binascii
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
 from .tls_session import TlsSession
+from memory_debug import snapshot as mem_snapshot
 
 try:
     import config as _config
@@ -53,14 +54,22 @@ class BrewfatherAPI(ApiBase):
         self._ensure_wifi()
         if self._session is None:
             self._session = TlsSession(self._HOST)
+        mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         status, body = self._session.get(path, headers=self._headers)
+        mem_snapshot("api.http.post", enabled=_DEBUG, collect=False)
         if status != 200 or not body:
             if _DEBUG:
                 print("[API] HTTP {}".format(status))
             return status, None
+        if _DEBUG:
+            try:
+                print("[API] body_len={}".format(len(body)))
+            except Exception:
+                pass
         data = json.loads(body)
         del body
         gc.collect()
+        mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
         return status, data
 
     # ── public API ─────────────────────────────────────────────────
@@ -71,7 +80,9 @@ class BrewfatherAPI(ApiBase):
         if self._session is None:
             self._session = TlsSession(self._HOST)
         if not self._session.is_connected:
+            mem_snapshot("api.warmup.pre", enabled=_DEBUG, collect=True)
             self._session.connect()
+            mem_snapshot("api.warmup.post", enabled=_DEBUG, collect=True)
 
     def release_session(self):
         """Close the TLS socket to free ~32 KB of IDF C-heap (SSL buffers)."""
@@ -126,6 +137,39 @@ class BrewfatherAPI(ApiBase):
 
     def get_hops(self, batch_id):
         try:
+            sessions = self.get_hop_sessions(batch_id)
+            hops = []
+            for session in sessions:
+                hop = Hop(hop_name=session["name"])
+                for step_name, step_amount in session["steps"]:
+                    hop.steps.append(HopStep(step_name=step_name, step_amount=step_amount))
+                hops.append(hop)
+            return hops
+        except Exception as e:
+            print("Error: {}".format(e))
+            return []
+
+    @staticmethod
+    def _group_hops(hops_data):
+        groups = {}
+        order = []
+        for h in hops_data:
+            name = h.get('name', 'Unknown Hop')
+            use = h.get('use', '')
+            t = h.get('time', 0)
+            amount = h.get('amount', 0.0)
+            unit = "d" if h.get('timeUnit') == "days" else "min"
+            if name not in groups:
+                groups[name] = []
+                order.append(name)
+            groups[name].append(("{} - {}{}".format(use, t, unit), amount))
+        sessions = []
+        for name in order:
+            sessions.append({"name": name, "steps": groups[name]})
+        return sessions
+
+    def get_hop_sessions(self, batch_id):
+        try:
             status, data = self._get_json(
                 "{}/batches/{}?include=recipe.hops".format(
                     self._BASE_PATH, batch_id
@@ -133,26 +177,13 @@ class BrewfatherAPI(ApiBase):
             )
             if data is None:
                 return []
-
-            hops_data = data.get('recipe', {}).get('hops', [])
-            groups = {}
-            order = []
-            for h in hops_data:
-                name = h.get('name', 'Unknown Hop')
-                use = h.get('use', '')
-                t = h.get('time', 0)
-                amount = h.get('amount', 0.0)
-                unit = "d" if h.get('timeUnit') == "days" else "min"
-                step = HopStep(
-                    step_name="{} - {}{}".format(use, t, unit),
-                    step_amount=amount,
-                )
-                if name not in groups:
-                    groups[name] = Hop(hop_name=name)
-                    order.append(name)
-                groups[name].steps.append(step)
-            return [groups[n] for n in order]
-
+            sessions = self._group_hops(data.get("recipe", {}).get("hops", []))
+            del data
+            gc.collect()
+            if _DEBUG:
+                print("[API] hops_source=batch")
         except Exception as e:
             print("Error: {}".format(e))
             return []
+        mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)
+        return sessions

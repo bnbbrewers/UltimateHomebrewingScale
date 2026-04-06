@@ -5,6 +5,7 @@ Memory-safe hop assistant app (business logic only).
 import gc
 
 import config
+from memory_debug import snapshot as mem_snapshot
 
 from .base_app import BaseApp
 from ui import screen_ids
@@ -17,6 +18,30 @@ _STATE_WEIGHT = 5
 _STATE_HOP_DONE_ACK = 6
 _STATE_ALL_DONE_ACK = 7
 _COLOR_HOP = 0x388E3C
+
+
+class _HopNameItems:
+    def __init__(self, hop_sessions):
+        self._hop_sessions = hop_sessions
+
+    def __len__(self):
+        return len(self._hop_sessions)
+
+    def __getitem__(self, index):
+        return self._hop_sessions[index]["name"]
+
+
+class _HopStepItems:
+    def __init__(self, app, steps):
+        self._app = app
+        self._steps = steps
+
+    def __len__(self):
+        return len(self._steps)
+
+    def __getitem__(self, index):
+        step_name, amount = self._steps[index]
+        return self._app._step_line(step_name, amount)
 
 
 class HopAssistantApp(BaseApp):
@@ -46,7 +71,7 @@ class HopAssistantApp(BaseApp):
         super().on_exit()
         if config.DEBUG:
             gc.collect()
-            print("[MEM] hop.on_exit before_cleanup free={}".format(gc.mem_free()))
+            mem_snapshot("hop.on_exit.before_cleanup", enabled=True, collect=False)
         self._batches = []
         self._hop_sessions = []
         self._batch_id = None
@@ -125,19 +150,11 @@ class HopAssistantApp(BaseApp):
             self._rotary.reset_rotary_value()
         if config.DEBUG:
             gc.collect()
-            print("[MEM] hop.sessions_ready hops={} free={}".format(
-                len(self._hop_sessions), gc.mem_free()))
+            print("[MEM] hop.sessions_ready hops={}".format(len(self._hop_sessions)))
+            mem_snapshot("hop.sessions_ready", enabled=True, collect=False)
 
     def _reload_hop_sessions(self):
-        self._hop_sessions = []
-        hops = self._api.get_hops(self._batch_id) if self._api else []
-        for h in hops:
-            steps = []
-            for s in h.steps:
-                steps.append((s.step_name, float(s.step_amount)))
-            if steps:
-                self._hop_sessions.append({"name": h.hop_name, "steps": steps})
-        hops = []
+        self._hop_sessions = self._fetch_hop_sessions()
         gc.collect()
 
     # ── display helpers ────────────────────────────────────────────
@@ -162,7 +179,7 @@ class HopAssistantApp(BaseApp):
         return max(0, g)
 
     def _show_hop_select(self):
-        names = [s["name"] for s in self._hop_sessions]
+        names = _HopNameItems(self._hop_sessions)
         self._current_hop_idx = min(self._current_hop_idx, max(0, len(names) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select_screen.configure(
@@ -174,7 +191,7 @@ class HopAssistantApp(BaseApp):
 
     def _show_step_select(self):
         hop = self._hop_sessions[self._current_hop_idx]
-        lines = [self._step_line(sn, amt) for sn, amt in hop["steps"]]
+        lines = _HopStepItems(self, hop["steps"])
         self._step_idx = min(self._step_idx, max(0, len(lines) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select_screen.configure(
@@ -251,8 +268,9 @@ class HopAssistantApp(BaseApp):
         self._state = _STATE_WEIGHT
         if config.DEBUG:
             gc.collect()
-            print("[MEM] hop.start_weigh hop={} target={}g free={}".format(
-                hop["name"], self._target_g, gc.mem_free()))
+            print("[MEM] hop.start_weigh hop={} target={}g".format(
+                hop["name"], self._target_g))
+            mem_snapshot("hop.start_weigh", enabled=True, collect=False)
 
     def _complete_current_step(self):
         hop = self._hop_sessions[self._current_hop_idx]
@@ -260,8 +278,9 @@ class HopAssistantApp(BaseApp):
         hop["steps"].pop(self._step_idx)
         gc.collect()
         if config.DEBUG:
-            print("[MEM] hop.step_done hop={} remaining={} free={}".format(
-                hop_name, len(hop["steps"]), gc.mem_free()))
+            print("[MEM] hop.step_done hop={} remaining={}".format(
+                hop_name, len(hop["steps"])))
+            mem_snapshot("hop.step_done", enabled=True, collect=False)
         if hop["steps"]:
             if self._step_idx >= len(hop["steps"]):
                 self._step_idx = len(hop["steps"]) - 1
@@ -293,28 +312,28 @@ class HopAssistantApp(BaseApp):
         self._state = _STATE_RECIPE
         gc.collect()
         if config.DEBUG:
-            print("[MEM] hop.batches_loaded free={}".format(gc.mem_free()))
+            mem_snapshot("hop.batches_loaded", enabled=True, collect=False)
+
+    def _fetch_hop_sessions(self):
+        if not self._api:
+            return []
+        sessions = self._api.get_hop_sessions(self._batch_id)
+        if not sessions:
+            return []
+        return sessions
 
     def _load_hops(self):
         self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
         self._batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
         gc.collect()
-
-        if self._api:
-            hops = self._api.get_hops(self._batch_id)
-        else:
-            hops = []
-
-        self._hop_sessions = []
+        mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
+        self._hop_sessions = self._fetch_hop_sessions()
         recipient_count = 0
-        for h in hops:
-            steps = [(s.step_name, float(s.step_amount)) for s in h.steps]
-            if steps:
-                self._hop_sessions.append({"name": h.hop_name, "steps": steps})
-                recipient_count += len(steps)
-        hops = []
+        for session in self._hop_sessions:
+            recipient_count += len(session["steps"])
         gc.collect()
+        mem_snapshot("hop.load_hops.post_api", enabled=config.DEBUG, collect=False)
 
         if recipient_count > 0:
             self._show_msg(
@@ -334,5 +353,5 @@ class HopAssistantApp(BaseApp):
             self._rotary.reset_rotary_value()
         if config.DEBUG:
             gc.collect()
-            print("[MEM] hop.hops_loaded recipients={} free={}".format(
-                recipient_count, gc.mem_free()))
+            print("[MEM] hop.hops_loaded recipients={}".format(recipient_count))
+            mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
