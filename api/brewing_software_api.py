@@ -15,12 +15,16 @@ except Exception:
 
 class Batch:
     """Represents a brewing batch"""
-    def __init__(self, batch_id, name):
+    def __init__(self, batch_id, name, recipe_id=""):
         self.batch_id = batch_id
         self.name = name
+        self.recipe_id = recipe_id
     
     def __repr__(self):
-        return f"Batch(batch_id='{self.batch_id}', name='{self.name}')"
+        return (
+            f"Batch(batch_id='{self.batch_id}', "
+            f"name='{self.name}', recipe_id='{self.recipe_id}')"
+        )
 
 
 class Malt:
@@ -126,6 +130,23 @@ class ApiBase:
             a list of HopStep(step_name, step_amount).
         """
         raise NotImplementedError("Subclass must implement get_hops()")
+
+    def get_hop_sessions(self, batch_id):
+        """
+        Compact hop format for memory-constrained UIs.
+
+        Returns:
+            List[dict]: [{"name": str, "steps": [(step_name, step_amount), ...]}, ...]
+        """
+        sessions = []
+        hops = self.get_hops(batch_id)
+        for hop in hops:
+            steps = []
+            for step in hop.steps:
+                steps.append((step.step_name, step.step_amount))
+            if steps:
+                sessions.append({"name": hop.hop_name, "steps": steps})
+        return sessions
 
 
 # Backward compatibility with existing modules.

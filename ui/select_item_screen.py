@@ -58,7 +58,15 @@ class SelectItemScreen:
         self.set_items(items, selected_index=selected_index)
 
     def set_items(self, items, selected_index=0):
-        self._items = list(items) if items else []
+        if not items:
+            self._items = []
+        elif isinstance(items, list):
+            self._items = items
+        elif hasattr(items, "__len__") and hasattr(items, "__getitem__"):
+            # Keep indexable sequences as-is to avoid copying large datasets.
+            self._items = items
+        else:
+            self._items = list(items)
         self.set_selected_index(selected_index)
 
     def set_title(self, title):

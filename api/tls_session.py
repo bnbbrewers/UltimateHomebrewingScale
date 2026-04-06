@@ -23,6 +23,7 @@ except Exception:
 
 
 class TlsSession:
+    _READ_CHUNK_SIZE = 1024
 
     def __init__(self, host, port=443):
         self._host = host
@@ -87,14 +88,16 @@ class TlsSession:
     # ── HTTP/1.1 implementation ────────────────────────────────────
 
     def _do_get(self, path, headers):
-        req = "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: keep-alive\r\n".format(
-            path, self._host
-        )
+        req_lines = [
+            "GET {} HTTP/1.1\r\n".format(path),
+            "Host: {}\r\n".format(self._host),
+            "Connection: keep-alive\r\n",
+        ]
         if headers:
             for k, v in headers.items():
-                req += "{}: {}\r\n".format(k, v)
-        req += "\r\n"
-        self._sock.write(req.encode())
+                req_lines.append("{}: {}\r\n".format(k, v))
+        req_lines.append("\r\n")
+        self._sock.write("".join(req_lines).encode())
 
         status_line = self._readline()
         if not status_line:
@@ -142,18 +145,29 @@ class TlsSession:
         return bytes(line)
 
     def _read_exact(self, n):
-        pieces = []
-        left = n
-        while left > 0:
-            chunk = self._sock.read(left)
+        if n <= 0:
+            return b""
+
+        out = bytearray(n)
+        mv = memoryview(out)
+        pos = 0
+        while pos < n:
+            to_read = n - pos
+            if to_read > self._READ_CHUNK_SIZE:
+                to_read = self._READ_CHUNK_SIZE
+            chunk = self._sock.read(to_read)
             if not chunk:
                 break
-            pieces.append(chunk)
-            left -= len(chunk)
-        return b"".join(pieces)
+            clen = len(chunk)
+            mv[pos:pos + clen] = chunk
+            pos += clen
+
+        if pos == n:
+            return bytes(out)
+        return bytes(mv[:pos])
 
     def _read_chunked(self):
-        pieces = []
+        out = bytearray()
         while True:
             size_line = self._readline().strip()
             if not size_line:
@@ -162,6 +176,6 @@ class TlsSession:
             if chunk_size == 0:
                 self._readline()
                 break
-            pieces.append(self._read_exact(chunk_size))
+            out.extend(self._read_exact(chunk_size))
             self._readline()
-        return b"".join(pieces)
+        return bytes(out)
