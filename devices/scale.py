@@ -27,6 +27,10 @@ MOVING_AVERAGE_SIZE = 10
 # Minimum interval between actual hardware reads (ms)
 READ_INTERVAL_MS = 100
 
+# Minimum delta (grams) required before exposing a new weight to callers.
+# Set to 0 to disable value throttling.
+REPORT_THRESHOLD_G = 1.0
+
 
 class CalibratedScale:
     """
@@ -36,13 +40,20 @@ class CalibratedScale:
     for accurate weight measurements across the full range.
     """
     
-    def __init__(self, calibration_file=None, read_interval_ms=READ_INTERVAL_MS):
+    def __init__(
+        self,
+        calibration_file=None,
+        read_interval_ms=READ_INTERVAL_MS,
+        report_threshold_g=REPORT_THRESHOLD_G,
+    ):
         """
         Initialize the scale with calibration
 
         Args:
             calibration_file: Path to calibration JSON file (optional)
             read_interval_ms: Minimum ms between actual hardware reads (default 100)
+            report_threshold_g: Minimum delta in grams before exposing a new
+                weight value to callers (default 1.0, set 0 to disable)
         """
         self.calibration_file = calibration_file or CALIBRATION_FILE
         self.weight_unit = None
@@ -53,6 +64,8 @@ class CalibratedScale:
         self._read_interval_ms = read_interval_ms
         self._last_read_ms = None
         self._cached_weight = None
+        self._report_threshold_g = report_threshold_g
+        self._reported_weight = None
         
         # Initialize Weight Unit
         self._init_weight_unit()
@@ -172,13 +185,27 @@ class CalibratedScale:
 
         Hardware is only queried once per _read_interval_ms; calls within
         that window return the last cached value immediately (non-blocking).
+        A report threshold can additionally suppress very small jitter updates.
 
         Returns:
             Weight in grams (float), or None if no valid reading yet
         """
+        raw_weight = self._acquire_weight(force=False)
+        return self._apply_report_threshold(raw_weight)
+
+    def _acquire_weight(self, force=False):
+        """
+        Read/refresh internal cached weight from hardware.
+
+        Args:
+            force: If True, bypass READ_INTERVAL_MS throttling.
+        """
         now = time.ticks_ms()
-        if (self._last_read_ms is not None and
-                time.ticks_diff(now, self._last_read_ms) < self._read_interval_ms):
+        if (
+            not force
+            and self._last_read_ms is not None
+            and time.ticks_diff(now, self._last_read_ms) < self._read_interval_ms
+        ):
             return self._cached_weight
 
         self._last_read_ms = now
@@ -204,7 +231,21 @@ class CalibratedScale:
         #         print(f"ADC: {adc_avg:.0f} | Weight: {weight:.1f}g | Tare: {self.tare_offset:.1f}g")
 
         self._cached_weight = weight
-        return weight
+        return self._cached_weight
+
+    def _apply_report_threshold(self, weight):
+        """Throttle exposed values to reduce tiny UI-level jitter updates."""
+        if weight is None:
+            return None
+        if self._report_threshold_g <= 0:
+            self._reported_weight = weight
+            return weight
+        if self._reported_weight is None:
+            self._reported_weight = weight
+            return weight
+        if abs(weight - self._reported_weight) >= self._report_threshold_g:
+            self._reported_weight = weight
+        return self._reported_weight
     
     def tare(self, num_samples=5, settle_ms=50):
         """
@@ -216,10 +257,12 @@ class CalibratedScale:
         """
         self.adc_buffer.clear()
         self._adc_sum = 0
+        self._reported_weight = None
         samples = []
         for _ in range(num_samples):
             self._last_read_ms = None
-            weight = self.read_weight()
+            # Force hardware reads for tare sampling, independent of report threshold.
+            weight = self._acquire_weight(force=True)
             if weight is not None:
                 weight += self.tare_offset
                 samples.append(weight)
@@ -232,6 +275,9 @@ class CalibratedScale:
 
         if samples:
             self.tare_offset = sum(samples) / len(samples)
+            self._cached_weight = None
+            self._reported_weight = None
+            self._last_read_ms = None
             if DEBUG_MODE:
                 print("Tare set to: {:.1f}g".format(self.tare_offset))
             return True

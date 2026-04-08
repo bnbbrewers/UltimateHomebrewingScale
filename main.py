@@ -62,7 +62,6 @@ def main():
         except Exception as e:
             if DEBUG:
                 print("[BOOT] warmup failed:", e)
-
     while True:
         M5.update()
         app_manager.tick()

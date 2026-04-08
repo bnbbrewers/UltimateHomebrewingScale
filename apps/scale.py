@@ -18,7 +18,6 @@ class ScaleApp(BaseApp):
 
         self._status_reset_at = 0
         self._last_weight = None
-        self._update_threshold = 0.6
 
     def on_enter(self):
         super().on_enter()
@@ -71,7 +70,7 @@ class ScaleApp(BaseApp):
         if weight is None:
             return None
 
-        if self._last_weight is None or abs(weight - self._last_weight) >= self._update_threshold:
+        if self._last_weight != weight:
             self._screen.update_from_weight(weight)
         self._last_weight = weight
         return None
