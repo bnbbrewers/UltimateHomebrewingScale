@@ -123,22 +123,22 @@ class ApiBase:
         """
         raise NotImplementedError("Subclass must implement get_hops()")
 
-    def get_hop_sessions(self, batch_id):
+    def get_hops_list(self, batch_id):
         """
         Compact hop format for memory-constrained UIs.
 
         Returns:
             List[dict]: [{"name": str, "steps": [(step_name, step_amount), ...]}, ...]
         """
-        sessions = []
+        hops_list = []
         hops = self.get_hops(batch_id)
         for hop in hops:
             steps = []
             for step in hop.steps:
                 steps.append((step.step_name, step.step_amount))
             if steps:
-                sessions.append({"name": hop.hop_name, "steps": steps})
-        return sessions
+                hops_list.append({"name": hop.hop_name, "steps": steps})
+        return hops_list
 
 
 # Backward compatibility with existing modules.
