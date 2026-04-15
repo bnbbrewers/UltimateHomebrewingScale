@@ -8,7 +8,6 @@ import lvgl as lv
 
 
 _LABEL_I18N_MAP = {
-    "Home": "launcher.home",
     "Scale": "launcher.scale",
     "Malt": "launcher.malt",
     "Hop": "launcher.hop",
@@ -18,13 +17,14 @@ _LABEL_I18N_MAP = {
 
 
 class LauncherScreen:
-    _MAX_ITEMS = 6
+    _MAX_ITEMS = 5
     _SCREEN_W = 240
     _SCREEN_H = 240
     _CENTER_X = 120
     _CENTER_Y = 120
-    _ICON_SIZE = 26
-    _ICON_RADIUS = 90
+    _ICON_SIZE = 38
+    _ICON_RADIUS = 102
+    _ROUND_EDGE_MARGIN = 2
     _ARC_START = 105
     _ARC_TOTAL = 135
 
@@ -152,6 +152,7 @@ class LauncherScreen:
         total = len(self._items)
         if total <= 0:
             return
+        icon_radius = self._get_safe_icon_radius()
 
         if total > 1:
             angle_step = float(self._ARC_TOTAL) / float(total - 1)
@@ -162,8 +163,10 @@ class LauncherScreen:
             item = self._items[i]
             angle_deg = float(self._ARC_START + self._ARC_TOTAL) - (float(i) * angle_step)
             angle_rad = math.radians(angle_deg)
-            x = int(self._CENTER_X + self._ICON_RADIUS * math.cos(angle_rad) - (self._ICON_SIZE / 2))
-            y = int(self._CENTER_Y + self._ICON_RADIUS * math.sin(angle_rad) - (self._ICON_SIZE / 2))
+            x = int(self._CENTER_X + icon_radius * math.cos(angle_rad) - (self._ICON_SIZE / 2))
+            y = int(self._CENTER_Y + icon_radius * math.sin(angle_rad) - (self._ICON_SIZE / 2))
+            x = self._clamp(x, 0, self._SCREEN_W - self._ICON_SIZE)
+            y = self._clamp(y, 0, self._SCREEN_H - self._ICON_SIZE)
 
             icon_path = item.get("icon", "")
             img = m5ui.M5Image(
@@ -172,8 +175,8 @@ class LauncherScreen:
                 y=y,
                 parent=self.page,
             )
-            img.set_scale(1.3, 1.3)
-            img.set_pivot(10, 10)
+            img.set_scale(1.0, 1.0)
+            img.set_pivot(self._ICON_SIZE // 2, self._ICON_SIZE // 2)
             img.set_size(self._ICON_SIZE, self._ICON_SIZE)
             self._icon_slots[i]["img"] = img
             self._icon_slots[i]["x"] = x
@@ -192,17 +195,35 @@ class LauncherScreen:
         else:
             angle_step = 0.0
 
+        icon_radius = self._get_safe_icon_radius()
         angle_deg = float(self._ARC_START + self._ARC_TOTAL) - (float(self._selected_index) * angle_step)
         angle_rad = math.radians(angle_deg)
-        indicator_radius = self._ICON_RADIUS - (self._ICON_SIZE // 2) - 13
+        indicator_radius = icon_radius - (self._ICON_SIZE // 2) - 13
         ix = int(self._CENTER_X + indicator_radius * math.cos(angle_rad) - 5)
         iy = int(self._CENTER_Y + indicator_radius * math.sin(angle_rad) - 5)
+        ix = self._clamp(ix, 0, self._SCREEN_W - 10)
+        iy = self._clamp(iy, 0, self._SCREEN_H - 10)
         if self._indicator_current_x == 0.0 and self._indicator_current_y == 0.0:
             self._indicator_current_x = float(ix)
             self._indicator_current_y = float(iy)
             self._selection_indicator.set_pos(ix, iy)
         self._indicator_target_x = ix
         self._indicator_target_y = iy
+
+    @staticmethod
+    def _clamp(value, min_value, max_value):
+        if value < min_value:
+            return min_value
+        if value > max_value:
+            return max_value
+        return value
+
+    def _get_safe_icon_radius(self):
+        # Keep full icon square inside the round display.
+        dial_radius = min(self._CENTER_X, self._CENTER_Y)
+        icon_half_diagonal = (math.sqrt(2.0) * self._ICON_SIZE) / 2.0
+        max_safe_radius = int(dial_radius - icon_half_diagonal - self._ROUND_EDGE_MARGIN)
+        return self._clamp(self._ICON_RADIUS, 0, max_safe_radius)
 
     @staticmethod
     def _play_selection_beep():
