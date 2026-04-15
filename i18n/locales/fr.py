@@ -57,6 +57,6 @@ TRANSLATIONS = {
         'malt': 'Malt',
         'hop': 'Houblon',
         'keg': 'Fut',
-        'settings': 'Congig',
+        'settings': 'Config',
     },
 }
