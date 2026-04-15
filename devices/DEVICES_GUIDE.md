@@ -6,6 +6,7 @@ Les modules de gestion des périphériques hardware ont été extraits dans `dev
 
 **Devices disponibles** :
 - **Scale** : Balance calibrée avec tare (`devices/scale.py`)
+- **Button** : Gestion centralisée appui court / appui long (`devices/button.py`)
 - **Relay** : Contrôle de relais (à venir)
 
 ## Architecture
@@ -13,6 +14,7 @@ Les modules de gestion des périphériques hardware ont été extraits dans `dev
 ```
 devices/
 ├── __init__.py           # Exports CalibratedScale, etc.
+├── button.py             # ButtonDevice (short/long press)
 ├── scale.py              # CalibratedScale class
 └── relay.py              # RelayController class (futur)
 ```

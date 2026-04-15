@@ -72,7 +72,7 @@ class GrainAssistantApp(BaseApp):
             if time.ticks_diff(time.ticks_ms(), self._done_at) >= 2000:
                 return "launcher"
         elif self._state == _STATE_MESSAGE_ACK:
-            if self.hardware.button.wasPressed():
+            if self.hardware.button.was_short_pressed():
                 return "launcher"
         return None
 
@@ -138,7 +138,7 @@ class GrainAssistantApp(BaseApp):
             self._batch_idx, len(self._batches))
         if changed:
             self._select_screen.set_selected_index(self._batch_idx)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._load_malts()
 
     def _tick_malt(self):
@@ -148,7 +148,7 @@ class GrainAssistantApp(BaseApp):
             self._malt_idx, len(self._malts))
         if changed:
             self._select_screen.set_selected_index(self._malt_idx)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._start_weighing()
 
     def _tick_weigh(self):
@@ -164,7 +164,7 @@ class GrainAssistantApp(BaseApp):
         if in_range != self._last_in_range:
             self._last_in_range = in_range
             self._weigh_screen.set_status(self.t("common.ok") if in_range else "")
-        if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
+        if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
             self._malts.pop(self._malt_idx)
             gc.collect()
             if config.DEBUG:
