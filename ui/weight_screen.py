@@ -6,6 +6,9 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
+CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
+REQUIRE_CUSTOM_WEIGHT_FONT = True
+
 
 class WeightScreen:
     MODE_SIMPLE = "simple"
@@ -15,6 +18,7 @@ class WeightScreen:
     def __init__(self, i18n=None):
         self._i18n = i18n
         self.page = m5ui.M5Page(bg_c=0x000000)
+        self._weight_font = self._load_custom_weight_font()
 
         self._mode = self.MODE_SIMPLE
         self._target = 0
@@ -42,11 +46,11 @@ class WeightScreen:
         self._title = m5ui.M5Label(
             "",
             x=0,
-            y=26,
+            y=20,
             text_c=0xFFFFFF,
             bg_c=0x000000,
             bg_opa=0,
-            font=lv.font_montserrat_16,
+            font=lv.font_montserrat_24,
             parent=self.page,
         )
         self._title.set_width(240)
@@ -59,7 +63,7 @@ class WeightScreen:
             text_c=0xFFFFFF,
             bg_c=0x000000,
             bg_opa=0,
-            font=lv.font_montserrat_24,
+            font=self._weight_font,
             parent=self.page,
         )
         self._value.set_width(240)
@@ -119,6 +123,22 @@ class WeightScreen:
         )
         self._ok_label.set_width(240)
         self._ok_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+
+    def _load_custom_weight_font(self):
+        """
+        Load custom font after LVGL/UI init.
+        No silent fallback path lookup: one explicit device path.
+        """
+        try:
+            font = lv.binfont_create(CUSTOM_WEIGHT_FONT_PATH)
+            if font:
+                return font
+            raise RuntimeError("lv.binfont_create returned None")
+        except Exception as e:
+            msg = "Weight font load failed ({}): {}".format(CUSTOM_WEIGHT_FONT_PATH, e)
+            if REQUIRE_CUSTOM_WEIGHT_FONT:
+                raise RuntimeError(msg)
+            return lv.font_montserrat_24
 
     def root(self):
         return self.page
