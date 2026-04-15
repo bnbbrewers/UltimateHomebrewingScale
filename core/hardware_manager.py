@@ -8,6 +8,7 @@ from M5 import *
 from hardware import Rotary
 from devices.scale import CalibratedScale
 from devices.wifi import WifiDevice
+from devices.button import ButtonDevice
 
 try:
     import config
@@ -39,7 +40,7 @@ class HardwareManager:
     _instance = None
 
     def __init__(self):
-        self.button = M5.BtnA
+        self.button = ButtonDevice(M5.BtnA, button_id="A")
 
         self.rotary = None
         try:
@@ -64,4 +65,5 @@ class HardwareManager:
         return cls._instance
 
     def tick(self):
+        self.button.tick()
         self.wifi.tick()

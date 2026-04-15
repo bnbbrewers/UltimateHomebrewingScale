@@ -110,7 +110,7 @@ class HopAssistantApp(BaseApp):
     # ── generic ack handler ────────────────────────────────────────
 
     def _tick_ack(self, on_ok):
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             if on_ok:
                 return on_ok()
             return "launcher"
@@ -209,7 +209,7 @@ class HopAssistantApp(BaseApp):
         self._batch_idx, changed = self._rotary_navigate(self._batch_idx, len(self._batches))
         if changed:
             self._select_screen.set_selected_index(self._batch_idx)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._load_hops()
 
     def _tick_select_hop(self):
@@ -219,7 +219,7 @@ class HopAssistantApp(BaseApp):
             self._current_hop_idx, len(self._hop_sessions))
         if changed:
             self._select_screen.set_selected_index(self._current_hop_idx)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._step_idx = 0
             self._show_step_select()
 
@@ -231,7 +231,7 @@ class HopAssistantApp(BaseApp):
         self._step_idx, changed = self._rotary_navigate(self._step_idx, len(steps))
         if changed:
             self._select_screen.set_selected_index(self._step_idx)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._start_weighing()
 
     def _tick_weight(self):
@@ -247,7 +247,7 @@ class HopAssistantApp(BaseApp):
         if in_range != self._last_in_range:
             self._last_in_range = in_range
             self._weigh_screen.set_status(self.t("common.ok") if in_range else "")
-        if (in_range or config.DEBUG) and self.hardware.button.wasPressed():
+        if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
             return self._complete_current_step()
         return None
 

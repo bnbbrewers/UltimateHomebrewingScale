@@ -2,7 +2,6 @@
 Base application class with no direct LVGL dependency.
 """
 
-import time
 from ui import screen_ids
 
 
@@ -17,8 +16,6 @@ class BaseApp:
         self.i18n = i18n
 
         self._active = False
-        self._btn_is_pressed = False
-        self._btn_press_start = 0
 
     def t(self, key, *args, **kwargs):
         if self.i18n:
@@ -27,27 +24,20 @@ class BaseApp:
 
     def on_enter(self):
         self._active = True
-        self._btn_is_pressed = False
+        button = self.hardware.button
+        if button and hasattr(button, "long_press_duration_ms"):
+            button.long_press_duration_ms = self.LONG_PRESS_DURATION_MS
 
     def on_exit(self):
         self._active = False
-        self._btn_is_pressed = False
 
     def tick(self):
         return None
 
     def _check_return_to_launcher(self):
         button = self.hardware.button
-        if button.isPressed():
-            if not self._btn_is_pressed:
-                self._btn_is_pressed = True
-                self._btn_press_start = time.ticks_ms()
-            else:
-                elapsed = time.ticks_diff(time.ticks_ms(), self._btn_press_start)
-                if elapsed >= self.LONG_PRESS_DURATION_MS:
-                    return True
-        else:
-            self._btn_is_pressed = False
+        if button and button.was_long_pressed():
+            return True
         return False
 
     def _flush_lvgl(self):

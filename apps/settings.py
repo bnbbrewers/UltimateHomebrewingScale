@@ -53,6 +53,6 @@ class SettingsApp(BaseApp):
                 if self._selected >= len(self._item_labels):
                     self._selected = len(self._item_labels) - 1
                 self._screen.set_selected_index(self._selected)
-        if self.hardware.button.wasPressed():
+        if self.hardware.button.was_short_pressed():
             self._screen.set_title("Not implemented")
         return None
