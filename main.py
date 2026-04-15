@@ -51,17 +51,6 @@ def main():
         i18n=i18n_instance,
     )
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
-
-    # Warmup kept after UI init (historically stable behavior on this project).
-    brewing_api = apis.get("brewing")
-    if brewing_api is not None:
-        try:
-            mem_snapshot("boot.pre_warmup", enabled=DEBUG, collect=True)
-            brewing_api.warmup()
-            mem_snapshot("boot.post_warmup", enabled=DEBUG, collect=True)
-        except Exception as e:
-            if DEBUG:
-                print("[BOOT] warmup failed:", e)
     while True:
         M5.update()
         app_manager.tick()
