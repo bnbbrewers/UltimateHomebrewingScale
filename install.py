@@ -287,7 +287,6 @@ class _StandaloneWifiDevice:
         self._started = True
         try:
             import network
-            import esp32
 
             self._wlan = network.WLAN(network.STA_IF)
             if self._wlan.isconnected():
@@ -300,16 +299,50 @@ class _StandaloneWifiDevice:
                 return
             if not self._wlan.active():
                 self._wlan.active(True)
-            nvs = esp32.NVS("uiflow")
-            ssid = nvs.get_str("ssid0")
-            pswd = nvs.get_str("pswd0")
+            ssid, pswd, source = _load_wifi_credentials()
+            if not ssid:
+                raise RuntimeError("missing WiFi SSID")
             self._wlan.connect(ssid, pswd)
             if self._debug:
-                print("[WiFi] Background connect start:", ssid)
+                print("[WiFi] Background connect start ({}): {}".format(source, ssid))
         except Exception as e:
             self._failed = True
             if self._debug:
                 print("[WiFi] Background connect failed:", e)
+
+
+def _load_wifi_credentials():
+    """
+    Return (ssid, password, source) with priority:
+    1) UIFlow NVS namespace "uiflow" keys "ssid0"/"pswd0"
+    2) config.py keys WIFI_SSID / WIFI_PASSWORD (or WIFI_PSWD alias)
+    """
+    # 1) NVS credentials
+    try:
+        import esp32
+        nvs = esp32.NVS("uiflow")
+        ssid = nvs.get_str("ssid0")
+        pswd = nvs.get_str("pswd0")
+        if ssid:
+            return ssid, pswd or "", "nvs"
+    except Exception:
+        pass
+
+    # 2) config.py fallback (works if config.py already exists on device)
+    try:
+        import config
+        ssid = getattr(config, "WIFI_SSID", "") or ""
+        pswd = (
+            getattr(config, "WIFI_PASSWORD", "")
+            or getattr(config, "WIFI_PSWD", "")
+            or ""
+        )
+        if ssid:
+            return ssid, pswd, "config"
+    except Exception:
+        pass
+
+    return "", "", "none"
 
 
 def run(branch="main", verbose=True, wifi_timeout_s=25, dest_root=""):
