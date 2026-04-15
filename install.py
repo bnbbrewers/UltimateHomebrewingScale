@@ -4,6 +4,7 @@ MicroPython installer for UltimateHomebrewingScale on M5Dial.
 Downloads repository files from GitHub (given a branch) while preserving
 the directory structure on the device. Skips:
  - Markdown files (*.md)
+ - Firmware binaries folder (firmware/)
  - "examples" (directories named examples/, and files with "example" in name,
    and files ending with .example)
 
@@ -87,6 +88,8 @@ def _should_download(repo_path):
     lp = repo_path.lower()
     if lp == ".gitignore":
         return False
+    if "/firmware/" in lp or lp.startswith("firmware/") or lp.endswith("/firmware"):
+        return False
     if lp.endswith(".md"):
         return False
     if _is_example_path(repo_path):
@@ -159,7 +162,10 @@ def _list_repo_tree(branch, start_path=""):
 
             # Skip examples directories early to avoid scanning their content
             if item_type == "dir":
-                if _is_example_path(item_path + "/"):
+                dir_path = item_path + "/"
+                if _is_example_path(dir_path):
+                    continue
+                if not _should_download(dir_path):
                     continue
                 stack.append(item_path)
             elif item_type == "file":
