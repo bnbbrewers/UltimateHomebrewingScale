@@ -77,7 +77,7 @@ class ApiBase:
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
-                import requests
+                import requests2 as requests
                 resp = requests.get(url, headers=headers)
                 return resp
             except Exception as e:

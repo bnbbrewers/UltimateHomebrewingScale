@@ -4,10 +4,8 @@ For UIFlow2.0 / MicroPython on M5Stack
 """
 
 import gc
-import json
 import binascii
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
-from .tls_session import TlsSession
 from memory_debug import snapshot as mem_snapshot
 
 try:
@@ -40,54 +38,54 @@ class BrewfatherAPI(ApiBase):
             'Authorization': 'Basic {}'.format(b64),
             'Content-Type': 'application/json',
         }
-        self._session = None
 
-    # ── persistent-session helpers ─────────────────────────────────
-
-    def _ensure_wifi(self):
-        from core.hardware_manager import HardwareManager
-        if not HardwareManager.get_instance().wifi.ensure_connected():
-            raise OSError("WiFi not connected")
+    # ── stateless HTTP helpers ─────────────────────────────────────
 
     def _get_json(self, path):
-        """GET returning (status_code, parsed_json|None) over the kept-alive TLS socket."""
-        self._ensure_wifi()
-        if self._session is None:
-            self._session = TlsSession(self._HOST)
+        """GET returning (status_code, parsed_json|None) using plain requests."""
+        url = "https://{}{}".format(self._HOST, path)
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
-        status, body = self._session.get(path, headers=self._headers)
-        mem_snapshot("api.http.post", enabled=_DEBUG, collect=False)
-        if status != 200 or not body:
+        resp = None
+        try:
+            resp = self._get(url, headers=self._headers)
+            status = getattr(resp, "status_code", None)
+            if status is None:
+                status = getattr(resp, "status", -1)
+
+            mem_snapshot("api.http.post", enabled=_DEBUG, collect=False)
+            if status != 200:
+                if _DEBUG:
+                    print("[API] HTTP {}".format(status))
+                return status, None
+
             if _DEBUG:
-                print("[API] HTTP {}".format(status))
-            return status, None
-        if _DEBUG:
-            try:
-                print("[API] body_len={}".format(len(body)))
-            except Exception:
-                pass
-        data = json.loads(body)
-        del body
-        gc.collect()
-        mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
-        return status, data
+                try:
+                    body = getattr(resp, "content", b"")
+                    print("[API] body_len={}".format(len(body)))
+                except Exception:
+                    pass
+
+            data = resp.json()
+            gc.collect()
+            mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
+            return status, data
+        finally:
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
 
     # ── public API ─────────────────────────────────────────────────
 
     def warmup(self):
-        """Establish the TLS connection while the IDF heap is still clean."""
-        self._ensure_wifi()
-        if self._session is None:
-            self._session = TlsSession(self._HOST)
-        if not self._session.is_connected:
-            mem_snapshot("api.warmup.pre", enabled=_DEBUG, collect=True)
-            self._session.connect()
-            mem_snapshot("api.warmup.post", enabled=_DEBUG, collect=True)
+        """No-op in stateless requests mode."""
+        mem_snapshot("api.warmup.pre", enabled=_DEBUG, collect=True)
+        mem_snapshot("api.warmup.post", enabled=_DEBUG, collect=True)
 
     def release_session(self):
-        """Close the TLS socket to free ~32 KB of IDF C-heap (SSL buffers)."""
-        if self._session is not None:
-            self._session.close()
+        """No-op in stateless requests mode."""
+        return
 
     def get_batches(self):
         try:
