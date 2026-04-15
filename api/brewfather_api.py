@@ -78,15 +78,6 @@ class BrewfatherAPI(ApiBase):
 
     # ── public API ─────────────────────────────────────────────────
 
-    def warmup(self):
-        """No-op in stateless requests mode."""
-        mem_snapshot("api.warmup.pre", enabled=_DEBUG, collect=True)
-        mem_snapshot("api.warmup.post", enabled=_DEBUG, collect=True)
-
-    def release_session(self):
-        """No-op in stateless requests mode."""
-        return
-
     def get_batches(self):
         try:
             status, data = self._get_json(
