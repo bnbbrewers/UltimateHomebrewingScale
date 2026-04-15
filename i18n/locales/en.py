@@ -52,7 +52,6 @@ TRANSLATIONS = {
     },
 
     'launcher': {
-        'home': 'Home',
         'scale': 'Scale',
         'malt': 'Malt',
         'hop': 'Hop',

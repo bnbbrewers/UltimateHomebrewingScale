@@ -53,7 +53,6 @@ TRANSLATIONS = {
     },
 
     'launcher': {
-        'home': 'Accueil',
         'scale': 'Balance',
         'malt': 'Malt',
         'hop': 'Houblon',
