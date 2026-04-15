@@ -46,11 +46,11 @@ class WeightScreen:
         self._title = m5ui.M5Label(
             "",
             x=0,
-            y=20,
+            y=26,
             text_c=0xFFFFFF,
             bg_c=0x000000,
             bg_opa=0,
-            font=lv.font_montserrat_24,
+            font=lv.font_montserrat_16,
             parent=self.page,
         )
         self._title.set_width(240)
