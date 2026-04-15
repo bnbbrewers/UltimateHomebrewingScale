@@ -21,14 +21,14 @@ _COLOR_HOP = 0x388E3C
 
 
 class _HopNameItems:
-    def __init__(self, hop_sessions):
-        self._hop_sessions = hop_sessions
+    def __init__(self, hops_list):
+        self._hops_list = hops_list
 
     def __len__(self):
-        return len(self._hop_sessions)
+        return len(self._hops_list)
 
     def __getitem__(self, index):
-        return self._hop_sessions[index]["name"]
+        return self._hops_list[index]["name"]
 
 
 class _HopStepItems:
@@ -61,7 +61,7 @@ class HopAssistantApp(BaseApp):
         self._batch_idx = 0
         self._batch_id = None
         self._prep_flow_active = False
-        self._hop_sessions = []
+        self._hops_list = []
         self._current_hop_idx = 0
         self._step_idx = 0
         self._target_g = 0
@@ -73,7 +73,7 @@ class HopAssistantApp(BaseApp):
             gc.collect()
             mem_snapshot("hop.on_exit.before_cleanup", enabled=True, collect=False)
         self._batches = []
-        self._hop_sessions = []
+        self._hops_list = []
         self._batch_id = None
         self._prep_flow_active = False
         self._select_screen.set_items([])
@@ -124,7 +124,7 @@ class HopAssistantApp(BaseApp):
         return "launcher"
 
     def _on_hop_done_ok(self):
-        if not self._hop_sessions:
+        if not self._hops_list:
             self._show_msg(
                 self.t("hop.title"), self.t("hop.all_hops_weighed"),
                 _COLOR_HOP, show_ok=True)
@@ -138,7 +138,7 @@ class HopAssistantApp(BaseApp):
     # ── flow ───────────────────────────────────────────────────────
 
     def _enter_hop_weighing_flow(self):
-        if not self._hop_sessions:
+        if not self._hops_list:
             self._show_msg(
                 self.t("hop.title"), self.t("hop.no_hops"),
                 _COLOR_HOP, show_ok=True)
@@ -150,11 +150,11 @@ class HopAssistantApp(BaseApp):
             self._rotary.reset_rotary_value()
         if config.DEBUG:
             gc.collect()
-            print("[MEM] hop.sessions_ready hops={}".format(len(self._hop_sessions)))
+            print("[MEM] hop.sessions_ready hops={}".format(len(self._hops_list)))
             mem_snapshot("hop.sessions_ready", enabled=True, collect=False)
 
-    def _reload_hop_sessions(self):
-        self._hop_sessions = self._fetch_hop_sessions()
+    def _reload_hops_list(self):
+        self._hops_list = self._fetch_hops_list()
         gc.collect()
 
     # ── display helpers ────────────────────────────────────────────
@@ -179,7 +179,7 @@ class HopAssistantApp(BaseApp):
         return max(0, g)
 
     def _show_hop_select(self):
-        names = _HopNameItems(self._hop_sessions)
+        names = _HopNameItems(self._hops_list)
         self._current_hop_idx = min(self._current_hop_idx, max(0, len(names) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select_screen.configure(
@@ -190,7 +190,7 @@ class HopAssistantApp(BaseApp):
         self._state = _STATE_SELECT_HOP
 
     def _show_step_select(self):
-        hop = self._hop_sessions[self._current_hop_idx]
+        hop = self._hops_list[self._current_hop_idx]
         lines = _HopStepItems(self, hop["steps"])
         self._step_idx = min(self._step_idx, max(0, len(lines) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
@@ -213,10 +213,10 @@ class HopAssistantApp(BaseApp):
             self._load_hops()
 
     def _tick_select_hop(self):
-        if not self._hop_sessions:
+        if not self._hops_list:
             return
         self._current_hop_idx, changed = self._rotary_navigate(
-            self._current_hop_idx, len(self._hop_sessions))
+            self._current_hop_idx, len(self._hops_list))
         if changed:
             self._select_screen.set_selected_index(self._current_hop_idx)
         if self.hardware.button.was_short_pressed():
@@ -224,7 +224,7 @@ class HopAssistantApp(BaseApp):
             self._show_step_select()
 
     def _tick_select_step(self):
-        hop = self._hop_sessions[self._current_hop_idx]
+        hop = self._hops_list[self._current_hop_idx]
         steps = hop["steps"]
         if not steps:
             return
@@ -254,7 +254,7 @@ class HopAssistantApp(BaseApp):
     # ── weighing ───────────────────────────────────────────────────
 
     def _start_weighing(self):
-        hop = self._hop_sessions[self._current_hop_idx]
+        hop = self._hops_list[self._current_hop_idx]
         step = hop["steps"][self._step_idx]
         self._target_g = self._to_target_g(step[1])
         self.screen_manager.show(screen_ids.WEIGHT)
@@ -273,7 +273,7 @@ class HopAssistantApp(BaseApp):
             mem_snapshot("hop.start_weigh", enabled=True, collect=False)
 
     def _complete_current_step(self):
-        hop = self._hop_sessions[self._current_hop_idx]
+        hop = self._hops_list[self._current_hop_idx]
         hop_name = hop["name"]
         hop["steps"].pop(self._step_idx)
         gc.collect()
@@ -286,9 +286,9 @@ class HopAssistantApp(BaseApp):
                 self._step_idx = len(hop["steps"]) - 1
             self._show_step_select()
             return None
-        del self._hop_sessions[self._current_hop_idx]
-        if self._current_hop_idx >= len(self._hop_sessions):
-            self._current_hop_idx = max(0, len(self._hop_sessions) - 1)
+        del self._hops_list[self._current_hop_idx]
+        if self._current_hop_idx >= len(self._hops_list):
+            self._current_hop_idx = max(0, len(self._hops_list) - 1)
         self._step_idx = 0
         self._show_msg(
             self.t("hop.title"), self.t("hop.hop_weighed", hop_name),
@@ -314,13 +314,21 @@ class HopAssistantApp(BaseApp):
         if config.DEBUG:
             mem_snapshot("hop.batches_loaded", enabled=True, collect=False)
 
-    def _fetch_hop_sessions(self):
+    def _fetch_hops_list(self):
         if not self._api:
             return []
-        sessions = self._api.get_hop_sessions(self._batch_id)
-        if not sessions:
+        hops_list = self._api.get_hops_list(self._batch_id)
+        if not hops_list:
             return []
-        return sessions
+        return hops_list
+
+    @staticmethod
+    def _count_distinct_steps(hops_list):
+        distinct_steps = {}
+        for hop in hops_list:
+            for step_name, _amount in hop.get("steps", []):
+                distinct_steps[step_name] = True
+        return len(distinct_steps)
 
     def _load_hops(self):
         self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
@@ -328,10 +336,8 @@ class HopAssistantApp(BaseApp):
         self._batches = []
         gc.collect()
         mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
-        self._hop_sessions = self._fetch_hop_sessions()
-        recipient_count = 0
-        for session in self._hop_sessions:
-            recipient_count += len(session["steps"])
+        self._hops_list = self._fetch_hops_list()
+        recipient_count = self._count_distinct_steps(self._hops_list)
         gc.collect()
         mem_snapshot("hop.load_hops.post_api", enabled=config.DEBUG, collect=False)
 

@@ -126,13 +126,13 @@ class BrewfatherAPI(ApiBase):
 
     def get_hops(self, batch_id):
         try:
-            sessions = self.get_hop_sessions(batch_id)
+            hops_list = self.get_hops_list(batch_id)
             hops = []
-            for session in sessions:
-                hop = Hop(hop_name=session["name"])
-                for step_name, step_amount in session["steps"]:
-                    hop.steps.append(HopStep(step_name=step_name, step_amount=step_amount))
-                hops.append(hop)
+            for hop in hops_list:
+                hop_obj = Hop(hop_name=hop["name"])
+                for step_name, step_amount in hop["steps"]:
+                    hop_obj.steps.append(HopStep(step_name=step_name, step_amount=step_amount))
+                hops.append(hop_obj)
             return hops
         except Exception as e:
             print("Error: {}".format(e))
@@ -152,12 +152,12 @@ class BrewfatherAPI(ApiBase):
                 groups[name] = []
                 order.append(name)
             groups[name].append(("{} - {}{}".format(use, t, unit), amount))
-        sessions = []
+        hops_list = []
         for name in order:
-            sessions.append({"name": name, "steps": groups[name]})
-        return sessions
+            hops_list.append({"name": name, "steps": groups[name]})
+        return hops_list
 
-    def get_hop_sessions(self, batch_id):
+    def get_hops_list(self, batch_id):
         try:
             status, data = self._get_json(
                 "{}/batches/{}?include=recipe.hops".format(
@@ -166,7 +166,7 @@ class BrewfatherAPI(ApiBase):
             )
             if data is None:
                 return []
-            sessions = self._group_hops(data.get("recipe", {}).get("hops", []))
+            hops_list = self._group_hops(data.get("recipe", {}).get("hops", []))
             del data
             gc.collect()
             if _DEBUG:
@@ -175,4 +175,4 @@ class BrewfatherAPI(ApiBase):
             print("Error: {}".format(e))
             return []
         mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)
-        return sessions
+        return hops_list
