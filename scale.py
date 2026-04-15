@@ -14,6 +14,9 @@ import m5ui
 import lvgl as lv
 import time
 
+CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
+REQUIRE_CUSTOM_WEIGHT_FONT = True
+
 # Configuration
 CALIBRATION_FILE = "scale_calibration.json"
 I2C_ADDRESS = 0x26
@@ -218,6 +221,7 @@ class ScaleApp:
         self.page = None
         self.weight_label = None
         self.status_label = None
+        self.custom_weight_font = None
         
         # State
         self.is_taring = False
@@ -234,6 +238,8 @@ class ScaleApp:
     
     def _create_ui(self):
         """Create LVGL user interface"""
+        self.custom_weight_font = self._load_custom_weight_font()
+
         # Create page
         self.page = m5ui.M5Page(bg_c=0x000000)
         
@@ -245,7 +251,7 @@ class ScaleApp:
             text_c=0xFFFFFF,
             bg_c=0x000000,
             bg_opa=0,
-            font=self._get_font(48),
+            font=self.custom_weight_font,
             parent=self.page
         )
         
@@ -277,6 +283,19 @@ class ScaleApp:
             if hasattr(lv, name):
                 return getattr(lv, name)
         return None
+
+    def _load_custom_weight_font(self):
+        """Load custom font after LVGL/UI init using a single explicit path."""
+        try:
+            font = lv.binfont_create(CUSTOM_WEIGHT_FONT_PATH)
+            if font:
+                return font
+            raise RuntimeError("lv.binfont_create returned None")
+        except Exception as e:
+            msg = "Weight font load failed ({}): {}".format(CUSTOM_WEIGHT_FONT_PATH, e)
+            if REQUIRE_CUSTOM_WEIGHT_FONT:
+                raise RuntimeError(msg)
+            return self._get_font(48)
     
     def _initial_tare(self):
         """Perform initial tare at startup"""
