@@ -3,6 +3,15 @@ Button device abstraction for consistent short/long press handling.
 """
 
 import time
+from devices.speaker import get_speaker
+
+try:
+    import config
+    _BUTTON_SHORT_BEEP_ENABLED = getattr(config, "BUTTON_SHORT_BEEP_ENABLED", True)
+    _BUTTON_LONG_BEEP_ENABLED = getattr(config, "BUTTON_LONG_BEEP_ENABLED", True)
+except Exception:
+    _BUTTON_SHORT_BEEP_ENABLED = True
+    _BUTTON_LONG_BEEP_ENABLED = True
 
 
 class ButtonDevice:
@@ -37,9 +46,17 @@ class ButtonDevice:
                 if elapsed >= self.long_press_duration_ms:
                     self._long_fired = True
                     self._long_event = True
+                    if _BUTTON_LONG_BEEP_ENABLED:
+                        speaker = get_speaker()
+                        if speaker:
+                            speaker.button_long_beep()
         else:
             if self._is_pressed and not self._long_fired:
                 self._short_event = True
+                if _BUTTON_SHORT_BEEP_ENABLED:
+                    speaker = get_speaker()
+                    if speaker:
+                        speaker.button_short_beep()
             self._is_pressed = False
             self._long_fired = False
 

@@ -13,3 +13,12 @@ WIFI_PASSWORD = ""
 # Language configuration
 # Supported languages: 'en' (English), 'fr' (Français)
 LANGUAGE = "en"
+
+# UI sound feedback toggles
+# Set to False to mute each interaction type:
+# - ROTARY_BEEP_ENABLED: beep on each rotary movement step
+# - BUTTON_SHORT_BEEP_ENABLED: beep on short button press
+# - BUTTON_LONG_BEEP_ENABLED: distinct beep on long button press
+ROTARY_BEEP_ENABLED = True
+BUTTON_SHORT_BEEP_ENABLED = True
+BUTTON_LONG_BEEP_ENABLED = True

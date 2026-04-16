@@ -140,13 +140,10 @@ class LauncherScreen:
             new_index = total - 1
         elif new_index >= total:
             new_index = 0
-        old_index = self._selected_index
         self._selected_index = new_index
         center = self._label_text(self._items[self._selected_index].get("label", ""))
         self._center_label.set_text(center)
         self._move_indicator_to_selected()
-        if old_index != new_index:
-            self._play_selection_beep()
 
     def _create_icons_once(self):
         total = len(self._items)
@@ -224,11 +221,3 @@ class LauncherScreen:
         icon_half_diagonal = (math.sqrt(2.0) * self._ICON_SIZE) / 2.0
         max_safe_radius = int(dial_radius - icon_half_diagonal - self._ROUND_EDGE_MARGIN)
         return self._clamp(self._ICON_RADIUS, 0, max_safe_radius)
-
-    @staticmethod
-    def _play_selection_beep():
-        try:
-            import M5
-            M5.Speaker.tone(4000, 50)
-        except Exception:
-            pass
