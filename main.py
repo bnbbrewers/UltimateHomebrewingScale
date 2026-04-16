@@ -56,7 +56,6 @@ def main():
     _RUNNING = True
     M5.begin()
     m5ui.init()
-    Speaker.begin()
     gc.collect()
     mem_snapshot("boot.start", enabled=DEBUG)
 
