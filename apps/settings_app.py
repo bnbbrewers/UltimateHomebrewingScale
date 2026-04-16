@@ -7,7 +7,7 @@ from ui import screen_ids
 
 
 class SettingsApp(BaseApp):
-    APP_ID = "settings"
+    APP_ID = "settings_app"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)

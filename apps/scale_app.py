@@ -9,7 +9,7 @@ from ui import screen_ids
 
 
 class ScaleApp(BaseApp):
-    APP_ID = "scale"
+    APP_ID = "scale_app"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)

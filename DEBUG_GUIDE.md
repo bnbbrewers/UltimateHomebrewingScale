@@ -35,7 +35,7 @@ Tous les `print()` sont conditionnés par `DEBUG` :
 - `apps/launcher_app.py` — Logique de navigation launcher
 - `ui/launcher_screen.py` — UI du launcher
 - `apps/base_app.py` — Détection appui long
-- `apps/scale.py` — Calibration et pesée
+- `apps/scale_app.py` — Calibration et pesée
 - Autres apps (grain, hop, keg, settings)
 
 ## Appui Long pour Retour au Launcher
@@ -84,7 +84,7 @@ Uploadez ces fichiers modifiés sur le M5Dial :
 - `apps/launcher_app.py`
 - `ui/launcher_screen.py`
 - `apps/base_app.py`
-- `apps/scale.py`
+- `apps/scale_app.py`
 
 ## Test
 
