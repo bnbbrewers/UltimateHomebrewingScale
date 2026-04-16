@@ -71,13 +71,12 @@ class LauncherApp(BaseApp):
         self._selected = 0
         self._screen.set_selected_index(self._selected)
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
 
     def tick(self):
         if self._rotary:
-            delta = self._rotary.get_rotary_value()
+            delta = self._rotary.consume_delta()
             if delta:
-                self._rotary.reset_rotary_value()
                 self._screen.handle_rotary_delta(delta)
                 self._selected = self._screen.get_selected_index()
         self._screen.animate_indicator()

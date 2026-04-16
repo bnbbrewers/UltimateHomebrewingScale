@@ -65,13 +65,4 @@ class BaseApp:
         r = self.hardware.rotary
         if not r:
             return idx, False
-        delta = r.get_rotary_value()
-        if not delta:
-            return idx, False
-        r.reset_rotary_value()
-        idx += 1 if delta > 0 else -1
-        if idx < 0:
-            idx = 0
-        if idx >= count:
-            idx = count - 1
-        return idx, True
+        return r.navigate_index(idx, count, wrap=False, invert=False)

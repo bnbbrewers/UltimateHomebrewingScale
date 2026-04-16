@@ -89,7 +89,7 @@ class GrainAssistantApp(BaseApp):
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names, accent_color=_COLOR_RECIPE, selected_index=0)
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         self._state = _STATE_RECIPE
         gc.collect()
         if config.DEBUG:
@@ -124,7 +124,7 @@ class GrainAssistantApp(BaseApp):
             self._state = _STATE_MALT
 
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         if config.DEBUG:
             gc.collect()
             print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
