@@ -3,14 +3,6 @@ Rotary encoder device abstraction.
 Centralizes rotary reads and index navigation helpers.
 """
 
-from devices.speaker import get_speaker
-
-try:
-    import config
-    _ROTARY_BEEP_ENABLED = getattr(config, "ROTARY_BEEP_ENABLED", True)
-except Exception:
-    _ROTARY_BEEP_ENABLED = True
-
 
 class RotaryDevice:
     def __init__(self, raw_rotary=None):
@@ -38,10 +30,6 @@ class RotaryDevice:
         delta = self._raw_rotary.get_rotary_value()
         if delta:
             self._raw_rotary.reset_rotary_value()
-            if _ROTARY_BEEP_ENABLED:
-                speaker = get_speaker()
-                if speaker:
-                    speaker.rotary_beep()
         return delta
 
     def navigate_index(self, idx, count, wrap=False, invert=False):
