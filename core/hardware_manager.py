@@ -9,7 +9,6 @@ from devices.scale import CalibratedScale
 from devices.wifi import WifiDevice
 from devices.button import ButtonDevice
 from devices.rotary import RotaryDevice
-from devices.speaker import get_speaker
 
 try:
     import config
@@ -56,9 +55,6 @@ class HardwareManager:
             self.scale = None
 
         self.relay = RelayDevice()
-        self.speaker = get_speaker()
-        if self.speaker:
-            self.speaker.begin()
         self.wifi = WifiDevice(debug=_DEBUG)
 
     @classmethod
