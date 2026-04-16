@@ -38,6 +38,28 @@ GITHUB_API_BASE = "https://api.github.com"
 RAW_BASE = "https://raw.githubusercontent.com"
 
 
+def _is_enomem(err):
+    try:
+        eno = getattr(err, "errno", None)
+        if eno == 12:
+            return True
+        args = getattr(err, "args", ()) or ()
+        if args and args[0] == 12:
+            return True
+        return "ENOMEM" in str(err)
+    except Exception:
+        return False
+
+
+def _gc_hard(cycles=3, pause_ms=30):
+    for _ in range(cycles):
+        gc.collect()
+        try:
+            time.sleep_ms(pause_ms)
+        except Exception:
+            time.sleep(pause_ms / 1000.0)
+
+
 def _path_join(a, b):
     if not a:
         return b
@@ -99,24 +121,62 @@ def _should_download(repo_path):
     return True
 
 
-def _github_api_get_json(url, headers):
-    try:
-        r = requests.get(url, headers=headers)
-    except TypeError:
-        # Some embedded requests impls don't support headers=
-        r = requests.get(url)
-    try:
-        status = getattr(r, "status_code", None)
-        if status is None:
-            status = getattr(r, "status", None)
-        if status != 200:
-            raise RuntimeError("HTTP %s: %s" % (r.status_code, url))
-        return r.json()
-    finally:
+def _github_api_get_json(url, headers, retries=4):
+    """
+    Robust GitHub API GET for constrained MicroPython devices.
+    Retries transient network/socket errors (e.g. OSError 16) and falls back to
+    a no-header request when the requests port is limited.
+    """
+    last_err = None
+
+    for attempt in range(retries):
+        # Try with headers first, then without headers for compatibility.
+        for use_headers in (True, False):
+            r = None
+            try:
+                _gc_hard(cycles=2, pause_ms=20)
+                if use_headers:
+                    r = requests.get(url, headers=headers)
+                else:
+                    r = requests.get(url)
+
+                status = getattr(r, "status_code", None)
+                if status is None:
+                    status = getattr(r, "status", None)
+                if status != 200:
+                    raise RuntimeError("HTTP %s: %s" % (status, url))
+                data = r.json()
+                _gc_hard(cycles=1, pause_ms=10)
+                return data
+            except TypeError as e:
+                # Some embedded requests impls don't support headers=.
+                last_err = e
+                if use_headers:
+                    continue
+                break
+            except OSError as e:
+                last_err = e
+                # ENOMEM needs a longer pause to let network/TLS buffers clear.
+                if _is_enomem(e):
+                    _gc_hard(cycles=3, pause_ms=80)
+            finally:
+                try:
+                    if r is not None:
+                        r.close()
+                except Exception:
+                    pass
+
+        # Small backoff + GC helps release sockets/heap on microcontrollers.
+        gc.collect()
         try:
-            r.close()
+            time.sleep_ms(200 + (attempt * 250))
         except Exception:
-            pass
+            time.sleep(0.2 + (attempt * 0.25))
+
+    raise RuntimeError(
+        "GitHub API request failed after %d attempts: %s err=%r"
+        % (retries, url, last_err)
+    )
 
 
 def _list_repo_tree(branch, start_path=""):
@@ -130,6 +190,7 @@ def _list_repo_tree(branch, start_path=""):
     headers = {
         "User-Agent": "UHS-M5Dial-Installer",
         "Accept": "application/vnd.github+json",
+        "Connection": "close",
     }
 
     files = []
@@ -152,6 +213,7 @@ def _list_repo_tree(branch, start_path=""):
             repo_path = data.get("path", path)
             if _should_download(repo_path):
                 files.append(repo_path)
+            del data
             continue
 
         for item in data:
@@ -171,6 +233,8 @@ def _list_repo_tree(branch, start_path=""):
             elif item_type == "file":
                 if _should_download(item_path):
                     files.append(item_path)
+        del data
+        _gc_hard(cycles=1, pause_ms=10)
 
     files.sort()
     return files
@@ -365,6 +429,11 @@ def run(branch="main", verbose=True, wifi_timeout_s=25, dest_root=""):
         raise RuntimeError("Missing requests module on this firmware.")
 
     _ensure_wifi(verbose=verbose, timeout_s=wifi_timeout_s)
+    # Give network stack a short settle time before first TLS call.
+    try:
+        time.sleep_ms(300)
+    except Exception:
+        time.sleep(0.3)
 
     # Normalize dest root for MicroPython FS
     dest_root = dest_root.strip()

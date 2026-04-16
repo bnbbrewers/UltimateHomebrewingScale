@@ -19,6 +19,8 @@ except Exception:
     config = None
     DEBUG = False
 
+_RUNNING = True
+
 
 def _load_i18n():
     try:
@@ -30,12 +32,37 @@ def _load_i18n():
         return None
 
 
+def request_stop():
+    global _RUNNING
+    _RUNNING = False
+
+
+def _maintenance_mode_requested(hold_ms=1200):
+    """
+    Hold BtnA during boot to skip launching the main app loop.
+    This keeps REPL available for maintenance tasks (installer/update).
+    """
+    start = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), start) < hold_ms:
+        M5.update()
+        if not M5.BtnA.isPressed():
+            return False
+        time.sleep_ms(30)
+    return True
+
+
 def main():
+    global _RUNNING
+    _RUNNING = True
     M5.begin()
     m5ui.init()
     Speaker.begin()
     gc.collect()
     mem_snapshot("boot.start", enabled=DEBUG)
+
+    if _maintenance_mode_requested():
+        print("[main] Maintenance mode: app startup skipped (BtnA held).")
+        return
 
  
 
@@ -51,7 +78,7 @@ def main():
         i18n=i18n_instance,
     )
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
-    while True:
+    while _RUNNING:
         M5.update()
         app_manager.tick()
         hardware.tick()
