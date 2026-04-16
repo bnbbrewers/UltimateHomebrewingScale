@@ -37,18 +37,35 @@ def request_stop():
     _RUNNING = False
 
 
-def _maintenance_mode_requested(hold_ms=1200):
+def _maintenance_mode_requested(window_ms=2200, required_pressed_ms=500):
     """
-    Hold BtnA during boot to skip launching the main app loop.
-    This keeps REPL available for maintenance tasks (installer/update).
+    Enter maintenance mode when BtnA is held during early boot.
+    Uses a detection window + accumulated pressed time to be resilient to
+    bounce / brief missed reads on embedded hardware.
     """
     start = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), start) < hold_ms:
+    pressed_acc = 0
+    step_ms = 40
+
+    while time.ticks_diff(time.ticks_ms(), start) < window_ms:
         M5.update()
-        if not M5.BtnA.isPressed():
-            return False
-        time.sleep_ms(30)
-    return True
+        try:
+            pressed = bool(M5.BtnA.isPressed())
+        except Exception:
+            pressed = False
+
+        if pressed:
+            pressed_acc += step_ms
+            if pressed_acc >= required_pressed_ms:
+                return True
+        else:
+            # Decay instead of full reset: tolerates brief glitches.
+            if pressed_acc > 0:
+                pressed_acc -= step_ms // 2
+                if pressed_acc < 0:
+                    pressed_acc = 0
+        time.sleep_ms(step_ms)
+    return False
 
 
 def main():
