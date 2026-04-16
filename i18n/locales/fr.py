@@ -23,7 +23,7 @@ TRANSLATIONS = {
     },
 
     'grain': {
-        'title': 'Assistant Malts',
+        'title': 'Malt',
         'select_malt': 'Selectionner un malt',
         'no_malts': 'Aucun malt trouve',
         'loading_grains': 'Chargement des grains...',
@@ -31,7 +31,7 @@ TRANSLATIONS = {
     },
 
     'hop': {
-        'title': 'Assistant Houblons',
+        'title': 'Houblon',
         'prepare_recipients': 'Preparez {0} recipient(s) pour les ajouts de houblon',
         'no_hops': 'Aucun houblon',
         'loading_hops': 'Chargement des houblons...',

@@ -22,7 +22,7 @@ TRANSLATIONS = {
     },
 
     'grain': {
-        'title': 'Grain Assistant',
+        'title': 'Grain',
         'select_malt': 'Select a malt',
         'no_malts': 'No malts found',
         'loading_grains': 'Loading grains...',
@@ -30,7 +30,7 @@ TRANSLATIONS = {
     },
 
     'hop': {
-        'title': 'Hop Assistant',
+        'title': 'Hop',
         'prepare_recipients': 'Prepare {0} container(s) for hop additions',
         'no_hops': 'No hops found',
         'loading_hops': 'Loading hops...',
