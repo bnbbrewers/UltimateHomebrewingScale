@@ -45,7 +45,7 @@ class _HopStepItems:
 
 
 class HopAssistantApp(BaseApp):
-    APP_ID = "hop_assistant"
+    APP_ID = "hop_app"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)

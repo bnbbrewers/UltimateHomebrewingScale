@@ -5,11 +5,11 @@ App manager with persistent one-time app instances.
 import gc
 
 from apps.launcher_app import LauncherApp
-from apps.scale import ScaleApp
-from apps.grain_assistant import GrainAssistantApp
-from apps.hop_assistant import HopAssistantApp
-from apps.keg_filler import KegFillerApp
-from apps.settings import SettingsApp
+from apps.scale_app import ScaleApp
+from apps.malt_app import GrainAssistantApp
+from apps.hop_app import HopAssistantApp
+from apps.keg_filler_app import KegFillerApp
+from apps.settings_app import SettingsApp
 
 
 class AppManager:
@@ -17,11 +17,11 @@ class AppManager:
         self._apis = apis
         self._apps = {
             "launcher": LauncherApp(screen_manager, hardware, apis, i18n=i18n),
-            "scale": ScaleApp(screen_manager, hardware, apis, i18n=i18n),
-            "grain_assistant": GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n),
-            "hop_assistant": HopAssistantApp(screen_manager, hardware, apis, i18n=i18n),
-            "keg_filler": KegFillerApp(screen_manager, hardware, apis, i18n=i18n),
-            "settings": SettingsApp(screen_manager, hardware, apis, i18n=i18n),
+            "scale_app": ScaleApp(screen_manager, hardware, apis, i18n=i18n),
+            "malt_app": GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n),
+            "hop_app": HopAssistantApp(screen_manager, hardware, apis, i18n=i18n),
+            "keg_filler_app": KegFillerApp(screen_manager, hardware, apis, i18n=i18n),
+            "settings_app": SettingsApp(screen_manager, hardware, apis, i18n=i18n),
         }
         self._active_app_id = "launcher"
         self._apps[self._active_app_id].on_enter()

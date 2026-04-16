@@ -142,7 +142,7 @@ for char in str(weight):
 ### Exemple de Mapping dans le Projet
 
 Le projet utilise déjà cette stratégie dans :
-- `apps/scale.py` → `_get_font()`
+- `apps/scale_app.py` → `_get_font()`
 - `ui/weight_screen.py` → fallback intégré
 
 ### Tailles Utilisées

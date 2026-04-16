@@ -110,16 +110,16 @@ print(f"Tare: {info['tare_offset']}g")
 
 ## Apps Utilisant CalibratedScale
 
-### ✅ Scale App (apps/scale.py)
+### ✅ Scale App (apps/scale_app.py)
 Affichage simple du poids avec tare
 
-### ✅ Grain Assistant (apps/grain_assistant.py)
+### ✅ Grain Assistant (apps/malt_app.py)
 Pesée de malt avec comparaison à un poids cible
 
-### ✅ Hop Assistant (apps/hop_assistant.py)
+### ✅ Hop Assistant (apps/hop_app.py)
 Pesée de houblon avec comparaison à un poids cible
 
-### ✅ Keg Filler (apps/keg_filler.py)
+### ✅ Keg Filler (apps/keg_filler_app.py)
 Remplissage de fût avec conversion poids → volume
 
 ## Configuration
@@ -218,9 +218,9 @@ devices/
 
 apps/
 ├── scale.py          (modifié)
-├── grain_assistant.py (modifié)
-├── hop_assistant.py  (modifié)
-└── keg_filler.py     (modifié)
+├── malt_app.py (modifié)
+├── hop_app.py  (modifié)
+└── keg_filler_app.py (modifié)
 ```
 
 ## Test

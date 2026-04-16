@@ -20,7 +20,7 @@ _COLOR_RECIPE = _COLOR_MALT
 
 
 class GrainAssistantApp(BaseApp):
-    APP_ID = "grain_assistant"
+    APP_ID = "malt_app"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
