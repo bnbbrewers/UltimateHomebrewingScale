@@ -5,10 +5,10 @@ Singleton hardware manager for one-time hardware initialization.
 import M5
 from M5 import *
 
-from hardware import Rotary
 from devices.scale import CalibratedScale
 from devices.wifi import WifiDevice
 from devices.button import ButtonDevice
+from devices.rotary import RotaryDevice
 
 try:
     import config
@@ -42,11 +42,10 @@ class HardwareManager:
     def __init__(self):
         self.button = ButtonDevice(M5.BtnA, button_id="A")
 
-        self.rotary = None
-        try:
-            self.rotary = Rotary()
-            self.rotary.reset_rotary_value()
-        except Exception:
+        self.rotary = RotaryDevice()
+        if self.rotary:
+            self.rotary.reset()
+        else:
             self.rotary = None
 
         self.scale = None

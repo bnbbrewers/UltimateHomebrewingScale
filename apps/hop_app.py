@@ -147,7 +147,7 @@ class HopAssistantApp(BaseApp):
             return
         self._show_hop_select()
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         if config.DEBUG:
             gc.collect()
             print("[MEM] hop.sessions_ready hops={}".format(len(self._hops_list)))
@@ -186,7 +186,7 @@ class HopAssistantApp(BaseApp):
             title=self.t("hop.select_hop"), items=names,
             accent_color=_COLOR_HOP, selected_index=self._current_hop_idx)
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         self._state = _STATE_SELECT_HOP
 
     def _show_step_select(self):
@@ -198,7 +198,7 @@ class HopAssistantApp(BaseApp):
             title=hop["name"], items=lines,
             accent_color=_COLOR_HOP, selected_index=self._step_idx)
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         self._state = _STATE_SELECT_STEP
 
     # ── tick handlers ──────────────────────────────────────────────
@@ -308,7 +308,7 @@ class HopAssistantApp(BaseApp):
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names, accent_color=_COLOR_HOP, selected_index=0)
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         self._state = _STATE_RECIPE
         gc.collect()
         if config.DEBUG:
@@ -356,7 +356,7 @@ class HopAssistantApp(BaseApp):
             self._state = _STATE_PREP_ACK
 
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
         if config.DEBUG:
             gc.collect()
             print("[MEM] hop.hops_loaded recipients={}".format(recipient_count))

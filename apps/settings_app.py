@@ -35,23 +35,15 @@ class SettingsApp(BaseApp):
             selected_index=self._selected,
         )
         if self._rotary:
-            self._rotary.reset_rotary_value()
+            self._rotary.reset()
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
-        if self._rotary:
-            delta = self._rotary.get_rotary_value()
-            if delta:
-                self._rotary.reset_rotary_value()
-                if delta > 0:
-                    self._selected += 1
-                else:
-                    self._selected -= 1
-                if self._selected < 0:
-                    self._selected = 0
-                if self._selected >= len(self._item_labels):
-                    self._selected = len(self._item_labels) - 1
+        if self._rotary and self._item_labels:
+            self._selected, changed = self._rotary.navigate_index(
+                self._selected, len(self._item_labels), wrap=False, invert=False)
+            if changed:
                 self._screen.set_selected_index(self._selected)
         if self.hardware.button.was_short_pressed():
             self._screen.set_title("Not implemented")
