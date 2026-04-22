@@ -26,7 +26,6 @@ def _load_setup_cfg():
         "ap_password": _get("SETUP_AP_PASSWORD", "brewsetup123"),
         "require_token": bool(_get("SETUP_REQUIRE_TOKEN", False)),
         "token": str(_get("SETUP_TOKEN", "") or ""),
-        "reboot_after_save": bool(_get("SETUP_REBOOT_AFTER_SAVE", False)),
     }
 
 
@@ -124,11 +123,7 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
             p.append("<br><small>{}</small>".format(_html_escape(errors[key])))
         p.append("</p>")
 
-    p.append("<p><button type='submit'>Save</button></p></form>")
-    p.append("<form method='post' action='/reboot'>")
-    if token:
-        p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
-    p.append("<p><button type='submit'>Reboot</button></p></form>")
+    p.append("<p><button type='submit'>Enregistrer et redemarrer</button></p></form>")
     p.append("</body></html>")
     return "".join(p)
 
@@ -327,13 +322,16 @@ class SetupPortalService:
             data += chunk
         head, sep, tail = data.partition(b"\r\n\r\n")
         if not sep:
+            # Some clients may use LF-only separators.
+            head, sep, tail = data.partition(b"\n\n")
+        if not sep:
             return "", "", {}, ""
         try:
             head_text = head.decode("utf-8")
         except Exception:
             head_text = head.decode("latin-1")
 
-        lines = head_text.split("\r\n")
+        lines = [ln for ln in head_text.replace("\r\n", "\n").split("\n") if ln]
         parts = (lines[0] if lines else "").split(" ")
         method = parts[0] if len(parts) > 0 else ""
         target = parts[1] if len(parts) > 1 else "/"
@@ -441,7 +439,7 @@ class SetupPortalService:
         method, target, _headers, body = self._read_request(client)
         if not method:
             self._log("empty request")
-            self._send(client, 400, "text/plain; charset=utf-8", "Bad request")
+            # Silent drop for empty/incomplete probes from browsers.
             return
         path, query = self._split_target(target)
 
@@ -481,20 +479,15 @@ class SetupPortalService:
 
             ok, errors = config_store.save_updates(updates)
             if ok:
-                if self._cfg.get("reboot_after_save"):
-                    self._send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
-                    try:
-                        import machine
+                self._send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
+                try:
+                    import machine
 
-                        time.sleep_ms(200)
-                        machine.reset()
-                    except Exception:
-                        pass
-                    return
-                loc = "/?saved=1"
-                if self._cfg.get("require_token"):
-                    loc += "&k={}".format(self._token)
-                self._send(client, 303, headers={"Location": loc})
+                    time.sleep_ms(200)
+                    machine.reset()
+                except Exception:
+                    # If reboot fails, keep a usable response for manual retry.
+                    self._send(client, 200, "text/html; charset=utf-8", "Saved. Please reboot manually.")
                 return
 
             values = config_store.load_current_values()
@@ -509,21 +502,6 @@ class SetupPortalService:
                 ssid=self._cfg.get("ap_ssid", ""),
             )
             self._send(client, 400, "text/html; charset=utf-8", html)
-            return
-
-        if method == "POST" and path == "/reboot":
-            form = parse_form_urlencoded(body)
-            if not self._token_ok(query, form):
-                self._send(client, 403, body="Forbidden")
-                return
-            self._send(client, 200, "text/html; charset=utf-8", "Rebooting...")
-            try:
-                import machine
-
-                time.sleep_ms(200)
-                machine.reset()
-            except Exception:
-                pass
             return
 
         self._send(client, 404, body="Not found")
