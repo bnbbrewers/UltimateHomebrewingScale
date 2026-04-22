@@ -28,4 +28,7 @@ ENV/
 .idea/
 AGENT.md
 
+# Local planning/docs artifacts
+docs/
+
 
