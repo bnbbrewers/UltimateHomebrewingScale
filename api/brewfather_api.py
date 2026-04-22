@@ -58,14 +58,17 @@ class BrewfatherAPI(ApiBase):
                     print("[API] HTTP {}".format(status))
                 return status, None
 
+            data = resp.json()
             if _DEBUG:
                 try:
-                    body = getattr(resp, "content", b"")
-                    print("[API] body_len={}".format(len(body)))
+                    if isinstance(data, list):
+                        print("[API] json_type=list len={}".format(len(data)))
+                    elif isinstance(data, dict):
+                        print("[API] json_type=dict keys={}".format(len(data)))
+                    else:
+                        print("[API] json_type={}".format(type(data)))
                 except Exception:
                     pass
-
-            data = resp.json()
             gc.collect()
             mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
             return status, data
