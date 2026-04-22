@@ -38,7 +38,7 @@ LAUNCHER_ITEMS = [
         "label": "Settings",
         "icon": "/flash/assets/icons/Parameters.png",
         "module": "settings_app",
-        "color": 0x546E7A,
+        "color": 0x7E57C2,
         "order": 4,
     },
 ]

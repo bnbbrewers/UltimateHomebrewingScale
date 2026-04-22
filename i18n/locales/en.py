@@ -49,6 +49,9 @@ TRANSLATIONS = {
         'language': 'Language',
         'calibration': 'Calibration',
         'about': 'About',
+        'portal_connect_sta': 'Scan the QR code to open setup',
+        'portal_connect_ap': 'Join the Dial Wi-Fi, then scan the QR code',
+        'portal_error': 'Portal error, check network',
     },
 
     'launcher': {
