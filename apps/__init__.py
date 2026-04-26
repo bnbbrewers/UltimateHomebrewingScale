@@ -9,6 +9,7 @@ from .malt_app import GrainAssistantApp
 from .hop_app import HopAssistantApp
 from .keg_filler_app import KegFillerApp
 from .settings_app import SettingsApp
+from .scale_calibration_wizard_app import ScaleCalibrationWizardApp
 
 __all__ = [
     "BaseApp",
@@ -18,4 +19,5 @@ __all__ = [
     "HopAssistantApp",
     "KegFillerApp",
     "SettingsApp",
+    "ScaleCalibrationWizardApp",
 ]

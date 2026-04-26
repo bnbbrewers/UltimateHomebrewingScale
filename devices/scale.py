@@ -112,7 +112,7 @@ class CalibratedScale:
             
         except Exception as e:
             print(f"Error loading calibration: {e}")
-            raise
+            self.calibration_points = []
     
     def _adc_to_weight(self, adc_value):
         """
@@ -125,6 +125,9 @@ class CalibratedScale:
         Returns:
             Weight in grams (float)
         """
+        if len(self.calibration_points) < 2:
+            return None
+
         # Find the two calibration points that bracket the ADC value
         # If ADC is outside range, extrapolate from nearest segment
         
@@ -224,7 +227,11 @@ class CalibratedScale:
         adc_avg = self._adc_sum / len(self.adc_buffer)
 
         # Convert to weight and apply tare offset
-        weight = self._adc_to_weight(adc_avg) - self.tare_offset
+        weight = self._adc_to_weight(adc_avg)
+        if weight is None:
+            self._cached_weight = None
+            return self._cached_weight
+        weight -= self.tare_offset
 
         # if DEBUG_MODE and len(self.adc_buffer) == MOVING_AVERAGE_SIZE:
         #     if int(time.time() * 10) % 10 == 0:
