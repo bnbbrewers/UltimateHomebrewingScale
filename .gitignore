@@ -32,3 +32,20 @@ AGENT.md
 docs/
 
 
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+/mempalace/
+/mempalace_export/
+/.mempalace/
+
+# AI agent local configs (do not commit)
+.codex/
+.claude/
+.cursor/
+.continue/
+.gemini/
+.aider*
+AGENTS.md
+CLAUDE.md
