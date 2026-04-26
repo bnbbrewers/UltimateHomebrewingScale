@@ -63,7 +63,7 @@ TRANSLATIONS = {
     },
 
     'portal': {
-        'title': 'Scale setup',
+        'title': 'Ultimate Homebrewing Scale setup',
         'ap': 'AP',
         'saved': 'Saved',
         'invalid_fields': 'Invalid fields',

@@ -64,7 +64,7 @@ TRANSLATIONS = {
     },
 
     'portal': {
-        'title': 'Configuration de la balance',
+        'title': 'Configuration Ultimate Homebrewing Scale',
         'ap': 'Point d acces',
         'saved': 'Enregistre',
         'invalid_fields': 'Champs invalides',
