@@ -56,6 +56,24 @@ def _url_decode(text):
     return "".join(out)
 
 
+def _ticks_ms():
+    if hasattr(time, "ticks_ms"):
+        return time.ticks_ms()
+    return int(time.time() * 1000)
+
+
+def _ticks_add(ticks, delta):
+    if hasattr(time, "ticks_add"):
+        return time.ticks_add(ticks, delta)
+    return ticks + delta
+
+
+def _ticks_diff(ticks1, ticks2):
+    if hasattr(time, "ticks_diff"):
+        return time.ticks_diff(ticks1, ticks2)
+    return ticks1 - ticks2
+
+
 def parse_form_urlencoded(body):
     payload = {}
     if not body:
@@ -71,19 +89,54 @@ def parse_form_urlencoded(body):
     return payload
 
 
-def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssid=""):
+def _current_language():
+    try:
+        import config
+
+        return getattr(config, "LANGUAGE", "en")
+    except Exception:
+        return "en"
+
+
+def _portal_i18n(values=None, i18n=None):
+    if i18n is not None:
+        return i18n
+    lang = None
+    if values:
+        lang = values.get("LANGUAGE")
+    from i18n import I18n
+
+    return I18n(lang or _current_language())
+
+
+def _translate_error(i18n, error):
+    text = str(error or "")
+    if text.startswith("nvs write failed: "):
+        return i18n.t("portal.validation.nvs_write_failed", text.split(": ", 1)[1])
+    key = text.replace(" ", "_")
+    return i18n.t("portal.validation.{}".format(key))
+
+
+def _option_label(i18n, key, choice):
+    if key == "LANGUAGE":
+        return i18n.t("portal.choices.language_{}".format(choice))
+    return choice
+
+
+def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssid="", i18n=None):
     errors = errors or {}
+    i18n = _portal_i18n(values, i18n=i18n)
     p = []
     p.append("<!doctype html><html><head><meta charset='utf-8'>")
     p.append("<meta name='viewport' content='width=device-width,initial-scale=1'>")
-    p.append("<title>Scale setup</title></head><body>")
-    p.append("<h3>Scale setup</h3>")
+    p.append("<title>{}</title></head><body>".format(_html_escape(i18n.t("portal.title"))))
+    p.append("<h3>{}</h3>".format(_html_escape(i18n.t("portal.title"))))
     if mode == "ap":
-        p.append("<p>AP: <b>{}</b></p>".format(_html_escape(ssid)))
+        p.append("<p>{}: <b>{}</b></p>".format(_html_escape(i18n.t("portal.ap")), _html_escape(ssid)))
     if saved:
-        p.append("<p><b>Saved</b></p>")
+        p.append("<p><b>{}</b></p>".format(_html_escape(i18n.t("portal.saved"))))
     if errors:
-        p.append("<p><b>Invalid fields</b></p>")
+        p.append("<p><b>{}</b></p>".format(_html_escape(i18n.t("portal.invalid_fields"))))
     p.append("<form method='post' action='/save'>")
     if token:
         p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
@@ -91,7 +144,7 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
     for key in EDITABLE_ORDER:
         spec = EDITABLE_KEYS[key]
         val = values.get(key, spec.get("default"))
-        p.append("<p>{}<br>".format(_html_escape(spec.get("label") or key)))
+        p.append("<p>{}<br>".format(_html_escape(i18n.t("portal.fields.{}".format(key)))))
         typ = spec.get("type")
         if typ == "bool":
             checked = " checked" if bool(val) else ""
@@ -100,7 +153,13 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
             p.append("<select name='{}'>".format(key))
             for choice in spec.get("choices", []):
                 sel = " selected" if str(val) == str(choice) else ""
-                p.append("<option value='{0}'{1}>{0}</option>".format(_html_escape(choice), sel))
+                p.append(
+                    "<option value='{0}'{1}>{2}</option>".format(
+                        _html_escape(choice),
+                        sel,
+                        _html_escape(_option_label(i18n, key, choice)),
+                    )
+                )
             p.append("</select>")
         elif typ == "int":
             p.append(
@@ -115,18 +174,19 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
             input_type = "password" if "PASSWORD" in key or "API_KEY" in key else "text"
             p.append("<input type='{0}' name='{1}' value='{2}'>".format(input_type, key, _html_escape(val)))
         if key in errors:
-            p.append("<br><small>{}</small>".format(_html_escape(errors[key])))
+            p.append("<br><small>{}</small>".format(_html_escape(_translate_error(i18n, errors[key]))))
         p.append("</p>")
 
-    p.append("<p><button type='submit'>Enregistrer et redemarrer</button></p></form>")
+    p.append("<p><button type='submit'>{}</button></p></form>".format(_html_escape(i18n.t("portal.save_reboot"))))
     p.append("</body></html>")
     return "".join(p)
 
 
 class SetupPortalService:
-    def __init__(self, wifi_device=None, debug=False):
+    def __init__(self, wifi_device=None, debug=False, i18n=None):
         self._wifi = wifi_device
         self._debug = bool(debug)
+        self._i18n = i18n
         self._cfg = _load_setup_cfg()
         self._listener = None
         self._mode = "none"
@@ -191,7 +251,7 @@ class SetupPortalService:
         except Exception as e:
             self._log("client error:", e)
             try:
-                self._send(client, 500, "text/plain; charset=utf-8", "Internal error")
+                self._send(client, 500, "text/plain; charset=utf-8", _portal_i18n(i18n=self._i18n).t("portal.internal_error"))
             except Exception:
                 pass
         try:
@@ -403,17 +463,13 @@ class SetupPortalService:
         self._log("response", status_code, "bytes", len(payload))
         self._send_all(client, head)
         self._send_all(client, payload)
+        self._log("response sent", status_code)
 
     def _send_all(self, client, data):
         if not data:
             return
-        try:
-            client.sendall(data)
-            return
-        except Exception:
-            pass
         total = 0
-        deadline = time.ticks_add(time.ticks_ms(), 3000)
+        deadline = _ticks_add(_ticks_ms(), 3000)
         size = len(data)
         while total < size:
             sent = 0
@@ -422,7 +478,7 @@ class SetupPortalService:
             except Exception:
                 sent = 0
             if not sent:
-                if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+                if _ticks_diff(deadline, _ticks_ms()) <= 0:
                     raise OSError("send timeout")
                 time.sleep_ms(10)
                 continue
@@ -444,7 +500,7 @@ class SetupPortalService:
 
         if method == "GET" and path == "/":
             if not self._token_ok(query, {}):
-                self._send(client, 403, body="Forbidden")
+                self._send(client, 403, body=_portal_i18n(i18n=self._i18n).t("portal.forbidden"))
                 return
             values = config_store.load_current_values()
             html = render_form_html(
@@ -454,6 +510,7 @@ class SetupPortalService:
                 token=self._token if self._cfg.get("require_token") else "",
                 mode=self._mode,
                 ssid=self._cfg.get("ap_ssid", ""),
+                i18n=self._i18n,
             )
             self._send(client, 200, "text/html; charset=utf-8", html)
             return
@@ -461,7 +518,7 @@ class SetupPortalService:
         if method == "POST" and path == "/save":
             form = parse_form_urlencoded(body)
             if not self._token_ok(query, form):
-                self._send(client, 403, body="Forbidden")
+                self._send(client, 403, body=_portal_i18n(form, i18n=self._i18n).t("portal.forbidden"))
                 return
 
             updates = {}
@@ -473,8 +530,9 @@ class SetupPortalService:
                     updates[key] = form.get(key)
 
             ok, errors = config_store.save_updates(updates)
+            i18n = _portal_i18n(updates, i18n=self._i18n)
             if ok:
-                self._send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
+                self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.saved_rebooting"))
                 try:
                     import machine
 
@@ -482,7 +540,7 @@ class SetupPortalService:
                     machine.reset()
                 except Exception:
                     # If reboot fails, keep a usable response for manual retry.
-                    self._send(client, 200, "text/html; charset=utf-8", "Saved. Please reboot manually.")
+                    self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.saved_manual_reboot"))
                 return
 
             values = config_store.load_current_values()
@@ -495,8 +553,9 @@ class SetupPortalService:
                 token=self._token if self._cfg.get("require_token") else "",
                 mode=self._mode,
                 ssid=self._cfg.get("ap_ssid", ""),
+                i18n=self._i18n,
             )
             self._send(client, 400, "text/html; charset=utf-8", html)
             return
 
-        self._send(client, 404, body="Not found")
+        self._send(client, 404, body=_portal_i18n(i18n=self._i18n).t("portal.not_found"))

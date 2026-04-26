@@ -63,7 +63,7 @@ class SettingsApp(BaseApp):
                 except Exception:
                     pass
 
-                self._portal = SetupPortalService(wifi_device=self.hardware.wifi, debug=debug_portal)
+                self._portal = SetupPortalService(wifi_device=self.hardware.wifi, debug=debug_portal, i18n=self.i18n)
                 if self._debug:
                     try:
                         import gc

@@ -11,6 +11,7 @@ config.py
 
 # Python
 __pycache__/
+tests/
 *.py[cod]
 *.py[cod].*
 *$py.class
