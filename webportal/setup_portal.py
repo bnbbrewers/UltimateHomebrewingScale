@@ -9,23 +9,18 @@ from .config_keys import EDITABLE_KEYS, EDITABLE_ORDER
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 
+SETUP_AP_SSID = "UHB-Scale-Setup"
+SETUP_AP_PASSWORD = ""
+SETUP_REQUIRE_TOKEN = False
+SETUP_TOKEN = ""
+
 
 def _load_setup_cfg():
-    try:
-        import config
-    except Exception:
-        config = None
-
-    def _get(name, default):
-        if config is None:
-            return default
-        return getattr(config, name, default)
-
     return {
-        "ap_ssid": _get("SETUP_AP_SSID", "UHB-Scale-Setup"),
-        "ap_password": _get("SETUP_AP_PASSWORD", "brewsetup123"),
-        "require_token": bool(_get("SETUP_REQUIRE_TOKEN", False)),
-        "token": str(_get("SETUP_TOKEN", "") or ""),
+        "ap_ssid": SETUP_AP_SSID,
+        "ap_password": SETUP_AP_PASSWORD,
+        "require_token": bool(SETUP_REQUIRE_TOKEN),
+        "token": str(SETUP_TOKEN or ""),
     }
 
 

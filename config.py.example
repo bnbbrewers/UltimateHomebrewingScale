@@ -8,10 +8,6 @@ BREWING_SOFTWARE = "brewfather"
 BREWFATHER_USER_ID = "your_user_id_here"
 BREWFATHER_API_KEY = "your_api_key_here"
 
-# Optional Wi-Fi fallback credentials.
-# Used only if UIFlow NVS keys (uiflow:ssid0/pswd0) are missing.
-WIFI_SSID = ""
-WIFI_PASSWORD = ""
 
 # Language configuration
 # Supported languages: 'en' (English), 'fr' (Francais)
@@ -33,11 +29,3 @@ API_WIFI_CONNECT_TIMEOUT_S = 8
 ROTARY_BEEP_ENABLED = True
 BUTTON_SHORT_BEEP_ENABLED = True
 BUTTON_LONG_BEEP_ENABLED = True
-
-# Setup web portal options (settings app)
-SETUP_AP_SSID = "UHB-Scale-Setup"
-SETUP_AP_PASSWORD = "brewsetup123"
-SETUP_AUTO_STOP_MIN = 10
-SETUP_REQUIRE_TOKEN = False
-SETUP_TOKEN = ""
-SETUP_REBOOT_AFTER_SAVE = False
