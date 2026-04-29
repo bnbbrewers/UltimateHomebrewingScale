@@ -34,14 +34,16 @@ def _file_exists(path):
             return False
 
 
-def _initial_app_id():
+def _initial_app_id(initial_app_id=None):
+    if initial_app_id:
+        return initial_app_id
     if _file_exists(CALIBRATION_FILE):
         return "launcher"
     return CALIBRATION_WIZARD_APP_ID
 
 
 class AppManager:
-    def __init__(self, screen_manager, hardware, apis, i18n=None):
+    def __init__(self, screen_manager, hardware, apis, i18n=None, initial_app_id=None):
         mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._apis = apis
         self._apps = {}
@@ -55,7 +57,7 @@ class AppManager:
         mem_snapshot("app.after_hop", enabled=_DEBUG, collect=True)
         self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
         mem_snapshot("app.after_keg", enabled=_DEBUG, collect=True)
-        self._active_app_id = _initial_app_id()
+        self._active_app_id = _initial_app_id(initial_app_id=initial_app_id)
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
         self._apps[self._active_app_id].on_enter()
