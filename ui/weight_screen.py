@@ -7,6 +7,13 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import UIHelper
+from memory_debug import snapshot as mem_snapshot
+
+try:
+    import config
+    _DEBUG = getattr(config, "DEBUG", False)
+except Exception:
+    _DEBUG = False
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
 REQUIRE_CUSTOM_WEIGHT_FONT = True
@@ -18,9 +25,12 @@ class WeightScreen:
     MODE_COUNTDOWN_L = "countdown_l"
 
     def __init__(self, i18n=None):
+        mem_snapshot("weight.init.start", enabled=_DEBUG, collect=True)
         self._i18n = i18n
         self.page = m5ui.M5Page(bg_c=0x000000)
+        mem_snapshot("weight.after_page", enabled=_DEBUG, collect=True)
         self._weight_font = self._load_custom_weight_font()
+        mem_snapshot("weight.after_font", enabled=_DEBUG, collect=True)
 
         self._mode = self.MODE_SIMPLE
         self._target = 0
@@ -42,6 +52,7 @@ class WeightScreen:
             "",
             0x333333,
         )
+        mem_snapshot("weight.after_title", enabled=_DEBUG, collect=True)
 
         self._value = m5ui.M5Label(
             "0 g",
@@ -55,6 +66,7 @@ class WeightScreen:
         )
         self._value.set_width(240)
         self._value.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        mem_snapshot("weight.after_value_label", enabled=_DEBUG, collect=True)
 
         self._progress = m5ui.M5Bar(
             x=30, y=162, w=180, h=20,
@@ -63,6 +75,7 @@ class WeightScreen:
             parent=self.page,
         )
         self._progress.set_bg_color(lv.color_hex(0x3A3A3A), 255, lv.PART.MAIN | lv.STATE.DEFAULT)
+        mem_snapshot("weight.after_progress", enabled=_DEBUG, collect=True)
 
         self._percent = m5ui.M5Label(
             "",
@@ -76,6 +89,7 @@ class WeightScreen:
         )
         self._percent.set_width(240)
         self._percent.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        mem_snapshot("weight.after_percent", enabled=_DEBUG, collect=True)
 
         self._status = m5ui.M5Label(
             "",
@@ -89,6 +103,7 @@ class WeightScreen:
         )
         self._status.set_width(240)
         self._status.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        mem_snapshot("weight.after_status", enabled=_DEBUG, collect=True)
 
         self._ok_bg = lv.obj(self.page)
         self._ok_bg.set_size(240, 28)
@@ -97,6 +112,7 @@ class WeightScreen:
         self._ok_bg.set_style_bg_opa(0, 0)
         self._ok_bg.set_style_border_width(0, 0)
         self._ok_bg.set_style_radius(0, 0)
+        mem_snapshot("weight.after_ok_bg", enabled=_DEBUG, collect=True)
 
         self._ok_label = m5ui.M5Label(
             "",
@@ -110,6 +126,7 @@ class WeightScreen:
         )
         self._ok_label.set_width(240)
         self._ok_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        mem_snapshot("weight.init.done", enabled=_DEBUG, collect=True)
 
     def _load_custom_weight_font(self):
         """

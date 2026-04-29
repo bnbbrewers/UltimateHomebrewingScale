@@ -72,28 +72,37 @@ def main():
     global _RUNNING
     _RUNNING = True
     M5.begin()
+    mem_snapshot("boot.after_m5_begin", enabled=DEBUG, collect=True)
     m5ui.init()
+    mem_snapshot("boot.after_m5ui_init", enabled=DEBUG, collect=True)
     Speaker.begin()
+    mem_snapshot("boot.after_speaker", enabled=DEBUG, collect=True)
     gc.collect()
     mem_snapshot("boot.start", enabled=DEBUG)
 
     if _maintenance_mode_requested():
         print("[main] Maintenance mode: app startup skipped (BtnA held).")
         return
+    mem_snapshot("boot.after_maintenance", enabled=DEBUG, collect=True)
 
  
 
     i18n_instance = _load_i18n()
+    mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
     hardware = HardwareManager.get_instance()
+    mem_snapshot("boot.after_hardware", enabled=DEBUG, collect=True)
     apis = ApiFactory().as_dict()
+    mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
 
     screen_manager = ScreenManager(i18n=i18n_instance)
+    mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
     app_manager = AppManager(
         screen_manager=screen_manager,
         hardware=hardware,
         apis=apis,
         i18n=i18n_instance,
     )
+    mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
     while _RUNNING:
         M5.update()
