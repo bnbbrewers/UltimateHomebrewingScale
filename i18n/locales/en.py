@@ -15,6 +15,28 @@ TRANSLATIONS = {
         'tare_error': 'Tare error',
     },
 
+    'scale_calibration': {
+        'intro_message_line1': 'Connect your scale',
+        'intro_message_line2': 'OK to continue',
+        'title': 'Scale Calibration',
+        'step': 'Step {0}/{1} - {2}g',
+        'adjust_target_hint_line1': 'Turn',
+        'adjust_target_hint_line2': 'to adjust target weight',
+        'start_button': 'Start',
+        'target': '{0} g',
+        'measuring_label': 'Measuring',
+        'measuring_progress': '{0}/{1}s',
+        'average': 'Avg: {0}',
+        'complete': 'Calibration complete',
+        'data_saved': 'Data saved',
+        'complete_saved_line1': 'Calibration complete!',
+        'complete_saved_line2': 'Data saved',
+        'done': 'Done',
+        'error': 'Error',
+        'scale_not_found': 'Scale not found',
+        'save_error': 'Save error: {0}',
+    },
+
     'recipe': {
         'select_recipe': 'Select a recipe',
         'no_recipe': 'No recipe found',

@@ -16,6 +16,28 @@ TRANSLATIONS = {
         'tare_error': 'Erreur de tarage',
     },
 
+    'scale_calibration': {
+        'intro_message_line1': 'Branchez votre balance',
+        'intro_message_line2': 'OK pour continuer',
+        'title': 'Calibration balance',
+        'step': 'Etape {0}/{1} - {2}g',
+        'adjust_target_hint_line1': 'Tourner',
+        'adjust_target_hint_line2': 'pour ajuster le poids cible',
+        'start_button': 'Start',
+        'target': '{0} g',
+        'measuring_label': 'Mesure',
+        'measuring_progress': '{0}/{1}s',
+        'average': 'Moy: {0}',
+        'complete': 'Calibration terminee',
+        'data_saved': 'Donnees sauvees',
+        'complete_saved_line1': 'Calibration terminee!',
+        'complete_saved_line2': 'Donnees sauvees',
+        'done': 'Termine',
+        'error': 'Erreur',
+        'scale_not_found': 'Balance introuvable',
+        'save_error': 'Erreur sauvegarde: {0}',
+    },
+
     'recipe': {
         'select_recipe': 'Selectionner une recette',
         'no_recipe': 'Pas de recette trouvée',
