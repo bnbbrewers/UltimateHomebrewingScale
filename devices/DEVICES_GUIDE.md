@@ -2,55 +2,55 @@
 
 ## Overview
 
-Les modules de gestion des périphériques hardware ont été extraits dans `devices/`.
+Hardware device management modules have been extracted into `devices/`.
 
-**Devices disponibles** :
-- **Scale** : Balance calibrée avec tare (`devices/scale.py`)
-- **Button** : Gestion centralisée appui court / appui long (`devices/button.py`)
-- **Relay** : Contrôle de relais (à venir)
+Available devices:
+- **Scale**: calibrated scale with tare support (`devices/scale.py`)
+- **Button**: centralized short-press and long-press handling (`devices/button.py`)
+- **Relay**: relay control, planned for later
 
 ## Architecture
 
-```
+```text
 devices/
 ├── __init__.py           # Exports CalibratedScale, etc.
 ├── button.py             # ButtonDevice (short/long press)
 ├── scale.py              # CalibratedScale class
-└── relay.py              # RelayController class (futur)
+└── relay.py              # RelayController class, future
 ```
 
-## Utilisation
+## Usage
 
 ### Import
 
 ```python
 from devices.scale import CalibratedScale
 
-# Ou (via __init__.py)
+# Or via __init__.py
 from devices import CalibratedScale
 ```
 
-### Initialisation
+### Initialization
 
 ```python
 # Basic usage
 scale = CalibratedScale()
 
-# With custom calibration file
+# With a custom calibration file
 scale = CalibratedScale(calibration_file="custom_cal.json")
 ```
 
-### Lecture du Poids
+### Reading Weight
 
 ```python
 # Read weight with moving average
-weight = scale.read_weight()  # Returns weight in grams (float)
+weight = scale.read_weight()  # Returns weight in grams as a float
 
 if weight is not None:
     print(f"Current weight: {weight:.1f}g")
 ```
 
-### Tare (Mise à Zéro)
+### Tare
 
 ```python
 # Tare the scale
@@ -60,15 +60,15 @@ if success:
     print("Tare completed")
 ```
 
-### Vérifier la Stabilité
+### Checking Stability
 
 ```python
-# Check if reading is stable
+# Check whether the reading is stable
 if scale.is_stable(threshold=5.0, samples=5):
     print("Weight is stable")
 ```
 
-### Informations de Calibration
+### Calibration Information
 
 ```python
 info = scale.get_calibration_info()
@@ -79,52 +79,54 @@ print(f"Tare: {info['tare_offset']}g")
 
 ## API Reference
 
-### CalibratedScale Class
+### `CalibratedScale`
 
-#### Methods
+#### `__init__(calibration_file=None)`
+- Initializes the scale with calibration data.
+- `calibration_file`: optional path to a JSON calibration file.
 
-**`__init__(calibration_file=None)`**
-- Initialise la balance avec calibration
-- `calibration_file` : Chemin vers fichier JSON (optionnel)
+#### `read_weight() -> float | None`
+- Reads the current weight using a moving average.
+- Returns the weight in grams, or `None` on error.
 
-**`read_weight() -> float | None`**
-- Lit le poids actuel avec moyenne mobile
-- Retourne poids en grammes, ou `None` en cas d'erreur
+#### `read_raw_adc() -> int | None`
+- Reads the raw ADC value from the sensor.
+- Returns the ADC value, or `None` on error.
 
-**`read_raw_adc() -> int | None`**
-- Lit la valeur ADC brute du capteur
-- Retourne valeur ADC, ou `None` en cas d'erreur
+#### `tare() -> bool`
+- Performs tare.
+- Returns `True` on success, `False` otherwise.
 
-**`tare() -> bool`**
-- Effectue la mise à zéro (tare)
-- Retourne `True` si succès, `False` sinon
+#### `is_stable(threshold=5.0, samples=5) -> bool`
+- Checks whether the reading is stable.
+- `threshold`: maximum tolerated variation in grams.
+- `samples`: number of samples to check.
 
-**`is_stable(threshold=5.0, samples=5) -> bool`**
-- Vérifie si la lecture est stable
-- `threshold` : Variation maximale tolérée (grammes)
-- `samples` : Nombre d'échantillons à vérifier
+#### `get_calibration_info() -> dict`
+- Returns calibration metadata.
+- Keys: `num_points`, `min_weight`, `max_weight`, `tare_offset`.
 
-**`get_calibration_info() -> dict`**
-- Retourne infos sur la calibration
-- Dict : `num_points`, `min_weight`, `max_weight`, `tare_offset`
+## Apps Using `CalibratedScale`
 
-## Apps Utilisant CalibratedScale
+### Scale App (`apps/scale_app.py`)
 
-### ✅ Scale App (apps/scale_app.py)
-Affichage simple du poids avec tare
+Simple weight display with tare.
 
-### ✅ Grain Assistant (apps/malt_app.py)
-Pesée de malt avec comparaison à un poids cible
+### Grain Assistant (`apps/malt_app.py`)
 
-### ✅ Hop Assistant (apps/hop_app.py)
-Pesée de houblon avec comparaison à un poids cible
+Malt weighing with comparison against a target weight.
 
-### ✅ Keg Filler (apps/keg_filler_app.py)
-Remplissage de fût avec conversion poids → volume
+### Hop Assistant (`apps/hop_app.py`)
+
+Hop weighing with comparison against a target weight.
+
+### Keg Filler (`apps/keg_filler_app.py`)
+
+Keg filling with weight-to-volume conversion.
 
 ## Configuration
 
-### Fichier: `scale_calibration.json`
+### File: `scale_calibration.json`
 
 ```json
 {
@@ -145,7 +147,7 @@ Remplissage de fût avec conversion poids → volume
 }
 ```
 
-### Constantes (devices/scale.py)
+### Constants in `devices/scale.py`
 
 ```python
 CALIBRATION_FILE = "scale_calibration.json"
@@ -155,7 +157,7 @@ SDA_PIN = 13
 MOVING_AVERAGE_SIZE = 10  # Samples for smoothing
 ```
 
-## Exemple Complet
+## Complete Example
 
 ```python
 from devices.scale import CalibratedScale
@@ -173,92 +175,96 @@ scale.tare()
 print("Add weight...")
 while True:
     weight = scale.read_weight()
-    
+
     if weight is not None:
         print(f"Weight: {weight:.1f}g")
-        
+
         # Check stability
         if scale.is_stable():
             print("  (stable)")
-    
+
     time.sleep(0.5)
 ```
 
-## Avantages de la Séparation
+## Benefits of Separation
 
-1. **✅ Réutilisabilité** : Même code dans toutes les apps
-2. **✅ Maintenabilité** : Un seul endroit pour les corrections
-3. **✅ Testabilité** : Module hardware isolé
-4. **✅ Clarté** : Séparation UI / logique métier
-5. **✅ Performance** : Une seule instance partageable
+1. Reusability: the same code is shared by every app.
+2. Maintainability: fixes live in one place.
+3. Hardware isolation: hardware behavior is kept out of the UI layer.
+4. Clarity: UI and business logic stay separated.
+5. Performance: a single instance can be shared.
 
 ## Debug Mode
 
-Le mode DEBUG de `config.py` s'applique aussi à `CalibratedScale` :
+The `DEBUG` setting from `config.py` also applies to `CalibratedScale`:
 
 ```python
 # config.py
-DEBUG = True  # Active les traces de la balance
+DEBUG = True  # Enables scale traces
 ```
 
-Traces affichées :
-- Initialisation du capteur
-- Chargement de la calibration
-- Lecture ADC/poids (throttled)
-- Opérations de tare
+Displayed traces:
+- Sensor initialization
+- Calibration loading
+- ADC and weight reads, throttled
+- Tare operations
 
-## Déploiement
+## Deployment
 
-Uploadez ces fichiers sur le M5Dial :
+Upload these files to the M5Dial:
 
-```
+```text
 devices/
 ├── __init__.py
 └── scale.py
 
 apps/
-├── scale.py          (modifié)
-├── malt_app.py (modifié)
-├── hop_app.py  (modifié)
-└── keg_filler_app.py (modifié)
+├── scale.py          (modified)
+├── malt_app.py       (modified)
+├── hop_app.py        (modified)
+└── keg_filler_app.py (modified)
 ```
 
-## Test
+## Manual Check
 
 ```python
-# Sur M5Dial
-exec(open('main.py').read())
+# On the M5Dial
+exec(open("main.py").read())
 
-# 1. Sélectionnez Scale App → fonctionne
-# 2. Sélectionnez Grain Assistant → utilise même balance
-# 3. Retour launcher (appui long 3s)
-# 4. Sélectionnez Hop Assistant → balance déjà initialisée
+# 1. Select Scale App. It works.
+# 2. Select Grain Assistant. It uses the same scale.
+# 3. Return to the launcher with a 3-second long press.
+# 4. Select Hop Assistant. The scale is already initialized.
 ```
 
 ## Performance
 
-- **Mémoire** : Classe partagée entre apps
-- **CPU** : Moyenne mobile optimisée
-- **Latence** : ~50ms par lecture
-- **Précision** : Interpolation linéaire multi-points
+- Memory: shared class across apps
+- CPU: optimized moving average
+- Latency: around 50 ms per read
+- Precision: multi-point linear interpolation
 
 ## Troubleshooting
 
-**Erreur "Weight Unit initialization failed"** :
-- Vérifier câblage I2C
-- Vérifier pins SCL/SDA (15/13)
-- Vérifier adresse I2C (0x26)
+### Error: `Weight Unit initialization failed`
 
-**Erreur "Calibration file not found"** :
-- Uploader `scale_calibration.json`
-- Ou lancer `ScaleCalibration/ScaleCalibrationWizard.py`
+- Check I2C wiring.
+- Check SCL/SDA pins: 15/13.
+- Check I2C address: `0x26`.
 
-**Poids instable** :
-- Augmenter `MOVING_AVERAGE_SIZE`
-- Utiliser `is_stable()` avant lecture
-- Éviter vibrations
+### Error: `Calibration file not found`
 
-**Poids incorrect** :
-- Re-calibrer avec wizard
-- Vérifier points de calibration
-- Tester avec poids connus
+- Upload `scale_calibration.json`.
+- Or run the scale calibration wizard.
+
+### Unstable Weight
+
+- Increase `MOVING_AVERAGE_SIZE`.
+- Use `is_stable()` before reading.
+- Avoid vibrations.
+
+### Incorrect Weight
+
+- Recalibrate with the wizard.
+- Check calibration points.
+- Test with known weights.

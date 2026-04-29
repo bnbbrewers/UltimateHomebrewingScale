@@ -16,7 +16,6 @@ except Exception:
     _DEBUG = False
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
-REQUIRE_CUSTOM_WEIGHT_FONT = True
 
 
 class WeightScreen:
@@ -112,7 +111,7 @@ class WeightScreen:
     def _load_custom_weight_font(self):
         """
         Load custom font after LVGL/UI init.
-        No silent fallback path lookup: one explicit device path.
+        One explicit device path.
         """
         try:
             font = lv.binfont_create(CUSTOM_WEIGHT_FONT_PATH)
@@ -121,9 +120,7 @@ class WeightScreen:
             raise RuntimeError("lv.binfont_create returned None")
         except Exception as e:
             msg = "Weight font load failed ({}): {}".format(CUSTOM_WEIGHT_FONT_PATH, e)
-            if REQUIRE_CUSTOM_WEIGHT_FONT:
-                raise RuntimeError(msg)
-            return lv.font_montserrat_24
+            raise RuntimeError(msg)
 
     def root(self):
         return self.page

@@ -44,7 +44,7 @@ class ScaleCalibrationWizardScreen:
             text_c=self._C_MUTED,
             bg_c=self._C_BG,
             bg_opa=0,
-            font=self._font(14),
+            font=lv.font_montserrat_14,
             parent=self.page,
         )
         self._step_label.set_width(self._W)
@@ -57,7 +57,7 @@ class ScaleCalibrationWizardScreen:
             text_c=self._C_TEXT,
             bg_c=self._C_BG,
             bg_opa=0,
-            font=self._font(24),
+            font=lv.font_montserrat_24,
             parent=self.page,
         )
         self._target_label.set_width(self._W)
@@ -70,7 +70,7 @@ class ScaleCalibrationWizardScreen:
             text_c=self._C_DIM,
             bg_c=self._C_BG,
             bg_opa=0,
-            font=self._font(12),
+            font=lv.font_montserrat_14,
             parent=self.page,
         )
         self._info_label.set_width(self._W)
@@ -83,7 +83,7 @@ class ScaleCalibrationWizardScreen:
             text_c=self._C_MUTED,
             bg_c=self._C_BG,
             bg_opa=0,
-            font=self._font(14),
+            font=lv.font_montserrat_14,
             parent=self.page,
         )
         self._status_label.set_width(self._W)
@@ -244,21 +244,6 @@ class ScaleCalibrationWizardScreen:
 
     def _lines(self, key1, key2, *args):
         return self._t(key1) + "\n" + self._t(key2, *args)
-
-    @staticmethod
-    def _font(preferred_size=16):
-        candidates = [
-            "font_montserrat_{}".format(preferred_size),
-            "font_montserrat_{}".format(preferred_size - 2),
-            "font_montserrat_16",
-            "font_montserrat_14",
-            "font_montserrat_12",
-            "font_montserrat_10",
-        ]
-        for name in candidates:
-            if hasattr(lv, name):
-                return getattr(lv, name)
-        return None
 
     @classmethod
     def _safe_width(cls, y_center):
