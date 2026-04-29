@@ -3,11 +3,47 @@ Ultimate Homebrewing Scale - persistent memory-safe runtime.
 """
 
 import gc
+import os
 import time
 import M5
 from M5 import *
 import m5ui
 import lvgl as lv
+
+
+def _file_exists(path):
+    try:
+        return os.path.exists(path)
+    except AttributeError:
+        try:
+            os.stat(path)
+            return True
+        except OSError:
+            return False
+
+
+def _copy_file(src, dst):
+    with open(src, "rb") as source:
+        with open(dst, "wb") as target:
+            while True:
+                chunk = source.read(1024)
+                if not chunk:
+                    break
+                target.write(chunk)
+
+
+def _ensure_config_file():
+    if _file_exists("config.py"):
+        return False
+    if not _file_exists("config.py.example"):
+        return False
+
+    _copy_file("config.py.example", "config.py")
+    print("[main] config.py created from config.py.example")
+    return True
+
+
+_CONFIG_CREATED = _ensure_config_file()
 
 from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 from memory_debug import snapshot as mem_snapshot
@@ -101,6 +137,7 @@ def main():
         hardware=hardware,
         apis=apis,
         i18n=i18n_instance,
+        initial_app_id="settings_app" if _CONFIG_CREATED else None,
     )
     mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
