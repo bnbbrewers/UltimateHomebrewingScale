@@ -6,6 +6,8 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
+from .ui_helper import UIHelper
+
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
 REQUIRE_CUSTOM_WEIGHT_FONT = True
 
@@ -35,26 +37,11 @@ class WeightScreen:
         self._last_percent_text = None
         self._last_indicator_overloaded = None
 
-        self._title_bg = lv.obj(self.page)
-        self._title_bg.set_size(240, 50)
-        self._title_bg.set_pos(0, 0)
-        self._title_bg.set_style_bg_color(lv.color_hex(0x333333), 0)
-        self._title_bg.set_style_bg_opa(255, 0)
-        self._title_bg.set_style_border_width(0, 0)
-        self._title_bg.set_style_radius(0, 0)
-
-        self._title = m5ui.M5Label(
+        self._title_bg, self._title = UIHelper.create_title(
+            self.page,
             "",
-            x=0,
-            y=26,
-            text_c=0xFFFFFF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=lv.font_montserrat_16,
-            parent=self.page,
+            0x333333,
         )
-        self._title.set_width(240)
-        self._title.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
         self._value = m5ui.M5Label(
             "0 g",
@@ -179,13 +166,13 @@ class WeightScreen:
         if text == self._last_title_text:
             return
         self._last_title_text = text
-        self._title.set_text(text)
+        UIHelper.set_title(self._title, text)
 
     def set_title_color(self, color):
         if color == self._last_title_color:
             return
         self._last_title_color = color
-        self._title_bg.set_style_bg_color(lv.color_hex(color), 0)
+        UIHelper.set_title_color(self._title_bg, color)
 
     def set_status(self, text):
         if text == self._last_status_text:

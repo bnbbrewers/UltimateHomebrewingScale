@@ -6,13 +6,13 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
+from .ui_helper import UIHelper
+
 
 class SelectItemScreen:
     _W = 240
     _R = 120
-    _BAR_H = 56
-    _TITLE_W = 130
-    _TITLE_Y = 18
+    _BAR_H = 50
     _GAP_BAR = 4
     _MARGIN = 8
     _FAR_H = 16
@@ -71,12 +71,12 @@ class SelectItemScreen:
 
     def set_title(self, title):
         if self._title_lbl:
-            self._title_lbl.set_text(title)
+            UIHelper.set_title(self._title_lbl, title)
 
     def set_accent_color(self, accent_color):
         self._accent_color = accent_color
         if self._title_bar:
-            self._title_bar.set_style_bg_color(lv.color_hex(accent_color), 0)
+            UIHelper.set_title_color(self._title_bar, accent_color)
         if self._band:
             self._band.set_style_bg_color(lv.color_hex(accent_color), 0)
 
@@ -137,12 +137,11 @@ class SelectItemScreen:
     def _build(self, title):
         y = self._BAR_H + self._GAP_BAR
 
-        self._title_bar = self._make_solid_bar(
-            0, 0, self._W, self._BAR_H, self._accent_color, radius=0
-        )
-        lbl_x = (self._W - self._TITLE_W) // 2
-        self._title_lbl = self._make_label(
-            title, lbl_x, self._TITLE_Y, self._C_TITLE, lv.font_montserrat_14, self._TITLE_W
+        self._title_bar, self._title_lbl = UIHelper.create_title(
+            self.page,
+            title,
+            self._accent_color,
+            width=self._W,
         )
 
         slot_defs = [

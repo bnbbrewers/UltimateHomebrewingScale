@@ -3,6 +3,8 @@
 import m5ui
 import lvgl as lv
 
+from .ui_helper import UIHelper
+
 
 class SetupQrScreen:
     def __init__(self, i18n=None):
@@ -10,26 +12,11 @@ class SetupQrScreen:
         self.page = m5ui.M5Page(bg_c=0x000000)
         self._accent = 0x7E57C2
 
-        self._title_bar = lv.obj(self.page)
-        self._title_bar.set_size(240, 48)
-        self._title_bar.set_pos(0, 0)
-        self._title_bar.set_style_bg_color(lv.color_hex(self._accent), 0)
-        self._title_bar.set_style_bg_opa(255, 0)
-        self._title_bar.set_style_border_width(0, 0)
-        self._title_bar.set_style_radius(0, 0)
-
-        self._title = m5ui.M5Label(
+        self._title_bar, self._title = UIHelper.create_title(
+            self.page,
             "Parametres",
-            x=0,
-            y=14,
-            text_c=0xFFFFFF,
-            bg_c=self._accent,
-            bg_opa=0,
-            font=lv.font_montserrat_16,
-            parent=self.page,
+            self._accent,
         )
-        self._title.set_width(240)
-        self._title.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
         self._qr_widget = None
         self._qr_ok = False
@@ -40,7 +27,7 @@ class SetupQrScreen:
 
     def configure(self, title, status, url, mode="sta", ap_ssid="", ap_password=""):
         # UX request: keep only the title text on screen.
-        self._title.set_text("Parametres")
+        UIHelper.set_title(self._title, "Parametres")
         self._qr_ok = self._render_qr(url)
 
     def _render_qr(self, payload):
