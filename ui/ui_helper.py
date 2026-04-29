@@ -11,6 +11,8 @@ TITLE_BAR_H = 50
 TITLE_FONT_SIZE = 16
 TITLE_MAX_LINES = 2
 TITLE_MAX_CHARS_PER_LINE = 16
+TITLE_Y_ONE_LINE = 18
+TITLE_Y_TWO_LINES = 8
 
 
 def format_title_text(text, max_chars_per_line=TITLE_MAX_CHARS_PER_LINE, max_lines=TITLE_MAX_LINES):
@@ -56,6 +58,22 @@ def format_title_text(text, max_chars_per_line=TITLE_MAX_CHARS_PER_LINE, max_lin
 
 class UIHelper:
     @staticmethod
+    def _title_y(title):
+        return TITLE_Y_TWO_LINES if "\n" in title else TITLE_Y_ONE_LINE
+
+    @staticmethod
+    def set_title(label, title):
+        formatted_title = format_title_text(title)
+        label.set_text(formatted_title)
+        label.set_pos(0, UIHelper._title_y(formatted_title))
+
+    @staticmethod
+    def set_title_color(title_bar, color):
+        import lvgl as lv
+
+        title_bar.set_style_bg_color(lv.color_hex(color), 0)
+
+    @staticmethod
     def create_title(parent, title, color, width=SCREEN_W):
         import lvgl as lv
         import m5ui
@@ -70,11 +88,10 @@ class UIHelper:
         title_bar.set_style_shadow_width(0, 0)
 
         formatted_title = format_title_text(title)
-        label_y = 6 if "\n" in formatted_title else 18
         title_label = m5ui.M5Label(
             formatted_title,
             x=0,
-            y=label_y,
+            y=UIHelper._title_y(formatted_title),
             text_c=0xFFFFFF,
             bg_c=color,
             bg_opa=0,

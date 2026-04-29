@@ -6,32 +6,19 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
+from .ui_helper import UIHelper
+
 
 class SimpleMessageScreen:
     def __init__(self, i18n=None):
         self._i18n = i18n
         self.page = m5ui.M5Page(bg_c=0x000000)
 
-        self._title_bar = lv.obj(self.page)
-        self._title_bar.set_size(240, 50)
-        self._title_bar.set_pos(0, 0)
-        self._title_bar.set_style_bg_color(lv.color_hex(0x333333), 0)
-        self._title_bar.set_style_bg_opa(255, 0)
-        self._title_bar.set_style_border_width(0, 0)
-        self._title_bar.set_style_radius(0, 0)
-
-        self._title_label = m5ui.M5Label(
+        self._title_bar, self._title_label = UIHelper.create_title(
+            self.page,
             "",
-            x=0,
-            y=18,
-            text_c=0xFFFFFF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=lv.font_montserrat_16,
-            parent=self.page,
+            0x333333,
         )
-        self._title_label.set_width(240)
-        self._title_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
         self._message_label = m5ui.M5Label(
             "",
@@ -90,13 +77,13 @@ class SimpleMessageScreen:
         self.set_ok_visible(show_ok_button)
 
     def set_title(self, title):
-        self._title_label.set_text(title)
+        UIHelper.set_title(self._title_label, title)
 
     def set_message(self, message):
         self._message_label.set_text(message)
 
     def set_title_color(self, color):
-        self._title_bar.set_style_bg_color(lv.color_hex(color), 0)
+        UIHelper.set_title_color(self._title_bar, color)
 
     def set_text_color(self, color):
         self._message_label.set_style_text_color(lv.color_hex(color), 0)

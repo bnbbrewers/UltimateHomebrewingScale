@@ -5,6 +5,8 @@ Settings screen. Objects created once in __init__.
 import m5ui
 import lvgl as lv
 
+from .ui_helper import UIHelper
+
 
 class SettingsScreen:
     def __init__(self, i18n=None):
@@ -14,18 +16,11 @@ class SettingsScreen:
 
         self.page = m5ui.M5Page(bg_c=0x000000)
 
-        self._title = m5ui.M5Label(
+        self._title_bar, self._title = UIHelper.create_title(
+            self.page,
             self._t("settings.title", "Settings"),
-            x=0,
-            y=18,
-            text_c=0x9CA3AF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=lv.font_montserrat_16,
-            parent=self.page,
+            0x333333,
         )
-        self._title.set_width(240)
-        self._title.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
         self._status = m5ui.M5Label(
             "Rotate and press",
