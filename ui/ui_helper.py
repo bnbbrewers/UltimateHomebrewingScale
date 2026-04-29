@@ -14,6 +14,13 @@ TITLE_MAX_LINES = 2
 TITLE_MAX_CHARS_PER_LINE = 13
 TITLE_Y_ONE_LINE = 18
 TITLE_Y_TWO_LINES = 10
+ACTION_BUTTON_W = 240
+ACTION_BUTTON_H = 40
+ACTION_BUTTON_X = 0
+ACTION_BUTTON_Y = 212
+ACTION_BUTTON_LABEL_X = 0
+ACTION_BUTTON_LABEL_Y = 215
+ACTION_BUTTON_COLOR = 0x4CAF50
 
 
 def format_title_text(text, max_chars_per_line=TITLE_MAX_CHARS_PER_LINE, max_lines=TITLE_MAX_LINES):
@@ -123,3 +130,35 @@ class UIHelper:
         title_label.set_width(label_width)
         title_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
         return title_bar, title_label
+
+    @staticmethod
+    def create_action_button(parent):
+        import lvgl as lv
+        import m5ui
+
+        button_bg = lv.obj(parent)
+        button_bg.set_size(ACTION_BUTTON_W, ACTION_BUTTON_H)
+        button_bg.set_pos(ACTION_BUTTON_X, ACTION_BUTTON_Y)
+        button_bg.set_style_bg_color(lv.color_hex(ACTION_BUTTON_COLOR), 0)
+        button_bg.set_style_bg_opa(0, 0)
+        button_bg.set_style_border_width(0, 0)
+        button_bg.set_style_radius(0, 0)
+
+        button_label = m5ui.M5Label(
+            "",
+            x=ACTION_BUTTON_LABEL_X,
+            y=ACTION_BUTTON_LABEL_Y,
+            text_c=0xFFFFFF,
+            bg_c=ACTION_BUTTON_COLOR,
+            bg_opa=0,
+            font=lv.font_montserrat_16,
+            parent=parent,
+        )
+        button_label.set_width(ACTION_BUTTON_W)
+        button_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        return button_bg, button_label
+
+    @staticmethod
+    def set_action_button_visible(button_bg, button_label, visible, label):
+        button_label.set_text(label if visible else "")
+        button_bg.set_style_bg_opa(255 if visible else 0, 0)

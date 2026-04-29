@@ -105,27 +105,8 @@ class WeightScreen:
         self._status.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
         mem_snapshot("weight.after_status", enabled=_DEBUG, collect=True)
 
-        self._ok_bg = lv.obj(self.page)
-        self._ok_bg.set_size(240, 28)
-        self._ok_bg.set_pos(0, 212)
-        self._ok_bg.set_style_bg_color(lv.color_hex(0x4CAF50), 0)
-        self._ok_bg.set_style_bg_opa(0, 0)
-        self._ok_bg.set_style_border_width(0, 0)
-        self._ok_bg.set_style_radius(0, 0)
+        self._ok_bg, self._ok_label = UIHelper.create_action_button(self.page)
         mem_snapshot("weight.after_ok_bg", enabled=_DEBUG, collect=True)
-
-        self._ok_label = m5ui.M5Label(
-            "",
-            x=0,
-            y=219,
-            text_c=0xFFFFFF,
-            bg_c=0x4CAF50,
-            bg_opa=0,
-            font=lv.font_montserrat_14,
-            parent=self.page,
-        )
-        self._ok_label.set_width(240)
-        self._ok_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
         mem_snapshot("weight.init.done", enabled=_DEBUG, collect=True)
 
     def _load_custom_weight_font(self):
@@ -146,6 +127,11 @@ class WeightScreen:
 
     def root(self):
         return self.page
+
+    def _ok_caption(self):
+        if self._i18n:
+            return self._i18n.t("common.ok")
+        return "common.ok"
 
     def configure(self, title, mode, target=0, title_bg_color=0x333333, tolerance=0):
         self._mode = mode
@@ -240,8 +226,12 @@ class WeightScreen:
         if visible == self._ok_visible:
             return
         self._ok_visible = visible
-        self._ok_label.set_text("OK" if visible else "")
-        self._ok_bg.set_style_bg_opa(255 if visible else 0, 0)
+        UIHelper.set_action_button_visible(
+            self._ok_bg,
+            self._ok_label,
+            visible,
+            self._ok_caption(),
+        )
 
     @staticmethod
     def _format_weight(weight):
