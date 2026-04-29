@@ -10,8 +10,6 @@ from apps.scale_app import ScaleApp
 from apps.malt_app import GrainAssistantApp
 from apps.hop_app import HopAssistantApp
 from apps.keg_filler_app import KegFillerApp
-from apps.settings_app import SettingsApp
-from apps.scale_calibration_wizard_app import ScaleCalibrationWizardApp
 
 
 CALIBRATION_FILE = "scale_calibration.json"
@@ -44,19 +42,44 @@ class AppManager:
             "malt_app": GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n),
             "hop_app": HopAssistantApp(screen_manager, hardware, apis, i18n=i18n),
             "keg_filler_app": KegFillerApp(screen_manager, hardware, apis, i18n=i18n),
-            "settings_app": SettingsApp(screen_manager, hardware, apis, i18n=i18n),
-            CALIBRATION_WIZARD_APP_ID: ScaleCalibrationWizardApp(
+        }
+        self._active_app_id = _initial_app_id()
+        self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
+        self._apps[self._active_app_id].on_enter()
+
+    def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
+        if app_id in self._apps:
+            return True
+        if app_id == "settings_app":
+            from apps.settings_app import SettingsApp
+
+            self._apps[app_id] = SettingsApp(
                 screen_manager,
                 hardware,
                 apis,
                 i18n=i18n,
-            ),
-        }
-        self._active_app_id = _initial_app_id()
-        self._apps[self._active_app_id].on_enter()
+            )
+            return True
+        if app_id == CALIBRATION_WIZARD_APP_ID:
+            from apps.scale_calibration_wizard_app import ScaleCalibrationWizardApp
+
+            self._apps[app_id] = ScaleCalibrationWizardApp(
+                screen_manager,
+                hardware,
+                apis,
+                i18n=i18n,
+            )
+            return True
+        return False
 
     def _switch_to(self, app_id):
-        if app_id not in self._apps:
+        if not self._ensure_app(
+            app_id,
+            self._apps[self._active_app_id].screen_manager,
+            self._apps[self._active_app_id].hardware,
+            self._apis,
+            self._apps[self._active_app_id].i18n,
+        ):
             app_id = "launcher"
         if app_id == self._active_app_id:
             return
