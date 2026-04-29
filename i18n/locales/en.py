@@ -31,6 +31,8 @@ TRANSLATIONS = {
         'data_saved': 'Data saved',
         'complete_saved_line1': 'Calibration complete!',
         'complete_saved_line2': 'Data saved',
+        'restart_after_success': 'Calibration complete, OK to restart',
+        'restart_after_save_error': 'Calibration file save error',
         'done': 'Done',
         'error': 'Error',
         'scale_not_found': 'Scale not found',

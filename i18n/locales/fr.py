@@ -32,6 +32,8 @@ TRANSLATIONS = {
         'data_saved': 'Donnees sauvees',
         'complete_saved_line1': 'Calibration terminee!',
         'complete_saved_line2': 'Donnees sauvees',
+        'restart_after_success': 'Calibration terminée, OK pour redémarrer',
+        'restart_after_save_error': 'Erreur de sauvegarde du fichier de calibration',
         'done': 'Termine',
         'error': 'Erreur',
         'scale_not_found': 'Balance introuvable',
