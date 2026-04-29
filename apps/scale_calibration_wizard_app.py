@@ -55,6 +55,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._last_status_second = -1
         self._sample_sum = 0
         self._sample_count = 0
+        self._waiting_restart_confirmation = False
 
     def on_enter(self):
         super().on_enter()
@@ -79,10 +80,17 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._last_status_second = -1
         self._sample_sum = 0
         self._sample_count = 0
+        self._waiting_restart_confirmation = False
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+
+        if self._waiting_restart_confirmation:
+            button = self.hardware.button
+            if button and button.was_short_pressed():
+                self._soft_reset()
+            return None
 
         if not self._intro_acknowledged:
             button = self.hardware.button
@@ -243,13 +251,27 @@ class ScaleCalibrationWizardApp(BaseApp):
             return
 
         self._render()
-        if self._save_calibration_data():
-            self._screen.render_complete(
-                self._lines(
-                    "scale_calibration.complete_saved_line1",
-                    "scale_calibration.complete_saved_line2",
-                )
-            )
+        save_ok = self._save_calibration_data()
+        self._show_restart_prompt(save_ok)
+
+    def _show_restart_prompt(self, save_ok):
+        if save_ok:
+            message = self._t("scale_calibration.restart_after_success")
+        else:
+            message = self._t("scale_calibration.restart_after_save_error")
+
+        screen = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)
+        if not screen:
+            return
+        screen.configure(
+            title=self._t("scale_calibration.title"),
+            message=message,
+            title_bg_color=INTRO_COLOR,
+            show_ok_button=True,
+        )
+        self._waiting_restart_confirmation = True
+        self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
+        self._flush_lvgl()
 
     def _save_calibration_data(self):
         try:
@@ -286,10 +308,17 @@ class ScaleCalibrationWizardApp(BaseApp):
             return True
         except Exception as exc:
             message = self._t("scale_calibration.save_error", exc)
-            self._screen.render_error(message)
             if DEBUG_MODE:
                 print(message)
             return False
+
+    def _soft_reset(self):
+        import machine
+
+        if hasattr(machine, "soft_reset"):
+            machine.soft_reset()
+        else:
+            machine.reset()
 
     def _t(self, key, *args):
         if self.i18n:
@@ -306,6 +335,10 @@ class ScaleCalibrationWizardApp(BaseApp):
             return "Calibration complete!"
         if key == "scale_calibration.complete_saved_line2":
             return "Data saved"
+        if key == "scale_calibration.restart_after_success":
+            return "Calibration complete, OK to restart"
+        if key == "scale_calibration.restart_after_save_error":
+            return "Calibration file save error"
         if key == "scale_calibration.save_error":
             return "Save error: {}".format(*args)
         return key

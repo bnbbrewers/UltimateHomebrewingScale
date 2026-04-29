@@ -19,13 +19,3 @@ GRAIN_WEIGHT_TOLERANCE = 10
 # Debug mode
 DEBUG = False
 
-# Launcher memory behavior
-LAUNCHER_LOAD_IMAGES = False
-
-# Maximum wait time for Wi-Fi connect before API calls fail fast.
-API_WIFI_CONNECT_TIMEOUT_S = 8
-
-# UI sound feedback toggles
-ROTARY_BEEP_ENABLED = True
-BUTTON_SHORT_BEEP_ENABLED = True
-BUTTON_LONG_BEEP_ENABLED = True
