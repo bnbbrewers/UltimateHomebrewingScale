@@ -1,22 +1,25 @@
 """
 Hidden scale calibration wizard app.
 
-The UI lives here for now, while hardware access goes through the shared
-HardwareManager devices.
+Keeps calibration state and hardware flow here, while screen widgets live in
+ui.scale_calibration_wizard_screen.
 """
 
 import json
 import time
 
-import lvgl as lv
-import m5ui
-
 from .base_app import BaseApp
+from ui.scale_calibration_wizard_screen import ScaleCalibrationWizardScreen
+from ui import screen_ids
+from memory_debug import snapshot as mem_snapshot
 
 
 CALIBRATION_POINTS = [0, 500, 5000, 20000]
 CALIBRATION_DURATION = 30
 CALIBRATION_FILE = "scale_calibration.json"
+SAMPLE_INTERVAL_MS = 100
+MEM_SNAPSHOT_INTERVAL_MS = 5000
+INTRO_COLOR = 0x00897B
 
 try:
     import config
@@ -33,12 +36,8 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._scale = self.hardware.scale
         self._rotary = self.hardware.rotary
 
-        self._page = None
-        self._title_label = None
-        self._step_label = None
-        self._info_label = None
-        self._status_label = None
-        self._progress_bar = None
+        self._screen = None
+        self._intro_acknowledged = False
 
         self._current_step = 0
         self._adjusted_weights = list(CALIBRATION_POINTS)
@@ -51,83 +50,21 @@ class ScaleCalibrationWizardApp(BaseApp):
 
         self._measuring = False
         self._measurement_started_at = 0
+        self._next_sample_at = 0
+        self._next_mem_snapshot_at = 0
         self._last_status_second = -1
-        self._samples = []
-
-    def _font(self, preferred_size=16):
-        candidates = [
-            "font_montserrat_{}".format(preferred_size),
-            "font_montserrat_{}".format(preferred_size - 2),
-            "font_montserrat_16",
-            "font_montserrat_14",
-            "font_montserrat_12",
-            "font_montserrat_10",
-        ]
-        for name in candidates:
-            if hasattr(lv, name):
-                return getattr(lv, name)
-        return None
-
-    def _build_ui(self):
-        self._page = m5ui.M5Page(bg_c=0x000000)
-        self._title_label = m5ui.M5Label(
-            "Scale Calibration",
-            x=50,
-            y=30,
-            text_c=0x9CA3AF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=self._font(16),
-            parent=self._page,
-        )
-        self._step_label = m5ui.M5Label(
-            "",
-            x=65,
-            y=75,
-            text_c=0xE0E0E0,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=self._font(16),
-            parent=self._page,
-        )
-        self._info_label = m5ui.M5Label(
-            "",
-            x=60,
-            y=105,
-            text_c=0x808080,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=self._font(10),
-            parent=self._page,
-        )
-        self._status_label = m5ui.M5Label(
-            "",
-            x=70,
-            y=150,
-            text_c=0xE0E0E0,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=self._font(12),
-            parent=self._page,
-        )
-        self._progress_bar = lv.bar(self._page)
-        self._progress_bar.set_size(160, 8)
-        self._progress_bar.set_pos(40, 195)
-        self._progress_bar.set_range(0, 100)
-        self._progress_bar.set_value(0, False)
+        self._sample_sum = 0
+        self._sample_count = 0
 
     def on_enter(self):
         super().on_enter()
         self._scale = self.hardware.scale
-        if self._page is None:
-            self._build_ui()
         self._reset_state()
-        self._page.screen_load()
-        if self._rotary:
-            self._rotary.reset()
-        self._render()
+        self._show_intro()
+        self._mem_snapshot("calibration.on_enter", collect=True)
 
     def _reset_state(self):
+        self._intro_acknowledged = False
         self._current_step = 0
         self._adjusted_weights = list(CALIBRATION_POINTS)
         self._calibration_data = {}
@@ -137,15 +74,25 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._last_encoder_change_time = 0
         self._measuring = False
         self._measurement_started_at = 0
+        self._next_sample_at = 0
+        self._next_mem_snapshot_at = 0
         self._last_status_second = -1
-        self._samples = []
+        self._sample_sum = 0
+        self._sample_count = 0
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
 
+        if not self._intro_acknowledged:
+            button = self.hardware.button
+            if button and button.was_short_pressed():
+                self._intro_acknowledged = True
+                self._show_wizard()
+            return None
+
         if self._scale is None:
-            self._status_label.set_text("Scale not found")
+            self._screen.render_error(self._t("scale_calibration.scale_not_found"))
             return None
 
         if self._measuring:
@@ -163,27 +110,45 @@ class ScaleCalibrationWizardApp(BaseApp):
 
         return None
 
-    def _render(self):
-        if self._progress_bar:
-            self._progress_bar.set_value(0, False)
+    def _show_intro(self):
+        screen = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)
+        if not screen:
+            self._intro_acknowledged = True
+            self._show_wizard()
+            return
+        screen.configure(
+            title=self._t("scale_calibration.title"),
+            message=self._lines(
+                "scale_calibration.intro_message_line1",
+                "scale_calibration.intro_message_line2",
+            ),
+            title_bg_color=INTRO_COLOR,
+            show_ok_button=True,
+        )
+        self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
+        self._flush_lvgl()
 
+    def _show_wizard(self):
+        if self._screen is None:
+            self._screen = ScaleCalibrationWizardScreen(i18n=self.i18n)
+        self._screen.show()
+        if self._rotary:
+            self._rotary.reset()
+        self._render()
+
+    def _render(self):
         if self._current_step < len(CALIBRATION_POINTS):
             target = self._adjusted_weights[self._current_step]
             point = CALIBRATION_POINTS[self._current_step]
-            self._step_label.set_text(
-                "Step {}/{}: {}g".format(
-                    self._current_step + 1,
-                    len(CALIBRATION_POINTS),
-                    point,
-                )
+            self._screen.render_step(
+                self._current_step,
+                len(CALIBRATION_POINTS),
+                point,
+                target,
             )
-            self._info_label.set_text("Enc: adjust\nBtn: start")
-            self._status_label.set_text("Target {}g".format(target))
             return
 
-        self._step_label.set_text("Calibration complete")
-        self._info_label.set_text("")
-        self._status_label.set_text("Data saved")
+        self._screen.render_complete()
 
     def _handle_encoder(self):
         if not self._rotary:
@@ -222,48 +187,55 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._render()
 
     def _start_measurement(self):
+        now = time.ticks_ms()
         self._measuring = True
-        self._measurement_started_at = time.ticks_ms()
+        self._measurement_started_at = now
+        self._next_sample_at = now
+        self._next_mem_snapshot_at = time.ticks_add(now, MEM_SNAPSHOT_INTERVAL_MS)
         self._last_status_second = -1
-        self._samples = []
-        self._status_label.set_text("Measuring\n0/{}s".format(CALIBRATION_DURATION))
-        if self._progress_bar:
-            self._progress_bar.set_value(0, False)
+        self._sample_sum = 0
+        self._sample_count = 0
+        self._screen.render_measuring(0, CALIBRATION_DURATION)
+        self._mem_snapshot("calibration.measurement.start", collect=True)
 
     def _tick_measurement(self):
-        adc_value = self._scale.read_raw_adc()
-        if adc_value is not None:
-            self._samples.append(adc_value)
-            if DEBUG_MODE:
-                print("ADC: {}".format(adc_value))
+        now = time.ticks_ms()
+        if time.ticks_diff(now, self._next_sample_at) >= 0:
+            adc_value = self._scale.read_raw_adc()
+            self._next_sample_at = time.ticks_add(now, SAMPLE_INTERVAL_MS)
+            if adc_value is not None:
+                self._sample_sum += adc_value
+                self._sample_count += 1
+                if DEBUG_MODE:
+                    print("ADC: {}".format(adc_value))
 
-        elapsed_ms = time.ticks_diff(time.ticks_ms(), self._measurement_started_at)
+        if time.ticks_diff(now, self._next_mem_snapshot_at) >= 0:
+            self._mem_snapshot("calibration.measurement.tick", collect=False)
+            self._next_mem_snapshot_at = time.ticks_add(now, MEM_SNAPSHOT_INTERVAL_MS)
+
+        elapsed_ms = time.ticks_diff(now, self._measurement_started_at)
         elapsed_s = elapsed_ms // 1000
         if elapsed_s != self._last_status_second:
             self._last_status_second = elapsed_s
-            shown_s = min(CALIBRATION_DURATION, elapsed_s)
-            self._status_label.set_text(
-                "Measuring\n{}/{}s".format(shown_s, CALIBRATION_DURATION)
-            )
-            if self._progress_bar:
-                pct = min(100, int((shown_s * 100) / CALIBRATION_DURATION))
-                self._progress_bar.set_value(pct, False)
+            self._screen.render_measuring(elapsed_s, CALIBRATION_DURATION)
 
         if elapsed_ms >= CALIBRATION_DURATION * 1000:
             self._finish_measurement()
 
     def _finish_measurement(self):
         self._measuring = False
-        if self._samples:
-            average = sum(self._samples) / len(self._samples)
+        self._mem_snapshot("calibration.measurement.finish.before_average", collect=True)
+        if self._sample_count:
+            average = self._sample_sum / self._sample_count
         else:
             average = 0
+        self._sample_sum = 0
+        self._sample_count = 0
+        self._mem_snapshot("calibration.measurement.finish.after_clear", collect=True)
 
         weight = self._adjusted_weights[self._current_step]
         self._calibration_data[weight] = average
-        self._status_label.set_text("Avg: {}".format(int(average)))
-        if self._progress_bar:
-            self._progress_bar.set_value(100, False)
+        self._screen.render_average(average)
 
         self._current_step += 1
         if self._current_step < len(CALIBRATION_POINTS):
@@ -272,7 +244,12 @@ class ScaleCalibrationWizardApp(BaseApp):
 
         self._render()
         if self._save_calibration_data():
-            self._status_label.set_text("Calibration complete!\nData saved")
+            self._screen.render_complete(
+                self._lines(
+                    "scale_calibration.complete_saved_line1",
+                    "scale_calibration.complete_saved_line2",
+                )
+            )
 
     def _save_calibration_data(self):
         try:
@@ -305,10 +282,36 @@ class ScaleCalibrationWizardApp(BaseApp):
 
             if DEBUG_MODE:
                 print("Calibration data saved to {}".format(CALIBRATION_FILE))
+            self._mem_snapshot("calibration.saved", collect=True)
             return True
         except Exception as exc:
-            message = "Save error: {}".format(exc)
-            self._status_label.set_text(message[:30])
+            message = self._t("scale_calibration.save_error", exc)
+            self._screen.render_error(message)
             if DEBUG_MODE:
                 print(message)
             return False
+
+    def _t(self, key, *args):
+        if self.i18n:
+            return self.i18n.t(key, *args)
+        if key == "scale_calibration.scale_not_found":
+            return "Scale not found"
+        if key == "scale_calibration.title":
+            return "Scale Calibration"
+        if key == "scale_calibration.intro_message_line1":
+            return "Connect your scale"
+        if key == "scale_calibration.intro_message_line2":
+            return "OK to continue"
+        if key == "scale_calibration.complete_saved_line1":
+            return "Calibration complete!"
+        if key == "scale_calibration.complete_saved_line2":
+            return "Data saved"
+        if key == "scale_calibration.save_error":
+            return "Save error: {}".format(*args)
+        return key
+
+    def _mem_snapshot(self, tag, collect=False):
+        mem_snapshot(tag, enabled=DEBUG_MODE, collect=collect)
+
+    def _lines(self, key1, key2):
+        return self._t(key1) + "\n" + self._t(key2)
