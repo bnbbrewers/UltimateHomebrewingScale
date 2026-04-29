@@ -1,23 +1,6 @@
 """
-Application package for persistent app instances.
+Application package marker.
+
+Keep this file free of app imports: importing any apps.* submodule executes
+this package initializer first, and eager imports cost RAM on the device.
 """
-
-from .base_app import BaseApp
-from .launcher_app import LauncherApp
-from .scale_app import ScaleApp
-from .malt_app import GrainAssistantApp
-from .hop_app import HopAssistantApp
-from .keg_filler_app import KegFillerApp
-from .settings_app import SettingsApp
-from .scale_calibration_wizard_app import ScaleCalibrationWizardApp
-
-__all__ = [
-    "BaseApp",
-    "LauncherApp",
-    "ScaleApp",
-    "GrainAssistantApp",
-    "HopAssistantApp",
-    "KegFillerApp",
-    "SettingsApp",
-    "ScaleCalibrationWizardApp",
-]
