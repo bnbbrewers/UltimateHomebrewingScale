@@ -114,27 +114,7 @@ class ScaleCalibrationWizardScreen:
             lv.PART.INDICATOR | lv.STATE.DEFAULT,
         )
 
-        self._start_bg = lv.obj(self.page)
-        self._start_bg.set_size(self._W, 28)
-        self._start_bg.set_pos(0, 212)
-        self._start_bg.set_style_bg_color(lv.color_hex(self._C_START), 0)
-        self._start_bg.set_style_bg_opa(0, 0)
-        self._start_bg.set_style_border_width(0, 0)
-        self._start_bg.set_style_radius(0, 0)
-        self._start_bg.set_style_shadow_width(0, 0)
-
-        self._start_label = m5ui.M5Label(
-            "",
-            x=0,
-            y=219,
-            text_c=self._C_TEXT,
-            bg_c=self._C_START,
-            bg_opa=0,
-            font=lv.font_montserrat_14,
-            parent=self.page,
-        )
-        self._start_label.set_width(self._W)
-        self._start_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        self._start_bg, self._start_label = UIHelper.create_action_button(self.page)
         self._set_start_visible(False)
 
     def root(self):
@@ -216,11 +196,12 @@ class ScaleCalibrationWizardScreen:
         self._status_label.set_text(message[:30])
 
     def _set_start_visible(self, visible):
-        if visible:
-            self._start_label.set_text(self._t("scale_calibration.start_button"))
-        else:
-            self._start_label.set_text("")
-        self._start_bg.set_style_bg_opa(255 if visible else 0, 0)
+        UIHelper.set_action_button_visible(
+            self._start_bg,
+            self._start_label,
+            visible,
+            self._t("scale_calibration.start_button"),
+        )
 
     def _set_progress_visible(self, visible):
         self._progress_bar.set_flag(lv.obj.FLAG.HIDDEN, not visible)
@@ -239,8 +220,6 @@ class ScaleCalibrationWizardScreen:
             return "Scale Calibration"
         if key == "scale_calibration.step":
             return "Step {}/{} - {}g".format(*args)
-        if key == "scale_calibration.start_button":
-            return "Start"
         if key == "scale_calibration.target":
             return "{} g".format(*args)
         if key == "scale_calibration.adjust_target_hint_line1":
