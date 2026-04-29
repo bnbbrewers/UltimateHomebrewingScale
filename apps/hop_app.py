@@ -53,8 +53,8 @@ class HopAssistantApp(BaseApp):
         self._rotary = self.hardware.rotary
         self._scale = self.hardware.scale
 
-        self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
-        self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
+        self._select_screen = None
+        self._weigh_screen = None
 
         self._state = _STATE_RECIPE
         self._batches = []
@@ -67,6 +67,16 @@ class HopAssistantApp(BaseApp):
         self._target_g = 0
         self._last_in_range = None
 
+    def _select(self):
+        if self._select_screen is None:
+            self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
+        return self._select_screen
+
+    def _weight(self):
+        if self._weigh_screen is None:
+            self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
+        return self._weigh_screen
+
     def on_exit(self):
         super().on_exit()
         if config.DEBUG:
@@ -76,7 +86,8 @@ class HopAssistantApp(BaseApp):
         self._hops_list = []
         self._batch_id = None
         self._prep_flow_active = False
-        self._select_screen.set_items([])
+        if self._select_screen:
+            self._select_screen.set_items([])
 
     def on_enter(self):
         super().on_enter()
@@ -182,7 +193,7 @@ class HopAssistantApp(BaseApp):
         names = _HopNameItems(self._hops_list)
         self._current_hop_idx = min(self._current_hop_idx, max(0, len(names) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
+        self._select().configure(
             title=self.t("hop.select_hop"), items=names,
             accent_color=_COLOR_HOP, selected_index=self._current_hop_idx)
         if self._rotary:
@@ -194,7 +205,7 @@ class HopAssistantApp(BaseApp):
         lines = _HopStepItems(self, hop["steps"])
         self._step_idx = min(self._step_idx, max(0, len(lines) - 1))
         self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
+        self._select().configure(
             title=hop["name"], items=lines,
             accent_color=_COLOR_HOP, selected_index=self._step_idx)
         if self._rotary:
@@ -208,7 +219,7 @@ class HopAssistantApp(BaseApp):
             return
         self._batch_idx, changed = self._rotary_navigate(self._batch_idx, len(self._batches))
         if changed:
-            self._select_screen.set_selected_index(self._batch_idx)
+            self._select().set_selected_index(self._batch_idx)
         if self.hardware.button.was_short_pressed():
             self._load_hops()
 
@@ -218,7 +229,7 @@ class HopAssistantApp(BaseApp):
         self._current_hop_idx, changed = self._rotary_navigate(
             self._current_hop_idx, len(self._hops_list))
         if changed:
-            self._select_screen.set_selected_index(self._current_hop_idx)
+            self._select().set_selected_index(self._current_hop_idx)
         if self.hardware.button.was_short_pressed():
             self._step_idx = 0
             self._show_step_select()
@@ -230,23 +241,23 @@ class HopAssistantApp(BaseApp):
             return
         self._step_idx, changed = self._rotary_navigate(self._step_idx, len(steps))
         if changed:
-            self._select_screen.set_selected_index(self._step_idx)
+            self._select().set_selected_index(self._step_idx)
         if self.hardware.button.was_short_pressed():
             self._start_weighing()
 
     def _tick_weight(self):
         if self._scale is None:
-            self._weigh_screen.set_status("Scale not found")
+            self._weight().set_status("Scale not found")
             return
         weight = self._scale.read_weight()
         if weight is None:
             return
-        self._weigh_screen.update_from_weight(weight)
+        self._weight().update_from_weight(weight)
         remaining = self._target_g - weight
         in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
         if in_range != self._last_in_range:
             self._last_in_range = in_range
-            self._weigh_screen.set_status(self.t("common.ok") if in_range else "")
+            self._weight().set_status(self.t("common.ok") if in_range else "")
         if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
             return self._complete_current_step()
         return None
@@ -258,10 +269,11 @@ class HopAssistantApp(BaseApp):
         step = hop["steps"][self._step_idx]
         self._target_g = self._to_target_g(step[1])
         self.screen_manager.show(screen_ids.WEIGHT)
-        self._weigh_screen.configure(
+        weigh_screen = self._weight()
+        weigh_screen.configure(
             title=hop["name"], mode="countdown_g", target=self._target_g,
             title_bg_color=_COLOR_HOP, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
-        self._weigh_screen.set_status(self.t("scale.tare_ready"))
+        weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
         if self._scale:
             self._scale.tare()
@@ -304,7 +316,7 @@ class HopAssistantApp(BaseApp):
         names = [b.name for b in self._batches]
         self._batch_idx = 0
         self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
+        self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names, accent_color=_COLOR_HOP, selected_index=0)
         if self._rotary:

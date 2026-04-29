@@ -28,8 +28,8 @@ class GrainAssistantApp(BaseApp):
         self._scale = self.hardware.scale
         self._rotary = self.hardware.rotary
 
-        self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
-        self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
+        self._select_screen = None
+        self._weigh_screen = None
 
         self._state = _STATE_RECIPE
         self._batches = []
@@ -40,6 +40,16 @@ class GrainAssistantApp(BaseApp):
         self._done_at = 0
         self._last_in_range = None
 
+    def _select(self):
+        if self._select_screen is None:
+            self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
+        return self._select_screen
+
+    def _weight(self):
+        if self._weigh_screen is None:
+            self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
+        return self._weigh_screen
+
     def on_exit(self):
         super().on_exit()
         if config.DEBUG:
@@ -47,7 +57,8 @@ class GrainAssistantApp(BaseApp):
             print("[MEM] grain.on_exit before_cleanup free={}".format(gc.mem_free()))
         self._batches = []
         self._malts = []
-        self._select_screen.set_items([])
+        if self._select_screen:
+            self._select_screen.set_items([])
 
     def on_enter(self):
         super().on_enter()
@@ -85,7 +96,7 @@ class GrainAssistantApp(BaseApp):
         names = [b.name for b in self._batches]
         self._batch_idx = 0
         self.screen_manager.show(screen_ids.SELECT_ITEM)
-        self._select_screen.configure(
+        self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names, accent_color=_COLOR_RECIPE, selected_index=0)
         if self._rotary:
@@ -108,7 +119,7 @@ class GrainAssistantApp(BaseApp):
 
         if names:
             self.screen_manager.show(screen_ids.SELECT_ITEM)
-            self._select_screen.configure(
+            self._select().configure(
                 title=self.t("grain.select_malt"), items=names,
                 accent_color=_COLOR_MALT, selected_index=0)
             self._state = _STATE_MALT
@@ -118,7 +129,7 @@ class GrainAssistantApp(BaseApp):
             self._state = _STATE_MESSAGE_ACK
         else:
             self.screen_manager.show(screen_ids.SELECT_ITEM)
-            self._select_screen.configure(
+            self._select().configure(
                 title=self.t("grain.no_malts"), items=[],
                 accent_color=_COLOR_MALT, selected_index=0)
             self._state = _STATE_MALT
@@ -137,7 +148,7 @@ class GrainAssistantApp(BaseApp):
         self._batch_idx, changed = self._rotary_navigate(
             self._batch_idx, len(self._batches))
         if changed:
-            self._select_screen.set_selected_index(self._batch_idx)
+            self._select().set_selected_index(self._batch_idx)
         if self.hardware.button.was_short_pressed():
             self._load_malts()
 
@@ -147,23 +158,23 @@ class GrainAssistantApp(BaseApp):
         self._malt_idx, changed = self._rotary_navigate(
             self._malt_idx, len(self._malts))
         if changed:
-            self._select_screen.set_selected_index(self._malt_idx)
+            self._select().set_selected_index(self._malt_idx)
         if self.hardware.button.was_short_pressed():
             self._start_weighing()
 
     def _tick_weigh(self):
         if self._scale is None:
-            self._weigh_screen.set_status("Scale not found")
+            self._weight().set_status("Scale not found")
             return
         weight = self._scale.read_weight()
         if weight is None:
             return
-        self._weigh_screen.update_from_weight(weight)
+        self._weight().update_from_weight(weight)
         remaining = self._target_g - weight
         in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
         if in_range != self._last_in_range:
             self._last_in_range = in_range
-            self._weigh_screen.set_status(self.t("common.ok") if in_range else "")
+            self._weight().set_status(self.t("common.ok") if in_range else "")
         if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
             self._malts.pop(self._malt_idx)
             gc.collect()
@@ -175,7 +186,7 @@ class GrainAssistantApp(BaseApp):
                     self._malt_idx = len(self._malts) - 1
                 names = [m.name for m in self._malts]
                 self.screen_manager.show(screen_ids.SELECT_ITEM)
-                self._select_screen.configure(
+                self._select().configure(
                     title=self.t("grain.select_malt"), items=names,
                     accent_color=_COLOR_MALT, selected_index=self._malt_idx)
                 self._state = _STATE_MALT
@@ -191,12 +202,13 @@ class GrainAssistantApp(BaseApp):
 
     def _start_weighing(self):
         self.screen_manager.show(screen_ids.WEIGHT)
+        weigh_screen = self._weight()
         malt = self._malts[self._malt_idx]
         self._target_g = int(malt.amount * 1000)
-        self._weigh_screen.configure(
+        weigh_screen.configure(
             title=malt.name, mode="countdown_g", target=self._target_g,
             title_bg_color=0xD4840A, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
-        self._weigh_screen.set_status(self.t("scale.tare_ready"))
+        weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
         if self._scale:
             self._scale.tare()

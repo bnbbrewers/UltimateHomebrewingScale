@@ -10,6 +10,13 @@ from apps.scale_app import ScaleApp
 from apps.malt_app import GrainAssistantApp
 from apps.hop_app import HopAssistantApp
 from apps.keg_filler_app import KegFillerApp
+from memory_debug import snapshot as mem_snapshot
+
+try:
+    import config
+    _DEBUG = getattr(config, "DEBUG", False)
+except Exception:
+    _DEBUG = False
 
 
 CALIBRATION_FILE = "scale_calibration.json"
@@ -35,17 +42,24 @@ def _initial_app_id():
 
 class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None):
+        mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._apis = apis
-        self._apps = {
-            "launcher": LauncherApp(screen_manager, hardware, apis, i18n=i18n),
-            "scale_app": ScaleApp(screen_manager, hardware, apis, i18n=i18n),
-            "malt_app": GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n),
-            "hop_app": HopAssistantApp(screen_manager, hardware, apis, i18n=i18n),
-            "keg_filler_app": KegFillerApp(screen_manager, hardware, apis, i18n=i18n),
-        }
+        self._apps = {}
+        self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.after_launcher", enabled=_DEBUG, collect=True)
+        self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.after_scale", enabled=_DEBUG, collect=True)
+        self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.after_malt", enabled=_DEBUG, collect=True)
+        self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.after_hop", enabled=_DEBUG, collect=True)
+        self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.after_keg", enabled=_DEBUG, collect=True)
         self._active_app_id = _initial_app_id()
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
+        mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
         self._apps[self._active_app_id].on_enter()
+        mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
 
     def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
         if app_id in self._apps:
@@ -59,6 +73,7 @@ class AppManager:
                 apis,
                 i18n=i18n,
             )
+            mem_snapshot("app.lazy.settings_created", enabled=_DEBUG, collect=True)
             return True
         if app_id == CALIBRATION_WIZARD_APP_ID:
             from apps.scale_calibration_wizard_app import ScaleCalibrationWizardApp
@@ -69,6 +84,7 @@ class AppManager:
                 apis,
                 i18n=i18n,
             )
+            mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
             return True
         return False
 
