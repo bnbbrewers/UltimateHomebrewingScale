@@ -49,11 +49,11 @@ self.label.set_text(self.i18n.t('scale.tare_ready'))
 
 # With positional argument
 self.label.set_text(self.i18n.t('grain.target', 500))
-# → "Target: 500g" / "Cible : 500g"
+# → "Target: 500g"
 
 # With named argument
 self.label.set_text(self.i18n.t('keg.filling_progress', percent=75))
-# → "Filled: 75%" / "Rempli : 75%"
+# → "Filled: 75%"
 ```
 
 ---
@@ -100,49 +100,49 @@ def __init__(self):
 ## 🗂️ Available Translation Keys
 
 ### Scale Mode (`scale.*`)
-- `scale.title` - "Scale" / "Balance"
-- `scale.tare_ready` - "Press to tare" / "Appuyer pour tarer"
-- `scale.taring` - "Taring..." / "Tarage..."
-- `scale.tare_done` - "Tare done!" / "Tarage effectué !"
-- `scale.tare_error` - "Tare error" / "Erreur de tarage"
-- `scale.initial_tare` - "Initial tare..." / "Tarage initial..."
+- `scale.title` - Scale screen title
+- `scale.tare_ready` - Prompt shown when the scale can be tared
+- `scale.taring` - Tare operation in progress
+- `scale.tare_done` - Tare operation completed
+- `scale.tare_error` - Tare operation failed
+- `scale.initial_tare` - Initial tare operation
 
 ### Common (`common.*`)
-- `common.ready` - "Ready" / "Prêt"
-- `common.error` - "Error" / "Erreur"
+- `common.ready` - Generic ready state
+- `common.error` - Generic error state
 - `common.ok` - "OK"
-- `common.cancel` - "Cancel" / "Annuler"
-- `common.loading` - "Loading..." / "Chargement..."
+- `common.cancel` - Generic cancel action
+- `common.loading` - Generic loading state
 
 ### Grain Assistant (`grain.*`)
-- `grain.title` - "Grain Assistant" / "Assistant Malts"
-- `grain.target` - "Target: {0}g" / "Cible : {0}g"
-- `grain.remaining` - "Remaining: {0}g" / "Restant : {0}g"
-- `grain.complete` - "Complete!" / "Terminé !"
-- `grain.all_done` - "All grains weighed!" / "Tous les malts pesés !"
+- `grain.title` - Grain assistant title
+- `grain.target` - Target grain weight
+- `grain.remaining` - Remaining grain weight
+- `grain.complete` - Grain step completion message
+- `grain.all_done` - All grains weighed message
 
 ### Hop Assistant (`hop.*`)
-- `hop.title` - "Hop Assistant" / "Assistant Houblons"
-- `hop.target` - "Target: {0}g" / "Cible : {0}g"
-- `hop.remaining` - "Remaining: {0}g" / "Restant : {0}g"
-- `hop.addition_time` - "Addition: {0} min" / "Ajout : {0} min"
+- `hop.title` - Hop assistant title
+- `hop.target` - Target hop weight
+- `hop.remaining` - Remaining hop weight
+- `hop.addition_time` - Hop addition time
 
 ### Keg Filler (`keg.*`)
-- `keg.title` - "Keg Filler" / "Remplisseur de Fûts"
-- `keg.filling` - "Filling..." / "Remplissage..."
-- `keg.complete` - "Filling complete!" / "Remplissage terminé !"
-- `keg.filling_progress` - "Filled: {percent}%" / "Rempli : {percent}%"
-- `keg.valve_open` - "Valve: OPEN" / "Vanne : OUVERTE"
-- `keg.valve_closed` - "Valve: CLOSED" / "Vanne : FERMÉE"
+- `keg.title` - Keg filler title
+- `keg.filling` - Filling in progress
+- `keg.complete` - Filling complete
+- `keg.filling_progress` - Filling progress percentage
+- `keg.valve_open` - Valve open state
+- `keg.valve_closed` - Valve closed state
 
 ### Menu & Settings (`menu.*`, `settings.*`)
 - `menu.title` - "Menu"
-- `menu.scale_mode` - "Scale" / "Balance"
-- `menu.grain_assistant` - "Grain Assistant" / "Assistant Malts"
-- `menu.hop_assistant` - "Hop Assistant" / "Assistant Houblons"
-- `menu.keg_filler` - "Keg Filler" / "Remplisseur de Fûts"
-- `settings.title` - "Settings" / "Paramètres"
-- `settings.language` - "Language" / "Langue"
+- `menu.scale_mode` - Scale mode menu item
+- `menu.grain_assistant` - Grain assistant menu item
+- `menu.hop_assistant` - Hop assistant menu item
+- `menu.keg_filler` - Keg filler menu item
+- `settings.title` - Settings screen title
+- `settings.language` - Language setting label
 - `settings.wifi` - "Wi-Fi"
 
 **Complete list:** See `i18n/locales/en.py` and `i18n/locales/fr.py`
@@ -162,12 +162,12 @@ German translations for Ultimate Homebrewing Scale
 
 TRANSLATIONS = {
     'common': {
-        'ready': 'Bereit',
-        'error': 'Fehler',
+        'ready': 'Translated ready text',
+        'error': 'Translated error text',
         # ... translate all keys
     },
     'scale': {
-        'tare_ready': 'Zum Tarieren drücken',
+        'tare_ready': 'Translated tare prompt',
         # ...
     },
     # ... all groups
@@ -188,8 +188,8 @@ And in `get_available_languages()`:
 ```python
 return [
     ('en', 'English'),
-    ('fr', 'Français'),
-    ('de', 'Deutsch'),  # ← Add this
+    ('fr', 'French'),
+    ('de', 'German'),  # Add this
 ]
 ```
 
@@ -233,7 +233,7 @@ lang = i18n.get_lang()  # → 'en'
 
 # List available languages
 langs = i18n.get_available_languages()
-# → [('en', 'English'), ('fr', 'Français')]
+# → [('en', 'English'), ('fr', 'French')]
 ```
 
 ---
@@ -261,13 +261,13 @@ from i18n import I18n
 i18n = I18n('en')
 assert i18n.t('scale.tare_ready') == 'Press to tare'
 
-# Test FR
+# Test FR; expected value depends on the French locale file
 i18n = I18n('fr')
-assert i18n.t('scale.tare_ready') == 'Appuyer pour tarer'
+assert isinstance(i18n.t('scale.tare_ready'), str)
 
 # Test with arguments
-assert i18n.t('grain.target', 500) == 'Cible : 500g'
-assert i18n.t('keg.filling_progress', percent=75) == 'Rempli : 75%'
+assert isinstance(i18n.t('grain.target', 500), str)
+assert isinstance(i18n.t('keg.filling_progress', percent=75), str)
 ```
 
 ---
@@ -281,17 +281,17 @@ Translations can be longer:
 | Language | Text | Length |
 |--------|-------|----------|
 | 🇬🇧 EN | "Press to tare" | 14 chars |
-| 🇫🇷 FR | "Appuyer pour tarer" | 18 chars (+28%) |
-| 🇩🇪 DE | "Zum Tarieren drücken" | 20 chars (+43%) |
+| FR | French translation | Typically longer |
+| DE | German translation | Typically longer |
 
 **Recommendation:** Allow 30-40% extra space in labels.
 
 ### Fonts
 
 M5Stack Montserrat fonts support:
-- ✅ French accents (é, è, ê, à, ç, ô)
-- ✅ German characters (ä, ö, ü, ß)
-- ✅ Spanish characters (ñ, á, í, ó, ú, ¿, ¡)
+- French accented characters
+- German accented characters
+- Spanish accented characters
 
 ---
 

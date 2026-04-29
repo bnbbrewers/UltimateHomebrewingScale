@@ -1,199 +1,148 @@
-# Guide des Fonts sur M5Dial
+# M5Dial Font Guide
 
-## Fonts Disponibles dans UIFlow2
+## Fonts Available in UIFlow2
 
-Les fonts Montserrat disponibles dans notre firmware UIFlow2 sont :
+The Montserrat fonts available in our UIFlow2 firmware are:
 
-### ✅ Tailles Disponibles
+### Available Sizes
 - `lv.font_montserrat_14`
 - `lv.font_montserrat_16`
 - `lv.font_montserrat_24`
 
-### ✅ Font custom importée
+### Imported Custom Font
 - `S:/flash/assets/montserrat_40.bin` via `lv.binfont_create(...)`
-- Utilisée pour le poids principal dans `ui/weight_screen.py`
-- Font partielle : ne pas l'utiliser comme police générale
+- Used for the main weight value in `ui/weight_screen.py`
+- Partial font: do not use it as a general-purpose UI font
 
-### ❌ Tailles NON Disponibles
-- `lv.font_montserrat_10` ❌
-- `lv.font_montserrat_12` ❌
-- `lv.font_montserrat_18` ❌
-- `lv.font_montserrat_20` ❌
-- `lv.font_montserrat_22` ❌
-- `lv.font_montserrat_26` ❌
-- `lv.font_montserrat_28` ❌
-- `lv.font_montserrat_32` ❌
-- `lv.font_montserrat_48` ❌
-- Tailles autres que 14, 16 et 24 ❌
+### Unavailable Sizes
+- `lv.font_montserrat_10`
+- `lv.font_montserrat_12`
+- `lv.font_montserrat_18`
+- `lv.font_montserrat_20`
+- `lv.font_montserrat_22`
+- `lv.font_montserrat_26`
+- `lv.font_montserrat_28`
+- `lv.font_montserrat_32`
+- `lv.font_montserrat_48`
+- Any size other than 14, 16, and 24
 
-## Utilisation Recommandée
+## Recommended Usage
 
-### Fonction de Fallback
-
-Utilisez une fonction de fallback pour mapper les tailles non disponibles :
-
-```python
-def _get_font(preferred_size=16):
-    """Get available LVGL font with fallbacks"""
-    size_map = {
-        48: 24,  # Large -> max firmware disponible
-        32: 24,  # Medium -> 24
-        24: 24,
-        16: 16,
-        14: 14,
-        12: 14,
-        10: 14,
-    }
-    
-    mapped_size = size_map.get(preferred_size, 16)
-    font_name = f"font_montserrat_{mapped_size}"
-    
-    if hasattr(lv, font_name):
-        return getattr(lv, font_name)
-    
-    # Fallback chain
-    for size in [24, 16, 14]:
-        font_name = f"font_montserrat_{size}"
-        if hasattr(lv, font_name):
-            return getattr(lv, font_name)
-    
-    return None
-```
-
-### Utilisation
+Use the firmware fonts directly. There is no dynamic detection: we control the
+firmware and reference existing fonts explicitly.
 
 ```python
-# Dans une app
 label = m5ui.M5Label(
-    "Mon Texte",
+    "My Text",
     x=10, y=10,
-    font=_get_font(32),  # Demandera 32, obtiendra 24
-    parent=self.page
+    font=lv.font_montserrat_24,
+    parent=self.page,
 )
 ```
 
-## Ajouter des Fonts Custom (Avancé)
+## Adding Custom Fonts
 
-⚠️ **Complexe** : Nécessite de recompiler le firmware UIFlow2
+This is complex and requires rebuilding the UIFlow2 firmware.
 
-### Option 1 : LVGL Font Converter (Web)
+### Option 1: LVGL Font Converter
 
-1. **Préparer la font** :
-   - Télécharger une font TrueType (.ttf)
-   - Ex: [Google Fonts](https://fonts.google.com/)
+1. Prepare the font:
+   - Download a TrueType font (`.ttf`)
+   - Example source: Google Fonts
 
-2. **Convertir avec LVGL Online Converter** :
-   - Aller sur : https://lvgl.io/tools/fontconverter
-   - Uploader votre font .ttf
-   - Sélectionner taille (ex: 32px)
-   - Sélectionner format : **C array**
-   - Sélectionner BPP : **4 bits** (bon compromis)
-   - Sélectionner range : **Basic Latin** (ou personnalisé)
-   - Cliquer **Convert**
-   - Télécharger le fichier `.c`
+2. Convert it with the LVGL online converter:
+   - Open `https://lvgl.io/tools/fontconverter`
+   - Upload the `.ttf` file
+   - Select the target size, for example `32px`
+   - Select format: `C array`
+   - Select BPP: `4 bits`
+   - Select range: `Basic Latin` or a custom range
+   - Convert and download the `.c` file
 
-3. **Intégrer dans UIFlow2** :
-   ```c
-   // Dans le firmware UIFlow2
-   #include "my_font_32.c"
-   
-   // Enregistrer dans LVGL
-   lv_font_t *my_font_32 = &lv_font_my_font_32;
-   ```
+3. Integrate it into UIFlow2:
 
-4. **Recompiler UIFlow2** :
-   - Compiler le firmware modifié
-   - Flasher sur M5Dial
-   - ⚠️ Processus complexe, documentation M5Stack requise
+```c
+// In the UIFlow2 firmware
+#include "my_font_32.c"
 
-### Option 2 : Fonts Binary (MicroPython)
+// Register it in LVGL
+lv_font_t *my_font_32 = &lv_font_my_font_32;
+```
 
-**Supporté dans ce projet pour un cas ciblé** : `ui/weight_screen.py` charge
-`S:/flash/assets/montserrat_40.bin` avec `lv.binfont_create(...)`.
+4. Rebuild and flash the modified firmware.
 
-Cette font est partielle et réservée au poids principal. Pour les libellés,
-titres et statuts, rester sur les fonts firmware `14`, `16` et `24`.
+### Option 2: Binary Fonts from MicroPython
 
-### Option 3 : Utiliser des Images
+This project supports one targeted binary font use case: `ui/weight_screen.py`
+loads `S:/flash/assets/montserrat_40.bin` with `lv.binfont_create(...)`.
 
-Pour des textes très grands, créer des images PNG :
+That font is partial and reserved for the main weight value. For labels, titles,
+and status text, use the firmware fonts `14`, `16`, and `24`.
+
+### Option 3: Images
+
+For very large text, create PNG images:
 
 ```python
-# Créer des chiffres en images (0-9)
+# Create digit images (0-9)
 images = {
-    '0': '/flash/assets/fonts/digit_0.png',
-    '1': '/flash/assets/fonts/digit_1.png',
+    "0": "/flash/assets/fonts/digit_0.png",
+    "1": "/flash/assets/fonts/digit_1.png",
     # ...
 }
 
-# Afficher
+# Display them
 for char in str(weight):
     img = m5ui.M5Image(images[char], x=x, y=y, parent=page)
-    x += 30  # Espacement
+    x += 30
 ```
 
-**Avantages** :
-- ✅ Très grande taille possible
-- ✅ Styles personnalisés (couleurs, effets)
+Advantages:
+- Very large sizes are possible
+- Fully custom styling
 
-**Inconvénients** :
-- ❌ Mémoire (1 image par caractère)
-- ❌ Complexe à animer
+Drawbacks:
+- Higher memory usage
+- More work to animate
 
-## Recommandations
+## Project Recommendations
 
-### Pour l'Ultimate Homebrewing Scale
+1. Use the firmware fonts directly: `14`, `16`, and `24`.
+2. Use `24` explicitly for larger standard text.
+3. Do not rebuild the firmware unless strictly needed.
+4. Use the imported partial 40px font only for the main weight value.
+5. For very large non-weight text, consider images or multiple labels.
 
-1. **Utiliser les fonts firmware disponibles** (14, 16, 24) avec fallback ✅
-2. **Mapper 32+ → 24** pour les textes standards ✅
-3. **Ne pas recompiler le firmware** (trop complexe) ❌
-4. **Pour le poids principal** : utiliser la font custom partielle 40 déjà importée
-5. **Alternative pour très gros texte hors poids** : Utiliser plusieurs labels ou images
+## Project Usage
 
-### Exemple de Mapping dans le Projet
+The project references these fonts directly:
+- `lv.font_montserrat_14`
+- `lv.font_montserrat_16`
+- `lv.font_montserrat_24`
+- `S:/flash/assets/montserrat_40.bin` in `ui/weight_screen.py`
 
-Le projet utilise déjà cette stratégie dans :
-- `apps/scale_app.py` → `_get_font()`
-- `ui/weight_screen.py` → fallback intégré
+## Font Usage Table
 
-### Tailles Utilisées
+| Usage | Requested Size | Actual Size | Font |
+|-------|----------------|-------------|------|
+| Title | 16 | 16 | `lv.font_montserrat_16` |
+| Main weight | 40 | partial 40 | `S:/flash/assets/montserrat_40.bin` |
+| Large standard text | 24 | 24 | `lv.font_montserrat_24` |
+| Status | 14 | 14 | `lv.font_montserrat_14` |
+| Small text | 14 | 14 | `lv.font_montserrat_14` |
 
-| Usage | Taille Demandée | Taille Obtenue | Font |
-|-------|-----------------|----------------|------|
-| Titre | 16 | 16 | `lv.font_montserrat_16` |
-| Poids principal | 40 | 40 partielle | `S:/flash/assets/montserrat_40.bin` |
-| Grand texte standard | 32 | 24 | `lv.font_montserrat_24` |
-| Statut | 14 | 14 | `lv.font_montserrat_14` |
-| Petit texte | 12 | 14 | `lv.font_montserrat_14` |
+## Useful Links
 
-## Test des Fonts Disponibles
+- LVGL Font Converter: `https://lvgl.io/tools/fontconverter`
+- LVGL Fonts documentation: `https://docs.lvgl.io/master/overview/font.html`
+- Google Fonts: `https://fonts.google.com/`
+- UIFlow2 documentation: `https://docs.m5stack.com/`
 
-Script pour lister toutes les fonts disponibles :
+## Summary
 
-```python
-import lvgl as lv
-
-# Liste toutes les fonts Montserrat
-for size in range(8, 60, 2):
-    font_name = f"font_montserrat_{size}"
-    if hasattr(lv, font_name):
-        print(f"✅ {font_name}")
-    else:
-        print(f"❌ {font_name}")
-```
-
-## Liens Utiles
-
-- **LVGL Font Converter** : https://lvgl.io/tools/fontconverter
-- **LVGL Docs Fonts** : https://docs.lvgl.io/master/overview/font.html
-- **Google Fonts** : https://fonts.google.com/
-- **UIFlow2 Docs** : https://docs.m5stack.com/
-
-## Résumé
-
-Pour Ultimate Homebrewing Scale :
-- ✅ **Utiliser fonts firmware 14, 16 et 24** avec fallback
-- ✅ **Utiliser la font custom partielle 40 uniquement pour le poids principal**
-- ✅ **Mapper 32+ vers 24** pour les textes standards
-- ❌ **Ne pas essayer d'ajouter des fonts custom générales**
-- 💡 **Si vraiment nécessaire** : Utiliser images pour gros textes
+For Ultimate Homebrewing Scale:
+- Use firmware fonts `14`, `16`, and `24` directly.
+- Use the partial custom 40px font only for the main weight value.
+- Use `24` for large standard text.
+- Do not add general-purpose custom fonts unless the firmware is rebuilt.
+- Use images for very large text when needed.

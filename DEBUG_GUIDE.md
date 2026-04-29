@@ -2,66 +2,67 @@
 
 ## Configuration
 
-### Activer/Désactiver les Traces
+### Enable or Disable Debug Traces
 
-Dans `config.py` :
+In `config.py`:
 
 ```python
 # Debug mode (set to True to enable debug prints)
-DEBUG = False  # Par défaut : pas de traces
-DEBUG = True   # Activer les traces
+DEBUG = False  # Default: no traces
+DEBUG = True   # Enable traces
 ```
 
-### Comportement
+### Behavior
 
-**Avec `DEBUG = False`** (défaut) :
-- ✅ Aucune trace print dans la console
-- ✅ Interface fluide sans ralentissement
-- ✅ Seules les erreurs fatales s'affichent
+With `DEBUG = False` by default:
+- No console debug prints
+- Smooth UI with no debug slowdown
+- Only fatal errors are displayed
 
-**Avec `DEBUG = True`** :
-- 📋 Traces de démarrage
-- 📋 Événements du launcher
-- 📋 Lancement des apps
-- 📋 Détection appui long
-- 📋 Calibration de la balance
-- 📋 Erreurs détaillées
+With `DEBUG = True`:
+- Startup traces
+- Launcher events
+- App startup traces
+- Long-press detection
+- Scale calibration traces
+- Detailed errors
 
-## Fichiers Modifiés
+## Modified Files
 
-Tous les `print()` sont conditionnés par `DEBUG` :
+All `print()` calls are gated by `DEBUG`:
 
-- `main.py` — Initialisation système
-- `apps/launcher_app.py` — Logique de navigation launcher
-- `ui/launcher_screen.py` — UI du launcher
-- `apps/base_app.py` — Détection appui long
-- `apps/scale_app.py` — Calibration et pesée
-- Autres apps (grain, hop, keg, settings)
+- `main.py` - System initialization
+- `apps/launcher_app.py` - Launcher navigation logic
+- `ui/launcher_screen.py` - Launcher UI
+- `apps/base_app.py` - Long-press detection
+- `apps/scale_app.py` - Calibration and weighing
+- Other apps: grain, hop, keg, settings
 
-## Appui Long pour Retour au Launcher
+## Long Press to Return to the Launcher
 
-### Comment Utiliser
+### How to Use
 
-**Dans n'importe quelle app** :
-1. Maintenez le **bouton central** enfoncé
-2. Attendez **3 secondes**
-3. L'app se ferme et retourne au launcher
+From any app:
 
-### Implémentation
+1. Hold the center button.
+2. Wait 3 seconds.
+3. The app closes and returns to the launcher.
 
-La détection est gérée dans `BaseApp.check_return_to_launcher()` :
+### Implementation
+
+Detection is handled in `BaseApp.check_return_to_launcher()`:
 
 ```python
 # Long press duration
-LONG_PRESS_DURATION = 3000  # 3 secondes (ms)
+LONG_PRESS_DURATION = 3000  # 3 seconds in ms
 
-# Automatiquement appelé dans la boucle principale
-# de toutes les apps héritant de BaseApp
+# Automatically called in the main loop
+# of every app inheriting from BaseApp
 ```
 
-### Apps Concernées
+### Covered Apps
 
-✅ Toutes les apps héritant de `BaseApp` :
+All apps inheriting from `BaseApp`:
 - Scale App
 - Grain Assistant
 - Hop Assistant
@@ -70,38 +71,39 @@ LONG_PRESS_DURATION = 3000  # 3 secondes (ms)
 
 ### Debug Long Press
 
-Avec `DEBUG = True`, un message s'affiche :
-```
+With `DEBUG = True`, this message is printed:
+
+```text
 Long press detected - returning to launcher
 ```
 
-## Déploiement
+## Deployment
 
-Uploadez ces fichiers modifiés sur le M5Dial :
+Upload these modified files to the M5Dial:
 
-- `config.py` (avec DEBUG = False/True)
+- `config.py` with `DEBUG = False` or `DEBUG = True`
 - `main.py`
 - `apps/launcher_app.py`
 - `ui/launcher_screen.py`
 - `apps/base_app.py`
 - `apps/scale_app.py`
 
-## Test
+## Manual Check
 
 ```python
-# Sur M5Dial
-exec(open('main.py').read())
+# On the M5Dial
+exec(open("main.py").read())
 
-# 1. Le launcher s'affiche (sans traces si DEBUG=False)
-# 2. Sélectionnez Scale
-# 3. Maintenez le bouton central 3s
-# 4. Retour automatique au launcher
+# 1. The launcher is displayed, with no traces if DEBUG=False.
+# 2. Select Scale.
+# 3. Hold the center button for 3 seconds.
+# 4. The app returns to the launcher automatically.
 ```
 
 ## Performance
 
-**Impact Mémoire** : Aucun (les strings ne sont pas créées si DEBUG=False)
+Memory impact: none when `DEBUG = False`, because debug strings are not created.
 
-**Fluidité** : Améliorée sans traces debug
+Smoothness: improved when debug traces are disabled.
 
-**Latence Appui Long** : < 50ms de détection
+Long-press latency: less than 50 ms.
