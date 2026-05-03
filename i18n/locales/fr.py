@@ -83,7 +83,7 @@ TRANSLATIONS = {
         'title': 'Mise a jour',
         'ready': 'Preparation...',
         'error': 'Erreur',
-        'done_restart': 'installation terminée, OK pour redémarrer',
+        'done_restart': 'installation terminee, OK pour redemarrer',
     },
 
     'launcher': {
