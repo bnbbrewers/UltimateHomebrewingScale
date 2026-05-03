@@ -79,6 +79,13 @@ TRANSLATIONS = {
         'portal_error': 'Erreur portail, verifier le reseau',
     },
 
+    'updater': {
+        'title': 'Mise a jour',
+        'ready': 'Preparation...',
+        'error': 'Erreur',
+        'done_restart': 'installation terminée, OK pour redémarrer',
+    },
+
     'launcher': {
         'scale': 'Balance',
         'malt': 'Malt',
@@ -95,6 +102,9 @@ TRANSLATIONS = {
         'save_reboot': 'Enregistrer et redemarrer',
         'saved_rebooting': 'Enregistre. Redemarrage...',
         'saved_manual_reboot': 'Enregistre. Redemarrez manuellement.',
+        'update_app': 'UPDATE APP',
+        'update_rebooting': 'Mise a jour demandee. Redemarrage...',
+        'update_request_failed': 'Demande de mise a jour echouee : {0}',
         'forbidden': 'Interdit',
         'not_found': 'Introuvable',
         'internal_error': 'Erreur interne',
@@ -107,6 +117,7 @@ TRANSLATIONS = {
             'BREWFATHER_USER_ID': 'Identifiant Brewfather',
             'BREWFATHER_API_KEY': 'Cle API Brewfather',
             'BREWING_SOFTWARE': 'Logiciel de brassage',
+            'UPDATE_BRANCH': 'Branche de mise a jour',
         },
         'choices': {
             'language_en': 'Anglais',

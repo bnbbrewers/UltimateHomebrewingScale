@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 English translations for Ultimate Homebrewing Scale
 """
@@ -78,6 +79,13 @@ TRANSLATIONS = {
         'portal_error': 'Portal error, check network',
     },
 
+    'updater': {
+        'title': 'Updater',
+        'ready': 'Preparing...',
+        'error': 'Error',
+        'done_restart': 'installation terminée, OK pour redémarrer',
+    },
+
     'launcher': {
         'scale': 'Scale',
         'malt': 'Malt',
@@ -94,6 +102,9 @@ TRANSLATIONS = {
         'save_reboot': 'Save and reboot',
         'saved_rebooting': 'Saved. Rebooting...',
         'saved_manual_reboot': 'Saved. Please reboot manually.',
+        'update_app': 'UPDATE APP',
+        'update_rebooting': 'Update requested. Rebooting...',
+        'update_request_failed': 'Update request failed: {0}',
         'forbidden': 'Forbidden',
         'not_found': 'Not found',
         'internal_error': 'Internal error',
@@ -106,6 +117,7 @@ TRANSLATIONS = {
             'BREWFATHER_USER_ID': 'Brewfather user id',
             'BREWFATHER_API_KEY': 'Brewfather API key',
             'BREWING_SOFTWARE': 'Brewing software',
+            'UPDATE_BRANCH': 'Update branch',
         },
         'choices': {
             'language_en': 'English',
