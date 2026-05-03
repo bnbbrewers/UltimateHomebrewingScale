@@ -10,6 +10,8 @@ _WIFI_KEYS = ("WIFI_SSID", "WIFI_PASSWORD")
 _NVS_NAMESPACE = "uiflow"
 _NVS_WIFI_SSID_KEY = "ssid0"
 _NVS_WIFI_PASSWORD_KEY = "pswd0"
+_APP_NVS_NAMESPACE = "uhs"
+_NVS_UPDATE_KEY = "update"
 
 
 def _nvs_get_text(nvs, key, max_len=128):
@@ -46,6 +48,44 @@ def _nvs_set_text(nvs, key, value):
         nvs.set_blob(key, text)
         return
     raise OSError("NVS string write API unavailable")
+
+
+def _nvs_get_int(nvs, key):
+    if hasattr(nvs, "get_i32"):
+        try:
+            return int(nvs.get_i32(key))
+        except Exception:
+            pass
+
+    if hasattr(nvs, "get_blob"):
+        try:
+            buf = bytearray(8)
+            size = nvs.get_blob(key, buf)
+            if isinstance(size, int) and size > 0:
+                raw = bytes(buf[:size])
+            else:
+                raw = bytes(buf).split(b"\x00", 1)[0]
+            if not raw:
+                return 0
+            try:
+                return int(raw.decode("utf-8"))
+            except Exception:
+                return int(raw[0])
+        except Exception:
+            pass
+
+    return 0
+
+
+def _nvs_set_int(nvs, key, value):
+    ivalue = int(value)
+    if hasattr(nvs, "set_i32"):
+        nvs.set_i32(key, ivalue)
+        return
+    if hasattr(nvs, "set_blob"):
+        nvs.set_blob(key, str(ivalue))
+        return
+    raise OSError("NVS integer write API unavailable")
 
 
 def resolve_config_path():
@@ -102,6 +142,28 @@ def _write_wifi_to_nvs(ssid, password):
         nvs = esp32.NVS(_NVS_NAMESPACE)
         _nvs_set_text(nvs, _NVS_WIFI_SSID_KEY, ssid)
         _nvs_set_text(nvs, _NVS_WIFI_PASSWORD_KEY, password)
+        nvs.commit()
+        return True, ""
+    except Exception as e:
+        return False, str(e)
+
+
+def is_update_requested():
+    try:
+        import esp32
+
+        nvs = esp32.NVS(_APP_NVS_NAMESPACE)
+        return _nvs_get_int(nvs, _NVS_UPDATE_KEY) == 1
+    except Exception:
+        return False
+
+
+def set_update_requested(requested):
+    try:
+        import esp32
+
+        nvs = esp32.NVS(_APP_NVS_NAMESPACE)
+        _nvs_set_int(nvs, _NVS_UPDATE_KEY, 1 if requested else 0)
         nvs.commit()
         return True, ""
     except Exception as e:

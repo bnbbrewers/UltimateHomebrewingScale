@@ -19,6 +19,12 @@ EDITABLE_KEYS = {
         "default": False,
         "label": "Debug mode",
     },
+    "UPDATE_BRANCH": {
+        "type": "str",
+        "max_len": 64,
+        "default": "main",
+        "label": "Update branch",
+    },
     "WIFI_SSID": {
         "type": "str",
         "max_len": 64,
@@ -59,5 +65,6 @@ EDITABLE_ORDER = [
     "BREWFATHER_API_KEY",
     "GRAIN_WEIGHT_TOLERANCE",
     "DEBUG",
+    "UPDATE_BRANCH",
     "BREWING_SOFTWARE",
 ]

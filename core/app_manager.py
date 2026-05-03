@@ -5,11 +5,6 @@ App manager with persistent one-time app instances.
 import gc
 import os
 
-from apps.launcher_app import LauncherApp
-from apps.scale_app import ScaleApp
-from apps.malt_app import GrainAssistantApp
-from apps.hop_app import HopAssistantApp
-from apps.keg_filler_app import KegFillerApp
 from memory_debug import snapshot as mem_snapshot
 
 try:
@@ -47,15 +42,23 @@ class AppManager:
         mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._apis = apis
         self._apps = {}
-        self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
+        if initial_app_id == "updater_app":
+            self._active_app_id = initial_app_id
+            self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
+            mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
+            self._apps[self._active_app_id].on_enter()
+            mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
+            return
+
+        self._create_launcher(screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_launcher", enabled=_DEBUG, collect=True)
-        self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
+        self._create_scale(screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_scale", enabled=_DEBUG, collect=True)
-        self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        self._create_malt(screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_malt", enabled=_DEBUG, collect=True)
-        self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        self._create_hop(screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_hop", enabled=_DEBUG, collect=True)
-        self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
+        self._create_keg(screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_keg", enabled=_DEBUG, collect=True)
         self._active_app_id = _initial_app_id(initial_app_id=initial_app_id)
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
@@ -65,6 +68,21 @@ class AppManager:
 
     def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
         if app_id in self._apps:
+            return True
+        if app_id == "launcher":
+            self._create_launcher(screen_manager, hardware, apis, i18n)
+            return True
+        if app_id == "scale_app":
+            self._create_scale(screen_manager, hardware, apis, i18n)
+            return True
+        if app_id == "malt_app":
+            self._create_malt(screen_manager, hardware, apis, i18n)
+            return True
+        if app_id == "hop_app":
+            self._create_hop(screen_manager, hardware, apis, i18n)
+            return True
+        if app_id == "keg_filler_app":
+            self._create_keg(screen_manager, hardware, apis, i18n)
             return True
         if app_id == "settings_app":
             from apps.settings_app import SettingsApp
@@ -88,7 +106,43 @@ class AppManager:
             )
             mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
             return True
+        if app_id == "updater_app":
+            from apps.updater_app import UpdaterApp
+
+            self._apps[app_id] = UpdaterApp(
+                screen_manager,
+                hardware,
+                apis,
+                i18n=i18n,
+            )
+            mem_snapshot("app.lazy.updater_created", enabled=_DEBUG, collect=True)
+            return True
         return False
+
+    def _create_launcher(self, screen_manager, hardware, apis, i18n):
+        from apps.launcher_app import LauncherApp
+
+        self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
+
+    def _create_scale(self, screen_manager, hardware, apis, i18n):
+        from apps.scale_app import ScaleApp
+
+        self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
+
+    def _create_malt(self, screen_manager, hardware, apis, i18n):
+        from apps.malt_app import GrainAssistantApp
+
+        self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+
+    def _create_hop(self, screen_manager, hardware, apis, i18n):
+        from apps.hop_app import HopAssistantApp
+
+        self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+
+    def _create_keg(self, screen_manager, hardware, apis, i18n):
+        from apps.keg_filler_app import KegFillerApp
+
+        self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
 
     def _switch_to(self, app_id):
         if not self._ensure_app(

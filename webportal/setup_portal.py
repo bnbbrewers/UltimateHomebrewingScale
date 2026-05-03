@@ -178,6 +178,10 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
         p.append("</p>")
 
     p.append("<p><button type='submit'>{}</button></p></form>".format(_html_escape(i18n.t("portal.save_reboot"))))
+    p.append("<form method='post' action='/update'>")
+    if token:
+        p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
+    p.append("<p><button type='submit'>{}</button></p></form>".format(_html_escape(i18n.t("portal.update_app"))))
     p.append("</body></html>")
     return "".join(p)
 
@@ -556,6 +560,33 @@ class SetupPortalService:
                 i18n=self._i18n,
             )
             self._send(client, 400, "text/html; charset=utf-8", html)
+            return
+
+        if method == "POST" and path == "/update":
+            form = parse_form_urlencoded(body)
+            if not self._token_ok(query, form):
+                self._send(client, 403, body=_portal_i18n(form, i18n=self._i18n).t("portal.forbidden"))
+                return
+
+            i18n = _portal_i18n(i18n=self._i18n)
+            ok, error = config_store.set_update_requested(True)
+            if not ok:
+                self._send(
+                    client,
+                    500,
+                    "text/html; charset=utf-8",
+                    i18n.t("portal.update_request_failed", error),
+                )
+                return
+
+            self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.update_rebooting"))
+            try:
+                import machine
+
+                time.sleep_ms(200)
+                machine.reset()
+            except Exception:
+                self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.saved_manual_reboot"))
             return
 
         self._send(client, 404, body=_portal_i18n(i18n=self._i18n).t("portal.not_found"))

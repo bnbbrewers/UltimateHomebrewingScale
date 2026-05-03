@@ -68,6 +68,15 @@ def _load_i18n():
         return None
 
 
+def _update_requested():
+    try:
+        from webportal import config_store
+
+        return config_store.is_update_requested()
+    except Exception:
+        return False
+
+
 def request_stop():
     global _RUNNING
     _RUNNING = False
@@ -132,12 +141,17 @@ def main():
 
     screen_manager = ScreenManager(i18n=i18n_instance)
     mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
+    initial_app_id = None
+    if _update_requested():
+        initial_app_id = "updater_app"
+    elif _CONFIG_CREATED:
+        initial_app_id = "settings_app"
     app_manager = AppManager(
         screen_manager=screen_manager,
         hardware=hardware,
         apis=apis,
         i18n=i18n_instance,
-        initial_app_id="settings_app" if _CONFIG_CREATED else None,
+        initial_app_id=initial_app_id,
     )
     mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)

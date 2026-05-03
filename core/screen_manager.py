@@ -51,6 +51,12 @@ class ScreenManager:
 
             self._screens[screen_id] = SetupQrScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.setup_qr", enabled=_DEBUG, collect=True)
+            return
+        if screen_id == screen_ids.UPDATER:
+            from ui.updater_screen import UpdaterScreen
+
+            self._screens[screen_id] = UpdaterScreen(i18n=self._i18n)
+            mem_snapshot("screen.lazy.updater", enabled=_DEBUG, collect=True)
 
     def get(self, screen_id):
         self._create_lazy_screen(screen_id)

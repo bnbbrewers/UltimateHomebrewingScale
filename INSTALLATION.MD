@@ -23,35 +23,24 @@ esptool.py --chip esp32s3 --port COM4 --baud 1500000 write_flash 0x0 firmware/fi
   - `WIFI_PASSWORD`
 - `LANGUAGE` is optional (`en` or `fr`).
 
-## 3) Open UIFlow2 and upload the installer
+## 3) Build/upload the application files
 
-- Open **UIFlow2**.
-- Create/open a project for your M5Dial.
-- Copy the repository’s `install.py` content into the device (UIFlow2 file editor).
-- Save it on the device as `install.py` (at the filesystem root).
+The custom firmware image is expected to include the application files. The old
+standalone `install.py` bootstrap script is no longer part of the project.
 
-## 4) Install the project from GitHub
+## 4) Update the project from GitHub
 
-Open the UIFlow2 **console / REPL** and run:
+Use the hidden updater app (`apps/updater_app.py`) when the device needs to pull
+the latest files from GitHub. The updater:
 
-```python
-import install
-install.run(branch="main")
-```
-
-Notes:
-- The installer connects to Wi‑Fi using the same mechanism as `devices/wifi.py`:
+- connects to Wi‑Fi using the same mechanism as `devices/wifi.py`:
   1. UIFlow NVS (`uiflow:ssid0/pswd0`)
   2. fallback `config.py` (`WIFI_SSID` / `WIFI_PASSWORD`)
-- Existing files are **overwritten**.
-- The installer skips `*.md`, `.gitignore`, `firmware/`, `examples/` directories, and files `*.example` / names containing `example`.
-
-To install another branch:
-
-```python
-import install
-install.run(branch="your-branch-name")
-```
+- overwrites existing application files
+- skips `*.md`, `.gitignore`, `firmware/`, `examples/` directories, and files
+  `*.example` / names containing `example`
+- reads the branch from `UPDATE_BRANCH` in `config.py` (`main` by default)
+- shows progress on screen and waits for OK before rebooting
 
 ## 5) Calibrate the scale
 

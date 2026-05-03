@@ -19,3 +19,5 @@ GRAIN_WEIGHT_TOLERANCE = 10
 # Debug mode
 DEBUG = False
 
+# Git branch used by the hidden updater app
+UPDATE_BRANCH = "main"
