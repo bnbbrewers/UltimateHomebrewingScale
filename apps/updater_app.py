@@ -52,6 +52,7 @@ class UpdaterApp(BaseApp):
                 branch=self._update_branch(),
                 progress_callback=self._on_progress,
                 wifi_device=self.hardware.wifi,
+                i18n=self.i18n,
             )
             self._waiting_restart = True
             self._screen.show_done(self._text("updater.done_restart", "updater.done_restart"))

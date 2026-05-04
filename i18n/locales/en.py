@@ -84,6 +84,14 @@ TRANSLATIONS = {
         'ready': 'Preparing...',
         'error': 'Error',
         'done_restart': 'Installation complete, OK to restart',
+        'scan_repo': 'Scanning repository',
+        'wifi_connecting': 'Connecting Wi-Fi',
+        'search_files': 'Searching files',
+        'downloading': 'Downloading',
+        'incomplete': 'Update incomplete',
+        'errors_count': '{0} error(s)',
+        'install_done': 'Installation complete',
+        'files_count': '{0} file(s)',
     },
 
     'launcher': {
