@@ -11,7 +11,6 @@ from ui import screen_ids
 
 
 UPDATE_COLOR = 0x1565C0
-DONE_MESSAGE = "installation terminée, OK pour redémarrer"
 
 
 class UpdaterApp(BaseApp):
@@ -55,7 +54,7 @@ class UpdaterApp(BaseApp):
                 wifi_device=self.hardware.wifi,
             )
             self._waiting_restart = True
-            self._screen.show_done(self._text("updater.done_restart", DONE_MESSAGE))
+            self._screen.show_done(self._text("updater.done_restart", "updater.done_restart"))
             self._flush_lvgl()
         except Exception as e:
             self._failed = True
