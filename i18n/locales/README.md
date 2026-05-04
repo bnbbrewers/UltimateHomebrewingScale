@@ -9,7 +9,7 @@ Each language has its own Python file (e.g., `en.py`, `fr.py`) containing a `TRA
 ## Available Languages
 
 - **en.py** - English (default)
-- **fr.py** - Français (French)
+- **fr.py** - French
 
 ## Adding a New Language
 
@@ -26,8 +26,8 @@ German translations for Ultimate Homebrewing Scale
 
 TRANSLATIONS = {
     'common': {
-        'ready': 'Bereit',
-        'error': 'Fehler',
+        'ready': 'Translated ready text',
+        'error': 'Translated error text',
         # ... etc
     },
     # ... rest of translations
@@ -42,7 +42,7 @@ elif self.lang == 'de':
     from locales.de import TRANSLATIONS
 
 # In the get_available_languages() method, add:
-('de', 'Deutsch'),
+('de', 'German'),
 ```
 
 4. **Test** your translations by setting `LANGUAGE = 'de'` in `config.py`

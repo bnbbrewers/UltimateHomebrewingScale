@@ -1,135 +1,137 @@
+# -*- coding: utf-8 -*-
 """
 English translations for Ultimate Homebrewing Scale
 """
 
 TRANSLATIONS = {
-    # Common strings
     'common': {
-        'ready': 'Ready',
-        'error': 'Error',
         'ok': 'OK',
-        'cancel': 'Cancel',
-        'yes': 'Yes',
-        'no': 'No',
-        'back': 'Back',
-        'next': 'Next',
-        'loading': 'Loading...',
-        'connecting': 'Connecting...',
-        'connection_error': 'Connection error',
     },
-    
-    # Scale mode
+
     'scale': {
         'title': 'Scale',
         'tare_ready': 'Press to tare',
         'taring': 'Taring...',
         'tare_done': 'Tare done!',
         'tare_error': 'Tare error',
-        'initial_tare': 'Initial tare...',
-        'weight': 'Weight',
-        'unit_g': 'g',
-        'unit_kg': 'kg',
     },
-    
-    # Grain Assistant
+
+    'scale_calibration': {
+        'intro_message_line1': 'Connect your scale',
+        'intro_message_line2': 'OK to continue',
+        'title': 'Scale Calibration',
+        'step': 'Step {0}/{1} - {2}g',
+        'adjust_target_hint_line1': 'Turn',
+        'adjust_target_hint_line2': 'to adjust target weight',
+        'start_button': 'Start',
+        'target': '{0} g',
+        'measuring_label': 'Measuring',
+        'measuring_progress': '{0}/{1}s',
+        'average': 'Avg: {0}',
+        'complete': 'Calibration complete',
+        'data_saved': 'Data saved',
+        'complete_saved_line1': 'Calibration complete!',
+        'complete_saved_line2': 'Data saved',
+        'restart_after_success': 'Calibration complete, OK to restart',
+        'restart_after_save_error': 'Calibration file save error',
+        'done': 'Done',
+        'error': 'Error',
+        'scale_not_found': 'Scale not found',
+        'save_error': 'Save error: {0}',
+    },
+
+    'recipe': {
+        'select_recipe': 'Select a recipe',
+        'no_recipe': 'No recipe found',
+        'loading_recipes': 'Loading recipes...',
+    },
+
     'grain': {
-        'title': 'Grain Assistant',
-        'select_batch': 'Select batch',
-        'no_batches': 'No batches found',
-        'loading_batches': 'Loading batches...',
-        'current_grain': 'Current grain',
-        'target': 'Target: {0}g',
-        'remaining': 'Remaining: {0}g',
-        'complete': 'Complete!',
-        'next_grain': 'Next grain',
-        'all_done': 'All grains weighed!',
-        'grain_number': 'Grain {0}/{1}',
+        'title': 'Grain',
+        'select_malt': 'Select a malt',
+        'no_malts': 'No malts found',
+        'loading_grains': 'Loading grains...',
+        'all_malts_done': 'All malts weighed!',
     },
-    
-    # Hop Assistant
+
     'hop': {
-        'title': 'Hop Assistant',
-        'select_batch': 'Select batch',
-        'no_batches': 'No batches found',
-        'loading_batches': 'Loading batches...',
-        'current_hop': 'Current hop',
-        'target': 'Target: {0}g',
-        'remaining': 'Remaining: {0}g',
-        'complete': 'Complete!',
-        'next_hop': 'Next hop',
-        'all_done': 'All hops weighed!',
-        'hop_number': 'Hop {0}/{1}',
-        'addition_time': 'Addition: {0} min',
+        'title': 'Hop',
+        'prepare_recipients': 'Prepare {0} container(s) for hop additions',
+        'no_hops': 'No hops found',
+        'loading_hops': 'Loading hops...',
+        'step_line': '{0} ({1}g)',
+        'select_hop': 'Select a hop',
+        'hop_weighed': '{0} weighed',
+        'all_hops_weighed': 'All hops weighed!',
     },
-    
-    # Keg Filler
+
     'keg': {
         'title': 'Keg Filler',
-        'select_keg': 'Select keg',
-        'no_kegs': 'No kegs saved',
-        'add_keg': 'Add new keg',
-        'keg_name': 'Keg name',
-        'empty_weight': 'Empty weight: {0}g',
-        'current_weight': 'Current: {0}g',
-        'target_weight': 'Target: {0}g',
-        'filling': 'Filling...',
-        'filling_progress': 'Filled: {percent}%',
-        'complete': 'Filling complete!',
-        'stopped': 'Filling stopped',
-        'connect_lines': 'Connect liquid and spunding',
-        'press_to_start': 'Press to start',
-        'press_to_stop': 'Press to stop',
-        'valve_open': 'Valve: OPEN',
-        'valve_closed': 'Valve: CLOSED',
     },
-    
-    # Menu / Settings
-    'menu': {
-        'title': 'Menu',
-        'scale_mode': 'Scale',
-        'grain_assistant': 'Grain Assistant',
-        'hop_assistant': 'Hop Assistant',
-        'keg_filler': 'Keg Filler',
-        'settings': 'Settings',
-        'calibration': 'Calibration',
-        'about': 'About',
-    },
-    
+
     'settings': {
         'title': 'Settings',
         'language': 'Language',
-        'units': 'Units',
-        'wifi': 'Wi-Fi',
-        'wifi_connected': 'Connected',
-        'wifi_disconnected': 'Disconnected',
-        'brewfather': 'Brewfather API',
-        'brewfather_configured': 'Configured',
-        'brewfather_not_configured': 'Not configured',
-        'display': 'Display',
-        'brightness': 'Brightness',
+        'calibration': 'Calibration',
         'about': 'About',
+        'portal_connect_sta': 'Scan the QR code to open setup',
+        'portal_connect_ap': 'Join the Dial Wi-Fi, then scan the QR code',
+        'portal_error': 'Portal error, check network',
     },
-    
-    # Calibration
-    'calibration': {
-        'title': 'Calibration',
-        'start': 'Start calibration',
-        'instructions': 'Follow instructions',
-        'place_weight': 'Place {0}g weight',
-        'remove_weight': 'Remove all weight',
-        'press_when_ready': 'Press when ready',
-        'reading': 'Reading...',
-        'complete': 'Calibration complete!',
-        'error': 'Calibration error',
-        'save': 'Save calibration',
+
+    'updater': {
+        'title': 'Updater',
+        'ready': 'Preparing...',
+        'error': 'Error',
+        'done_restart': 'installation terminée, OK pour redémarrer',
     },
-    
-    # About
-    'about': {
-        'title': 'About',
-        'app_name': 'Ultimate Homebrewing Scale',
-        'version': 'Version',
-        'author': 'Open Source Project',
-        'website': 'github.com/...',
+
+    'launcher': {
+        'scale': 'Scale',
+        'malt': 'Malt',
+        'hop': 'Hop',
+        'keg': 'Keg',
+        'settings': 'Settings',
+    },
+
+    'portal': {
+        'title': 'Ultimate Homebrewing Scale setup',
+        'ap': 'AP',
+        'saved': 'Saved',
+        'invalid_fields': 'Invalid fields',
+        'save_reboot': 'Save and reboot',
+        'saved_rebooting': 'Saved. Rebooting...',
+        'saved_manual_reboot': 'Saved. Please reboot manually.',
+        'update_app': 'UPDATE APP',
+        'update_rebooting': 'Update requested. Rebooting...',
+        'update_request_failed': 'Update request failed: {0}',
+        'forbidden': 'Forbidden',
+        'not_found': 'Not found',
+        'internal_error': 'Internal error',
+        'fields': {
+            'LANGUAGE': 'Language',
+            'GRAIN_WEIGHT_TOLERANCE': 'Grain tolerance (g)',
+            'DEBUG': 'Debug mode',
+            'WIFI_SSID': 'Wi-Fi SSID',
+            'WIFI_PASSWORD': 'Wi-Fi password',
+            'BREWFATHER_USER_ID': 'Brewfather user id',
+            'BREWFATHER_API_KEY': 'Brewfather API key',
+            'BREWING_SOFTWARE': 'Brewing software',
+            'UPDATE_BRANCH': 'Update branch',
+        },
+        'choices': {
+            'language_en': 'English',
+            'language_fr': 'French',
+        },
+        'validation': {
+            'invalid_boolean': 'invalid boolean',
+            'invalid_integer': 'invalid integer',
+            'below_minimum': 'below minimum',
+            'above_maximum': 'above maximum',
+            'invalid_value': 'invalid value',
+            'too_long': 'too long',
+            'unsupported_type': 'unsupported type',
+            'nvs_write_failed': 'NVS write failed: {0}',
+        },
     },
 }
