@@ -84,6 +84,14 @@ TRANSLATIONS = {
         'ready': 'Preparation...',
         'error': 'Erreur',
         'done_restart': 'installation terminee, OK pour redemarrer',
+        'scan_repo': 'Analyse du depot',
+        'wifi_connecting': 'Connexion Wi-Fi',
+        'search_files': 'Recherche des fichiers',
+        'downloading': 'Telechargement',
+        'incomplete': 'Mise a jour incomplete',
+        'errors_count': '{0} erreur(s)',
+        'install_done': 'Installation terminee',
+        'files_count': '{0} fichier(s)',
     },
 
     'launcher': {

@@ -25,6 +25,18 @@ RAW_BASE = "https://raw.githubusercontent.com"
 OBSOLETE_PATHS = ("install.py",)
 
 
+def _t(i18n, key, fallback):
+    if i18n:
+        return i18n.t(key)
+    return fallback
+
+
+def _tf(i18n, key, fallback, *args):
+    if i18n:
+        return i18n.t(key, *args)
+    return fallback.format(*args)
+
+
 def _emit(callback, stage, message="", detail="", current=0, total=0, percent=0):
     if callback:
         callback(
@@ -182,7 +194,7 @@ def _github_api_get_json(url, requests_module, retries=4):
     raise RuntimeError("GitHub API request failed: %s err=%r" % (url, last_err))
 
 
-def list_repo_tree(branch, requests_module=None, progress_callback=None):
+def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=None):
     requests_module = requests_module or _requests
     if requests_module is None:
         raise RuntimeError("Missing requests module")
@@ -212,7 +224,7 @@ def list_repo_tree(branch, requests_module=None, progress_callback=None):
                 stack.append(item_path)
             elif item_type == "file" and should_download(item_path):
                 files.append(item_path)
-        _emit(progress_callback, "scan", "Analyse du depot", path or "/", 0, 0, 0)
+        _emit(progress_callback, "scan", _t(i18n, "updater.scan_repo", "Scanning repository"), path or "/", 0, 0, 0)
         del data
         _gc_hard(cycles=1, pause_ms=10)
     files.sort()
@@ -256,10 +268,10 @@ def _download_to_file(url, dest_path, requests_module):
             pass
 
 
-def _ensure_wifi(wifi_device, timeout_s, progress_callback):
+def _ensure_wifi(wifi_device, timeout_s, progress_callback, i18n=None):
     if wifi_device is None:
         return
-    _emit(progress_callback, "wifi", "Connexion Wi-Fi", "", 0, 0, 0)
+    _emit(progress_callback, "wifi", _t(i18n, "updater.wifi_connecting", "Connecting Wi-Fi"), "", 0, 0, 0)
     if hasattr(wifi_device, "ensure_connected"):
         if wifi_device.ensure_connected(timeout_s=timeout_s):
             return
@@ -297,6 +309,7 @@ def update(
     wifi_timeout_s=25,
     dest_root="",
     ensure_wifi=True,
+    i18n=None,
 ):
     requests_module = requests_module or _requests
     if requests_module is None:
@@ -308,13 +321,14 @@ def update(
         dest_root = ""
 
     if ensure_wifi:
-        _ensure_wifi(wifi_device, wifi_timeout_s, progress_callback)
+        _ensure_wifi(wifi_device, wifi_timeout_s, progress_callback, i18n=i18n)
 
-    _emit(progress_callback, "scan", "Recherche des fichiers", branch, 0, 0, 0)
+    _emit(progress_callback, "scan", _t(i18n, "updater.search_files", "Searching files"), branch, 0, 0, 0)
     files = list_repo_tree(
         branch,
         requests_module=requests_module,
         progress_callback=progress_callback,
+        i18n=i18n,
     )
     total = len(files)
 
@@ -325,7 +339,7 @@ def update(
         _emit(
             progress_callback,
             "download",
-            "Telechargement",
+            _t(i18n, "updater.downloading", "Downloading"),
             repo_path,
             index,
             total,
@@ -343,7 +357,23 @@ def update(
     _remove_obsolete(dest_root)
     result = {"ok": ok, "failed": failed, "total": total}
     if failed:
-        _emit(progress_callback, "error", "Mise a jour incomplete", "%d erreur(s)" % failed, ok, total, 100)
+        _emit(
+            progress_callback,
+            "error",
+            _t(i18n, "updater.incomplete", "Update incomplete"),
+            _tf(i18n, "updater.errors_count", "{0} error(s)", failed),
+            ok,
+            total,
+            100,
+        )
         raise RuntimeError("Update finished with %d failures" % failed)
-    _emit(progress_callback, "done", "Installation terminee", "%d fichier(s)" % ok, ok, total, 100)
+    _emit(
+        progress_callback,
+        "done",
+        _t(i18n, "updater.install_done", "Installation complete"),
+        _tf(i18n, "updater.files_count", "{0} file(s)", ok),
+        ok,
+        total,
+        100,
+    )
     return result
