@@ -1,0 +1,16 @@
+{
+  "name": "Ultimate Homebrewing Scale",
+  "version": "dev",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "https://raw.githubusercontent.com/bnbbrewers/UltimateHomebrewingScale/main/firmware/firmwareM5DialCustom.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

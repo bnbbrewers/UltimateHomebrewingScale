@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ultimate Homebrewing Scale Firmware</title>
+    <script
+      type="module"
+      src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+    ></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      esp-web-install-button {
+        --esp-tools-button-color: #1f7a5b;
+        --esp-tools-button-text-color: #ffffff;
+        --esp-tools-button-border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+  </body>
+</html>
