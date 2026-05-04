@@ -1,6 +1,6 @@
 {
   "name": "Ultimate Homebrewing Scale",
-  "version": "dev",
+  "version": "main",
   "new_install_prompt_erase": true,
   "builds": [
     {
