@@ -46,11 +46,11 @@ class ScreenManager:
             self._screens[screen_id] = SimpleMessageScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.simple", enabled=_DEBUG, collect=True)
             return
-        if screen_id == screen_ids.SETUP_QR:
-            from ui.setup_qr_screen import SetupQrScreen
+        if screen_id == screen_ids.SETTINGS:
+            from ui.settings_screen import SettingsScreen
 
-            self._screens[screen_id] = SetupQrScreen(i18n=self._i18n)
-            mem_snapshot("screen.lazy.setup_qr", enabled=_DEBUG, collect=True)
+            self._screens[screen_id] = SettingsScreen(i18n=self._i18n)
+            mem_snapshot("screen.lazy.settings", enabled=_DEBUG, collect=True)
             return
         if screen_id == screen_ids.UPDATER:
             from ui.updater_screen import UpdaterScreen
