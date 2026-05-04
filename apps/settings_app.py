@@ -44,7 +44,7 @@ class SettingsApp(BaseApp):
             gc.collect()
             gc.collect()
             if self._screen is None:
-                self._screen = self.screen_manager.get(screen_ids.SETUP_QR)
+                self._screen = self.screen_manager.get(screen_ids.SETTINGS)
             if self._portal is None:
                 if self._debug:
                     try:
@@ -84,7 +84,7 @@ class SettingsApp(BaseApp):
                 status = self.t("settings.portal_connect_ap")
             else:
                 status = self.t("settings.portal_connect_sta")
-            self.screen_manager.show(screen_ids.SETUP_QR)
+            self.screen_manager.show(screen_ids.SETTINGS)
             self._flush_lvgl()
             self._screen.configure(
                 title=self.t("settings.title"),
@@ -99,7 +99,7 @@ class SettingsApp(BaseApp):
             # Requested UX: no error message on screen, console only.
             try:
                 if self._screen is not None:
-                    self.screen_manager.show(screen_ids.SETUP_QR)
+                    self.screen_manager.show(screen_ids.SETTINGS)
             except Exception:
                 pass
 
