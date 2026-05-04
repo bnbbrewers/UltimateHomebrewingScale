@@ -92,6 +92,7 @@ TRANSLATIONS = {
         'errors_count': '{0} error(s)',
         'install_done': 'Installation complete',
         'files_count': '{0} file(s)',
+        'github_rate_limited': 'GitHub API limit reached, retry later',
     },
 
     'launcher': {

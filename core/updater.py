@@ -23,6 +23,7 @@ GITHUB_API_BASE = "https://api.github.com"
 RAW_BASE = "https://raw.githubusercontent.com"
 
 OBSOLETE_PATHS = ("install.py",)
+REQUEST_TIMEOUT_S = 15
 
 
 def _t(i18n, key, fallback):
@@ -35,6 +36,70 @@ def _tf(i18n, key, fallback, *args):
     if i18n:
         return i18n.t(key, *args)
     return fallback.format(*args)
+
+
+def _request_get(requests_module, url, headers=None, stream=False, timeout_s=REQUEST_TIMEOUT_S):
+    kwargs = {}
+    if headers is not None:
+        kwargs["headers"] = headers
+    if stream:
+        kwargs["stream"] = True
+    if timeout_s:
+        kwargs["timeout"] = timeout_s
+
+    attempts = [kwargs]
+    if "timeout" in kwargs:
+        no_timeout = dict(kwargs)
+        del no_timeout["timeout"]
+        attempts.append(no_timeout)
+    if "stream" in kwargs:
+        no_stream = dict(kwargs)
+        del no_stream["stream"]
+        attempts.append(no_stream)
+        if "timeout" in no_stream:
+            no_stream_no_timeout = dict(no_stream)
+            del no_stream_no_timeout["timeout"]
+            attempts.append(no_stream_no_timeout)
+
+    last_err = None
+    for attempt_kwargs in attempts:
+        try:
+            return requests_module.get(url, **attempt_kwargs)
+        except TypeError as e:
+            last_err = e
+    raise last_err
+
+
+def _response_text(response):
+    text = getattr(response, "text", None)
+    if text:
+        return text
+    content = getattr(response, "content", None)
+    if content:
+        try:
+            return content.decode("utf-8")
+        except Exception:
+            try:
+                return str(content)
+            except Exception:
+                pass
+    return ""
+
+
+def _is_rate_limited(response):
+    status = getattr(response, "status_code", None)
+    if status is None:
+        status = getattr(response, "status", None)
+    if status not in (403, 429):
+        return False
+    headers = getattr(response, "headers", None)
+    if headers:
+        try:
+            if str(headers.get("x-ratelimit-remaining", "")) == "0":
+                return True
+        except Exception:
+            pass
+    return "rate limit" in _response_text(response).lower()
 
 
 def _emit(callback, stage, message="", detail="", current=0, total=0, percent=0):
@@ -151,7 +216,7 @@ def raw_file_url(branch, repo_path):
     return "%s/%s/%s/%s/%s" % (RAW_BASE, REPO_OWNER, REPO_NAME, branch, repo_path)
 
 
-def _github_api_get_json(url, requests_module, retries=4):
+def _github_api_get_json(url, requests_module, retries=4, i18n=None):
     headers = {
         "User-Agent": "UHS-M5Dial-Updater",
         "Accept": "application/vnd.github+json",
@@ -164,12 +229,14 @@ def _github_api_get_json(url, requests_module, retries=4):
             try:
                 _gc_hard(cycles=2, pause_ms=20)
                 if use_headers:
-                    r = requests_module.get(url, headers=headers)
+                    r = _request_get(requests_module, url, headers=headers)
                 else:
-                    r = requests_module.get(url)
+                    r = _request_get(requests_module, url)
                 status = getattr(r, "status_code", None)
                 if status is None:
                     status = getattr(r, "status", None)
+                if _is_rate_limited(r):
+                    raise RuntimeError(_t(i18n, "updater.github_rate_limited", "GitHub API limit reached, retry later"))
                 if status != 200:
                     raise RuntimeError("HTTP %s: %s" % (status, url))
                 return r.json()
@@ -203,7 +270,7 @@ def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=No
     stack = [""]
     while stack:
         path = stack.pop()
-        data = _github_api_get_json(github_contents_url(branch, path), requests_module)
+        data = _github_api_get_json(github_contents_url(branch, path), requests_module, i18n=i18n)
         if isinstance(data, dict):
             repo_path = data.get("path", path)
             if should_download(repo_path):
@@ -233,9 +300,9 @@ def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=No
 
 def _download_to_file(url, dest_path, requests_module):
     try:
-        r = requests_module.get(url, stream=True)
+        r = _request_get(requests_module, url, stream=True)
     except TypeError:
-        r = requests_module.get(url)
+        r = _request_get(requests_module, url)
     try:
         status = getattr(r, "status_code", None)
         if status is None:
