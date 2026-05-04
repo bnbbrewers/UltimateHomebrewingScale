@@ -114,6 +114,8 @@ def should_download(repo_path):
         return False
     if "/firmware/" in lp or lp.startswith("firmware/") or lp.endswith("/firmware"):
         return False
+    if "/docs/" in lp or lp.startswith("docs/") or lp.endswith("/docs"):
+        return False
     if lp.endswith(".md"):
         return False
     if _is_example_path(repo_path):
