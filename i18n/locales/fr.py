@@ -1,135 +1,137 @@
+# -*- coding: utf-8 -*-
 """
-Traductions françaises pour Ultimate Homebrewing Scale
+Traductions francaises pour Ultimate Homebrewing Scale
 """
 
 TRANSLATIONS = {
-    # Chaînes communes
     'common': {
-        'ready': 'Prêt',
-        'error': 'Erreur',
         'ok': 'OK',
-        'cancel': 'Annuler',
-        'yes': 'Oui',
-        'no': 'Non',
-        'back': 'Retour',
-        'next': 'Suivant',
-        'loading': 'Chargement...',
-        'connecting': 'Connexion...',
-        'connection_error': 'Erreur de connexion',
     },
-    
-    # Mode Balance
+
     'scale': {
         'title': 'Balance',
         'tare_ready': 'Appuyer pour tarer',
         'taring': 'Tarage...',
-        'tare_done': 'Tarage effectué !',
+        'tare_done': 'Tarage effectue !',
         'tare_error': 'Erreur de tarage',
-        'initial_tare': 'Tarage initial...',
-        'weight': 'Poids',
-        'unit_g': 'g',
-        'unit_kg': 'kg',
     },
-    
-    # Assistant Malts
+
+    'scale_calibration': {
+        'intro_message_line1': 'Branchez votre balance',
+        'intro_message_line2': 'OK pour continuer',
+        'title': 'Calibration balance',
+        'step': 'Etape {0}/{1} - {2}g',
+        'adjust_target_hint_line1': 'Tourner',
+        'adjust_target_hint_line2': 'pour ajuster le poids cible',
+        'start_button': 'Start',
+        'target': '{0} g',
+        'measuring_label': 'Mesure',
+        'measuring_progress': '{0}/{1}s',
+        'average': 'Moy: {0}',
+        'complete': 'Calibration terminee',
+        'data_saved': 'Donnees sauvees',
+        'complete_saved_line1': 'Calibration terminee!',
+        'complete_saved_line2': 'Donnees sauvees',
+        'restart_after_success': 'Calibration terminée, OK pour redémarrer',
+        'restart_after_save_error': 'Erreur de sauvegarde du fichier de calibration',
+        'done': 'Termine',
+        'error': 'Erreur',
+        'scale_not_found': 'Balance introuvable',
+        'save_error': 'Erreur sauvegarde: {0}',
+    },
+
+    'recipe': {
+        'select_recipe': 'Selectionner une recette',
+        'no_recipe': 'Pas de recette trouvée',
+        'loading_recipes': 'Chargement des recettes...',
+    },
+
     'grain': {
-        'title': 'Assistant Malts',
-        'select_batch': 'Sélectionner brassin',
-        'no_batches': 'Aucun brassin trouvé',
-        'loading_batches': 'Chargement des brassins...',
-        'current_grain': 'Malt actuel',
-        'target': 'Cible : {0}g',
-        'remaining': 'Restant : {0}g',
-        'complete': 'Terminé !',
-        'next_grain': 'Malt suivant',
-        'all_done': 'Tous les malts pesés !',
-        'grain_number': 'Malt {0}/{1}',
+        'title': 'Malt',
+        'select_malt': 'Selectionner un malt',
+        'no_malts': 'Aucun malt trouve',
+        'loading_grains': 'Chargement des grains...',
+        'all_malts_done': 'Tous les malts peses !',
     },
-    
-    # Assistant Houblons
+
     'hop': {
-        'title': 'Assistant Houblons',
-        'select_batch': 'Sélectionner brassin',
-        'no_batches': 'Aucun brassin trouvé',
-        'loading_batches': 'Chargement des brassins...',
-        'current_hop': 'Houblon actuel',
-        'target': 'Cible : {0}g',
-        'remaining': 'Restant : {0}g',
-        'complete': 'Terminé !',
-        'next_hop': 'Houblon suivant',
-        'all_done': 'Tous les houblons pesés !',
-        'hop_number': 'Houblon {0}/{1}',
-        'addition_time': 'Ajout : {0} min',
+        'title': 'Houblon',
+        'prepare_recipients': 'Preparez {0} recipient(s) pour les ajouts de houblon',
+        'no_hops': 'Aucun houblon',
+        'loading_hops': 'Chargement des houblons...',
+        'step_line': '{0} ({1}g)',
+        'select_hop': 'Selectionner un houblon',
+        'hop_weighed': '{0} : termine',
+        'all_hops_weighed': 'Tous les houblons peses !',
     },
-    
-    # Remplisseur de Fûts
+
     'keg': {
-        'title': 'Remplisseur de Fûts',
-        'select_keg': 'Sélectionner fût',
-        'no_kegs': 'Aucun fût enregistré',
-        'add_keg': 'Ajouter un fût',
-        'keg_name': 'Nom du fût',
-        'empty_weight': 'Poids à vide : {0}g',
-        'current_weight': 'Actuel : {0}g',
-        'target_weight': 'Cible : {0}g',
-        'filling': 'Remplissage...',
-        'filling_progress': 'Rempli : {percent}%',
-        'complete': 'Remplissage terminé !',
-        'stopped': 'Remplissage arrêté',
-        'connect_lines': 'Connecter liquide et spunding',
-        'press_to_start': 'Appuyer pour démarrer',
-        'press_to_stop': 'Appuyer pour arrêter',
-        'valve_open': 'Vanne : OUVERTE',
-        'valve_closed': 'Vanne : FERMÉE',
+        'title': 'Remplisseur de Futs',
     },
-    
-    # Menu / Paramètres
-    'menu': {
-        'title': 'Menu',
-        'scale_mode': 'Balance',
-        'grain_assistant': 'Assistant Malts',
-        'hop_assistant': 'Assistant Houblons',
-        'keg_filler': 'Remplisseur de Fûts',
-        'settings': 'Paramètres',
-        'calibration': 'Calibration',
-        'about': 'À propos',
-    },
-    
+
     'settings': {
-        'title': 'Paramètres',
+        'title': 'Parametres',
         'language': 'Langue',
-        'units': 'Unités',
-        'wifi': 'Wi-Fi',
-        'wifi_connected': 'Connecté',
-        'wifi_disconnected': 'Déconnecté',
-        'brewfather': 'API Brewfather',
-        'brewfather_configured': 'Configuré',
-        'brewfather_not_configured': 'Non configuré',
-        'display': 'Affichage',
-        'brightness': 'Luminosité',
-        'about': 'À propos',
+        'calibration': 'Calibration',
+        'about': 'A propos',
+        'portal_connect_sta': 'Scanner le QR pour ouvrir la config',
+        'portal_connect_ap': 'Connectez le tel au Wi-Fi du Dial puis scannez',
+        'portal_error': 'Erreur portail, verifier le reseau',
     },
-    
-    # Calibration
-    'calibration': {
-        'title': 'Calibration',
-        'start': 'Démarrer calibration',
-        'instructions': 'Suivre les instructions',
-        'place_weight': 'Placer poids de {0}g',
-        'remove_weight': 'Retirer tout poids',
-        'press_when_ready': 'Appuyer quand prêt',
-        'reading': 'Lecture...',
-        'complete': 'Calibration terminée !',
-        'error': 'Erreur de calibration',
-        'save': 'Sauvegarder calibration',
+
+    'updater': {
+        'title': 'Mise a jour',
+        'ready': 'Preparation...',
+        'error': 'Erreur',
+        'done_restart': 'installation terminee, OK pour redemarrer',
     },
-    
-    # À propos
-    'about': {
-        'title': 'À propos',
-        'app_name': 'Ultimate Homebrewing Scale',
-        'version': 'Version',
-        'author': 'Projet Open Source',
-        'website': 'github.com/...',
+
+    'launcher': {
+        'scale': 'Balance',
+        'malt': 'Malt',
+        'hop': 'Houblon',
+        'keg': 'Fut',
+        'settings': 'Config',
+    },
+
+    'portal': {
+        'title': 'Configuration Ultimate Homebrewing Scale',
+        'ap': 'Point d acces',
+        'saved': 'Enregistre',
+        'invalid_fields': 'Champs invalides',
+        'save_reboot': 'Enregistrer et redemarrer',
+        'saved_rebooting': 'Enregistre. Redemarrage...',
+        'saved_manual_reboot': 'Enregistre. Redemarrez manuellement.',
+        'update_app': 'UPDATE APP',
+        'update_rebooting': 'Mise a jour demandee. Redemarrage...',
+        'update_request_failed': 'Demande de mise a jour echouee : {0}',
+        'forbidden': 'Interdit',
+        'not_found': 'Introuvable',
+        'internal_error': 'Erreur interne',
+        'fields': {
+            'LANGUAGE': 'Langue',
+            'GRAIN_WEIGHT_TOLERANCE': 'Tolerance malt (g)',
+            'DEBUG': 'Mode debug',
+            'WIFI_SSID': 'SSID Wi-Fi',
+            'WIFI_PASSWORD': 'Mot de passe Wi-Fi',
+            'BREWFATHER_USER_ID': 'Identifiant Brewfather',
+            'BREWFATHER_API_KEY': 'Cle API Brewfather',
+            'BREWING_SOFTWARE': 'Logiciel de brassage',
+            'UPDATE_BRANCH': 'Branche de mise a jour',
+        },
+        'choices': {
+            'language_en': 'Anglais',
+            'language_fr': 'Francais',
+        },
+        'validation': {
+            'invalid_boolean': 'booleen invalide',
+            'invalid_integer': 'entier invalide',
+            'below_minimum': 'inferieur au minimum',
+            'above_maximum': 'superieur au maximum',
+            'invalid_value': 'valeur invalide',
+            'too_long': 'trop long',
+            'unsupported_type': 'type non pris en charge',
+            'nvs_write_failed': 'ecriture NVS echouee : {0}',
+        },
     },
 }

@@ -3,15 +3,28 @@ Brewing Software API Interface
 For UIFlow2.0 / MicroPython on M5Stack
 """
 
+import gc
+import time
+
+try:
+    import config as _config
+    _DEBUG = getattr(_config, 'DEBUG', False)
+except Exception:
+    _DEBUG = False
+
 
 class Batch:
     """Represents a brewing batch"""
-    def __init__(self, batch_id, name):
+    def __init__(self, batch_id, name, recipe_id=""):
         self.batch_id = batch_id
         self.name = name
+        self.recipe_id = recipe_id
     
     def __repr__(self):
-        return f"Batch(batch_id='{self.batch_id}', name='{self.name}')"
+        return (
+            f"Batch(batch_id='{self.batch_id}', "
+            f"name='{self.name}', recipe_id='{self.recipe_id}')"
+        )
 
 
 class Malt:
@@ -25,21 +38,57 @@ class Malt:
         return f"Malt(name='{self.name}', ebc={self.ebc}, amount={self.amount})"
 
 
-class Hop:
-    """Represents a hop ingredient"""
-    def __init__(self, name, amount, use, time):
-        self.name = name
-        self.amount = amount  # in grams
-        self.use = use  # Boil, Whirlpool, Dry Hop, etc.
-        self.time = time  # in minutes
-    
+class HopStep:
+    """Represents a single hop addition step"""
+    def __init__(self, step_name, step_amount):
+        self.step_name = step_name
+        self.step_amount = step_amount  # in grams
+
     def __repr__(self):
-        return f"Hop(name='{self.name}', amount={self.amount}, use='{self.use}', time={self.time})"
+        return f"HopStep(step_name='{self.step_name}', step_amount={self.step_amount})"
 
 
-class BrewingSoftwareAPI:
-    """Base class for brewing software API implementations"""
-    
+class Hop:
+    """Represents a hop grouped with all its addition steps"""
+    def __init__(self, hop_name, steps=None):
+        self.hop_name = hop_name
+        self.steps = steps or []
+
+    def __repr__(self):
+        return f"Hop(hop_name='{self.hop_name}', steps={self.steps})"
+
+
+class ApiBase:
+    """Abstract base class for brewing software API implementations."""
+
+    def _get(self, url, headers, retries=2):
+        """
+        HTTP GET helper shared by all implementations.
+
+        Ensures WiFi is connected, then performs the request with up to
+        `retries` attempts.  The first attempt may fail with -202
+        (ESP_ERR_HTTP_CONNECT) if the network stack isn't fully ready yet;
+        a 1 s pause between retries is enough for DNS/routing to stabilise.
+        """
+        from core.hardware_manager import HardwareManager
+        if not HardwareManager.get_instance().wifi.ensure_connected():
+            raise OSError("WiFi not connected")
+
+        last_exc = None
+        for attempt in range(max(1, retries)):
+            try:
+                import requests2 as requests
+                resp = requests.get(url, headers=headers)
+                return resp
+            except Exception as e:
+                last_exc = e
+                if _DEBUG:
+                    print(f"[HTTP] attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep_ms(1000)
+                    gc.collect()
+        raise last_exc
+
     def get_batches(self):
         """
         Retrieve all batches from the brewing software
@@ -63,12 +112,34 @@ class BrewingSoftwareAPI:
     
     def get_hops(self, batch_id):
         """
-        Retrieve hops for a specific batch
-        
+        Retrieve hops for a specific batch, grouped by hop name.
+
         Args:
             batch_id: The unique identifier of the batch
-            
+
         Returns:
-            List[Hop]: List of hops with name, amount, use and time
+            List[Hop]: Each entry has .hop_name and .steps,
+            a list of HopStep(step_name, step_amount).
         """
         raise NotImplementedError("Subclass must implement get_hops()")
+
+    def get_hops_list(self, batch_id):
+        """
+        Compact hop format for memory-constrained UIs.
+
+        Returns:
+            List[dict]: [{"name": str, "steps": [(step_name, step_amount), ...]}, ...]
+        """
+        hops_list = []
+        hops = self.get_hops(batch_id)
+        for hop in hops:
+            steps = []
+            for step in hop.steps:
+                steps.append((step.step_name, step.step_amount))
+            if steps:
+                hops_list.append({"name": hop.hop_name, "steps": steps})
+        return hops_list
+
+
+# Backward compatibility with existing modules.
+BrewingSoftwareAPI = ApiBase

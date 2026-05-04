@@ -2,9 +2,22 @@
 # Rename this file to config.py and fill in your credentials
 # Get credentials from: https://web.brewfather.app/tabs/settings
 
+# Brewing software API to use
+BREWING_SOFTWARE = "brewfather"
+
 BREWFATHER_USER_ID = "your_user_id_here"
 BREWFATHER_API_KEY = "your_api_key_here"
 
+
 # Language configuration
-# Supported languages: 'en' (English), 'fr' (Français)
+# Supported languages: 'en' (English), 'fr' (Francais)
 LANGUAGE = "en"
+
+# Grain weighing tolerance in grams
+GRAIN_WEIGHT_TOLERANCE = 10
+
+# Debug mode
+DEBUG = False
+
+# Git branch used by the hidden updater app
+UPDATE_BRANCH = "main"

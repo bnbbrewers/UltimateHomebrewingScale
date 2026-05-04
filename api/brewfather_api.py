@@ -3,146 +3,179 @@ Brewfather API Implementation
 For UIFlow2.0 / MicroPython on M5Stack
 """
 
-import requests
+import gc
 import binascii
-import json
-from brewing_software_api import BrewingSoftwareAPI, Batch, Malt, Hop
+from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
+from memory_debug import snapshot as mem_snapshot
+
+try:
+    import config as _config
+    _DEBUG = getattr(_config, "DEBUG", False)
+except Exception:
+    _DEBUG = False
 
 
-class BrewfatherAPI(BrewingSoftwareAPI):
+class BrewfatherAPI(ApiBase):
     """Implementation of BrewingSoftwareAPI for Brewfather"""
-    
-    BASE_URL = "https://api.brewfather.app/v2"
-    
-    def __init__(self, user_id, api_key):
-        """
-        Initialize Brewfather API client
-        
-        Args:
-            user_id: Brewfather user ID
-            api_key: Brewfather API key
-        """
+
+    _HOST = "api.brewfather.app"
+    _BASE_PATH = "/v2"
+
+    def __init__(self):
+        try:
+            import config
+            user_id = getattr(config, 'BREWFATHER_USER_ID', '')
+            api_key  = getattr(config, 'BREWFATHER_API_KEY',  '')
+        except ImportError:
+            user_id = ''
+            api_key  = ''
+
         self.user_id = user_id
-        self.api_key = api_key
-        # Create Basic Auth header
-        credentials = f"{user_id}:{api_key}"
-        b64_credentials = binascii.b2a_base64(credentials.encode()).decode().strip()
-        self.headers = {
-            'Authorization': f'Basic {b64_credentials}',
-            'Content-Type': 'application/json'
+        self.api_key  = api_key
+        credentials = "{}:{}".format(user_id, api_key)
+        b64 = binascii.b2a_base64(credentials.encode()).decode().strip()
+        self._headers = {
+            'Authorization': 'Basic {}'.format(b64),
+            'Content-Type': 'application/json',
         }
-    
+
+    # ── stateless HTTP helpers ─────────────────────────────────────
+
+    def _get_json(self, path):
+        """GET returning (status_code, parsed_json|None) using plain requests."""
+        url = "https://{}{}".format(self._HOST, path)
+        mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
+        resp = None
+        try:
+            resp = self._get(url, headers=self._headers)
+            status = getattr(resp, "status_code", None)
+            if status is None:
+                status = getattr(resp, "status", -1)
+
+            mem_snapshot("api.http.post", enabled=_DEBUG, collect=False)
+            if status != 200:
+                if _DEBUG:
+                    print("[API] HTTP {}".format(status))
+                return status, None
+
+            data = resp.json()
+            if _DEBUG:
+                try:
+                    if isinstance(data, list):
+                        print("[API] json_type=list len={}".format(len(data)))
+                    elif isinstance(data, dict):
+                        print("[API] json_type=dict keys={}".format(len(data)))
+                    else:
+                        print("[API] json_type={}".format(type(data)))
+                except Exception:
+                    pass
+            gc.collect()
+            mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
+            return status, data
+        finally:
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
+
+    # ── public API ─────────────────────────────────────────────────
+
     def get_batches(self):
-        """
-        Retrieve all batches from Brewfather
-        
-        Returns:
-            List[Batch]: List of batches with batch_id and name (recipe name)
-        """
         try:
-            response = requests.get(f"{self.BASE_URL}/batches?status=Planning&include=_id", headers=self.headers)
-            
-            if response.status_code != 200:
-                print(f"Error: HTTP {response.status_code}")
-                response.close()
+            status, data = self._get_json(
+                "{}/batches?status=Brewing&include=_id".format(self._BASE_PATH)
+            )
+            if data is None:
                 return []
-            
-            batches_data = response.json()
-            response.close()
-            
+
             batches = []
-            for batch_data in batches_data:
+            for batch_data in data:
                 recipe = batch_data.get('recipe', {})
-                recipe_name = recipe.get('name', 'Unknown Recipe')
-                batch = Batch(
+                batches.append(Batch(
                     batch_id=batch_data.get('_id', ''),
-                    name=recipe_name
-                )
-                batches.append(batch)
-            
+                    name=recipe.get('name', 'Unknown Recipe'),
+                ))
             return batches
-            
+
         except Exception as e:
-            print(f"Error: {e}")
+            print("Error: {}".format(e))
             return []
-    
+
     def get_malts(self, batch_id):
-        """
-        Retrieve malts/grains for a specific batch from Brewfather
-        
-        Args:
-            batch_id: The unique identifier of the batch
-            
-        Returns:
-            List[Malt]: List of malts with name, EBC and amount
-        """
         try:
-            response = requests.get(f"{self.BASE_URL}/batches/{batch_id}?include=recipe.fermentables", headers=self.headers)
-            
-            if response.status_code != 200:
-                print(f"Error: HTTP {response.status_code}")
-                response.close()
-                return []
-            
-            batch_data = response.json()
-            response.close()
-            
-            recipe = batch_data.get('recipe', {})
-            fermentables = recipe.get('fermentables', [])
-            
-            malts = []
-            for fermentable in fermentables:
-                # Filter only malts/grains (exclude sugars, extracts, etc.)
-                if fermentable.get('type') in ['Grain', 'Malt']:
-                    malt = Malt(
-                        name=fermentable.get('name', 'Unknown Malt'),
-                        ebc=fermentable.get('color', 0.0),
-                        amount=fermentable.get('amount', 0.0)
-                    )
-                    malts.append(malt)
-            
-            return malts
-            
-        except Exception as e:
-            print(f"Error: {e}")
-            return []
-    
-    def get_hops(self, batch_id):
-        """
-        Retrieve hops for a specific batch from Brewfather
-        
-        Args:
-            batch_id: The unique identifier of the batch
-            
-        Returns:
-            List[Hop]: List of hops with name, amount, use and time
-        """
-        try:
-            response = requests.get(f"{self.BASE_URL}/batches/{batch_id}?include=recipe.hops", headers=self.headers)
-            
-            if response.status_code != 200:
-                print(f"Error: HTTP {response.status_code}")
-                response.close()
-                return []
-            
-            batch_data = response.json()
-            response.close()
-            
-            recipe = batch_data.get('recipe', {})
-            hops_data = recipe.get('hops', [])
-            
-            hops = []
-            for hop_data in hops_data:
-                hop = Hop(
-                    name=hop_data.get('name', 'Unknown Hop'),
-                    amount=hop_data.get('amount', 0.0),
-                    use=hop_data.get('use', ''),
-                    time=hop_data.get('time', 0)
+            status, data = self._get_json(
+                "{}/batches/{}?include=recipe.fermentables".format(
+                    self._BASE_PATH, batch_id
                 )
-                hops.append(hop)
-            
-            return hops
-            
+            )
+            if data is None:
+                return []
+
+            fermentables = data.get('recipe', {}).get('fermentables', [])
+            malts = []
+            for f in fermentables:
+                if f.get('type') in ['Grain', 'Malt']:
+                    malts.append(Malt(
+                        name=f.get('name', 'Unknown Malt'),
+                        ebc=f.get('color', 0.0),
+                        amount=f.get('amount', 0.0),
+                    ))
+            return malts
+
         except Exception as e:
-            print(f"Error: {e}")
+            print("Error: {}".format(e))
             return []
+
+    def get_hops(self, batch_id):
+        try:
+            hops_list = self.get_hops_list(batch_id)
+            hops = []
+            for hop in hops_list:
+                hop_obj = Hop(hop_name=hop["name"])
+                for step_name, step_amount in hop["steps"]:
+                    hop_obj.steps.append(HopStep(step_name=step_name, step_amount=step_amount))
+                hops.append(hop_obj)
+            return hops
+        except Exception as e:
+            print("Error: {}".format(e))
+            return []
+
+    @staticmethod
+    def _group_hops(hops_data):
+        groups = {}
+        order = []
+        for h in hops_data:
+            name = h.get('name', 'Unknown Hop')
+            use = h.get('use', '')
+            t = h.get('time', 0)
+            amount = h.get('amount', 0.0)
+            unit = "d" if h.get('timeUnit') == "days" else "min"
+            if name not in groups:
+                groups[name] = []
+                order.append(name)
+            groups[name].append(("{} - {}{}".format(use, t, unit), amount))
+        hops_list = []
+        for name in order:
+            hops_list.append({"name": name, "steps": groups[name]})
+        return hops_list
+
+    def get_hops_list(self, batch_id):
+        try:
+            status, data = self._get_json(
+                "{}/batches/{}?include=recipe.hops".format(
+                    self._BASE_PATH, batch_id
+                )
+            )
+            if data is None:
+                return []
+            hops_list = self._group_hops(data.get("recipe", {}).get("hops", []))
+            del data
+            gc.collect()
+            if _DEBUG:
+                print("[API] hops_source=batch")
+        except Exception as e:
+            print("Error: {}".format(e))
+            return []
+        mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)
+        return hops_list

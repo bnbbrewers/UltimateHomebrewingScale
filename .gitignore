@@ -4,7 +4,6 @@
 
 #conf
 scale_calibration.json
-=======
 ScaleCalibration/scale_calibration.json
 
 # Configuration files with credentials
@@ -12,7 +11,9 @@ config.py
 
 # Python
 __pycache__/
+tests/
 *.py[cod]
+*.py[cod].*
 *$py.class
 *.so
 .Python
@@ -20,10 +21,32 @@ venv/
 env/
 ENV/
 .venv
+.tmp_pyc/
 
 
 # IDE
 .vscode/
 .idea/
+AGENT.md
+
+# Local planning/docs artifacts
+docs/
 
 
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+/mempalace/
+/mempalace_export/
+/.mempalace/
+
+# AI agent local configs (do not commit)
+.codex/
+.claude/
+.cursor/
+.continue/
+.gemini/
+.aider*
+AGENTS.md
+CLAUDE.md

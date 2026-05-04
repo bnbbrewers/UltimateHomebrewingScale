@@ -54,8 +54,8 @@ class I18n:
         
         Examples:
             i18n.t('scale.tare_ready')
-            i18n.t('grain.remaining', 150)
-            i18n.t('keg.filling_progress', percent=75)
+            i18n.t('grain.select_malt')
+            i18n.t('hop.prepare_recipients', 3)
         """
         # Navigate nested keys (e.g., 'scale.tare_ready')
         keys = key.split('.')
