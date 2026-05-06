@@ -14,8 +14,8 @@ The system is designed to be **modular, affordable, and evolutive**, allowing ne
 
 Start with the hardware, then install the firmware and calibrate the scale:
 
-1. [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/docs/HardwareInstallationGuide/) - source the parts, prepare the enclosure, and assemble the scale hardware.
-2. [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/docs/SoftwareInstallationGuide/) - flash the M5Stack Dial, configure Wi-Fi, and run the calibration wizard.
+1. [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/) - source the parts, prepare the enclosure, and assemble the scale hardware.
+2. [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/) - flash the M5Stack Dial, configure Wi-Fi, and run the calibration wizard.
 
 ---
 
