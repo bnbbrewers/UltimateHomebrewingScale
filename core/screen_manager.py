@@ -29,32 +29,42 @@ class ScreenManager:
         if screen_id in self._screens:
             return
         if screen_id == screen_ids.SELECT_ITEM:
+            mem_snapshot("screen.lazy.select.before_import", enabled=_DEBUG, collect=True)
             from ui.select_item_screen import SelectItemScreen
 
+            mem_snapshot("screen.lazy.select.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = SelectItemScreen()
             mem_snapshot("screen.lazy.select", enabled=_DEBUG, collect=True)
             return
         if screen_id == screen_ids.WEIGHT:
+            mem_snapshot("screen.lazy.weight.before_import", enabled=_DEBUG, collect=True)
             from ui.weight_screen import WeightScreen
 
+            mem_snapshot("screen.lazy.weight.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = WeightScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.weight", enabled=_DEBUG, collect=True)
             return
         if screen_id == screen_ids.SIMPLE_MESSAGE:
+            mem_snapshot("screen.lazy.simple.before_import", enabled=_DEBUG, collect=True)
             from ui.simple_message_screen import SimpleMessageScreen
 
+            mem_snapshot("screen.lazy.simple.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = SimpleMessageScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.simple", enabled=_DEBUG, collect=True)
             return
         if screen_id == screen_ids.SETTINGS:
+            mem_snapshot("screen.lazy.settings.before_import", enabled=_DEBUG, collect=True)
             from ui.settings_screen import SettingsScreen
 
+            mem_snapshot("screen.lazy.settings.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = SettingsScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.settings", enabled=_DEBUG, collect=True)
             return
         if screen_id == screen_ids.UPDATER:
+            mem_snapshot("screen.lazy.updater.before_import", enabled=_DEBUG, collect=True)
             from ui.updater_screen import UpdaterScreen
 
+            mem_snapshot("screen.lazy.updater.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = UpdaterScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.updater", enabled=_DEBUG, collect=True)
 

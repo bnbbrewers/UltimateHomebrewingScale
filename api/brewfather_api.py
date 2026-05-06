@@ -5,6 +5,8 @@ For UIFlow2.0 / MicroPython on M5Stack
 
 import gc
 import binascii
+import json
+import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
 from memory_debug import snapshot as mem_snapshot
 
@@ -20,6 +22,7 @@ class BrewfatherAPI(ApiBase):
 
     _HOST = "api.brewfather.app"
     _BASE_PATH = "/v2"
+    _TMP_JSON_PATH = "brewfather_api.tmp"
 
     def __init__(self):
         try:
@@ -41,13 +44,59 @@ class BrewfatherAPI(ApiBase):
 
     # ── stateless HTTP helpers ─────────────────────────────────────
 
+    @staticmethod
+    def _remove_file(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+    def _spool_response_to_file(self, resp, path):
+        mode = "content"
+        with open(path, "wb") as f:
+            raw = getattr(resp, "raw", None)
+            if raw is not None and hasattr(raw, "read"):
+                mode = "raw"
+                while True:
+                    chunk = raw.read(512)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    del chunk
+                return mode
+
+            iter_content = getattr(resp, "iter_content", None)
+            if iter_content:
+                mode = "iter"
+                for chunk in iter_content(512):
+                    if chunk:
+                        f.write(chunk)
+                    del chunk
+                return mode
+
+            content = getattr(resp, "content", b"")
+            f.write(content)
+            del content
+        return mode
+
+    @staticmethod
+    def _load_json_file(path):
+        with open(path, "r") as f:
+            load = getattr(json, "load", None)
+            if load:
+                return load(f)
+            return json.loads(f.read())
+
     def _get_json(self, path):
         """GET returning (status_code, parsed_json|None) using plain requests."""
         url = "https://{}{}".format(self._HOST, path)
+        if _DEBUG:
+            print("[API] GET {}".format(path))
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         resp = None
+        self._remove_file(self._TMP_JSON_PATH)
         try:
-            resp = self._get(url, headers=self._headers)
+            resp = self._get(url, headers=self._headers, stream=True)
             status = getattr(resp, "status_code", None)
             if status is None:
                 status = getattr(resp, "status", -1)
@@ -58,7 +107,19 @@ class BrewfatherAPI(ApiBase):
                     print("[API] HTTP {}".format(status))
                 return status, None
 
-            data = resp.json()
+            spool_mode = self._spool_response_to_file(resp, self._TMP_JSON_PATH)
+            if _DEBUG:
+                print("[API] body_spooled mode={}".format(spool_mode))
+            mem_snapshot("api.body.spooled", enabled=_DEBUG, collect=False)
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
+                resp = None
+            gc.collect()
+            mem_snapshot("api.body.closed", enabled=_DEBUG, collect=False)
+            data = self._load_json_file(self._TMP_JSON_PATH)
             if _DEBUG:
                 try:
                     if isinstance(data, list):
@@ -78,6 +139,7 @@ class BrewfatherAPI(ApiBase):
                     resp.close()
                 except Exception:
                     pass
+            self._remove_file(self._TMP_JSON_PATH)
 
     # ── public API ─────────────────────────────────────────────────
 

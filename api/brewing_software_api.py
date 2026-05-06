@@ -61,7 +61,7 @@ class Hop:
 class ApiBase:
     """Abstract base class for brewing software API implementations."""
 
-    def _get(self, url, headers, retries=2):
+    def _get(self, url, headers, retries=2, stream=False):
         """
         HTTP GET helper shared by all implementations.
 
@@ -78,7 +78,10 @@ class ApiBase:
         for attempt in range(max(1, retries)):
             try:
                 import requests2 as requests
-                resp = requests.get(url, headers=headers)
+                try:
+                    resp = requests.get(url, headers=headers, stream=stream)
+                except TypeError:
+                    resp = requests.get(url, headers=headers)
                 return resp
             except Exception as e:
                 last_exc = e

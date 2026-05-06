@@ -146,9 +146,12 @@ class AppManager:
         if app_id == self._active_app_id:
             return
         old = self._active_app_id
+        mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
         self._apps[old].on_exit()
+        mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         gc.collect()
         gc.collect()
+        mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
         try:
             import config
             if getattr(config, "DEBUG", False):
@@ -156,7 +159,9 @@ class AppManager:
         except Exception:
             pass
         self._active_app_id = app_id
+        mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
+        mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
 
     def tick(self):
         next_app = self._apps[self._active_app_id].tick()
