@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480" role="img" aria-labelledby="title desc">
+  <title id="title">Dial firmware flash mode</title>
+  <desc id="desc">A diagram showing the rear BOOT G0 button held while USB-C is plugged in.</desc>
+  <rect width="720" height="480" fill="#f8fbf8"/>
+  <rect x="52" y="64" width="616" height="352" rx="22" fill="#ffffff" stroke="#d9ded8" stroke-width="3"/>
+  <path d="M493 238h78c34 0 52 17 52 49v23" fill="none" stroke="#2867a8" stroke-width="16" stroke-linecap="round"/>
+  <rect x="590" y="303" width="64" height="52" rx="10" fill="#25342e"/>
+  <rect x="609" y="314" width="25" height="30" rx="4" fill="#f6f4ef"/>
+  <circle cx="318" cy="240" r="126" fill="#f47c20"/>
+  <circle cx="318" cy="240" r="102" fill="#202421"/>
+  <circle cx="318" cy="240" r="78" fill="#edf4f1"/>
+  <circle cx="318" cy="240" r="52" fill="#ffffff" stroke="#d9ded8" stroke-width="3"/>
+  <text x="318" y="231" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#15563f">M5</text>
+  <text x="318" y="255" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#15563f">Dial</text>
+  <circle cx="211" cy="322" r="24" fill="#1f7a5b"/>
+  <path d="M151 374c16-35 36-52 60-52" fill="none" stroke="#b46b22" stroke-width="20" stroke-linecap="round"/>
+  <path d="M137 394c7-15 15-23 24-26" fill="none" stroke="#b46b22" stroke-width="12" stroke-linecap="round"/>
+  <rect x="88" y="88" width="188" height="76" rx="10" fill="#e7f3ee" stroke="#b8d7ca"/>
+  <text x="112" y="120" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#15563f">Hold rear</text>
+  <text x="112" y="146" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#15563f">BOOT / G0</text>
+  <path d="M234 164l-26 132" fill="none" stroke="#15563f" stroke-width="4" stroke-dasharray="8 8"/>
+  <rect x="443" y="88" width="186" height="78" rx="10" fill="#e8f1fb" stroke="#b9d0e8"/>
+  <text x="467" y="121" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#1f4f82">Plug in</text>
+  <text x="467" y="147" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#1f4f82">USB-C</text>
+  <path d="M523 166l52 74" fill="none" stroke="#2867a8" stroke-width="4" stroke-dasharray="8 8"/>
+  <text x="360" y="400" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#5f6c66">Release the button after the USB connection is made</text>
+</svg>
