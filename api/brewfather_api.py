@@ -52,6 +52,9 @@ class BrewfatherAPI(ApiBase):
             pass
 
     def _spool_response_to_file(self, resp, path):
+        # On the M5Dial, parsing JSON while the HTTPS response is still open
+        # can exhaust ESP-IDF's largest contiguous heap block. Spool the body
+        # in small chunks so TLS/socket buffers can be released before parsing.
         mode = "content"
         with open(path, "wb") as f:
             raw = getattr(resp, "raw", None)
@@ -74,6 +77,8 @@ class BrewfatherAPI(ApiBase):
                     del chunk
                 return mode
 
+            # Last-resort fallback for request implementations without a raw
+            # stream. This may allocate the full body while TLS buffers remain.
             content = getattr(resp, "content", b"")
             f.write(content)
             del content
@@ -119,6 +124,8 @@ class BrewfatherAPI(ApiBase):
                 resp = None
             gc.collect()
             mem_snapshot("api.body.closed", enabled=_DEBUG, collect=False)
+            # Parse only after closing the response. This avoids holding
+            # requests2/TLS buffers and the decoded JSON tree at the same time.
             data = self._load_json_file(self._TMP_JSON_PATH)
             if _DEBUG:
                 try:
