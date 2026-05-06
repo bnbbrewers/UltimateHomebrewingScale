@@ -1,178 +1,248 @@
 # Ultimate Homebrewing Scale (UHS)
 
----
+Ultimate Homebrewing Scale is a DIY connected brewing scale for the M5Stack Dial.
+It runs on UIFlow2 / MicroPython and combines a calibrated load platform, a
+rotary-driven UI, Brewfather recipe integration, a smartphone setup portal, and
+an on-device updater.
 
-## Overview
+The project is designed for real brewery use: simple operation on the device,
+minimal wiring, and a memory-conscious runtime that can survive LVGL, Wi-Fi and
+HTTPS on an ESP32-S3.
 
-Ultimate Homebrewing Scale (UHS) is an open-source DIY connected scale designed for homebrewers. Its goal is to simplify ingredient weighing (grains, hops, minerals) and enable precise counter-pressure keg filling based on weight rather than volume.
+## Current Status
 
-The system is designed to be **modular, affordable, and evolutive**, allowing new brewing-related use cases to be added over time.
+Implemented:
 
----
+- Launcher with rotary selection and single-button validation.
+- Scale mode with live weight display and tare.
+- Malt assistant using Brewfather batches and fermentables.
+- Hop assistant using Brewfather batches and grouped hop additions.
+- Scale calibration wizard with multi-point calibration saved to
+  `scale_calibration.json`.
+- Smartphone settings portal for Wi-Fi, Brewfather credentials, language,
+  tolerance, debug mode and update branch.
+- Hidden updater app that downloads application files from GitHub.
+- English and French UI strings.
 
-## Quickstart
+Work in progress:
 
-Start with the hardware, then install the firmware and calibrate the scale:
+- Keg filler app. The menu entry and weight screen exist, but automated filling
+  logic and relay/valve control are not complete yet.
 
-1. [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/) - source the parts, prepare the enclosure, and assemble the scale hardware.
-2. [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/) - flash the M5Stack Dial, configure Wi-Fi, and run the calibration wizard.
+## Quick Start
 
----
+1. Assemble the hardware:
+   [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/).
+2. Flash the custom M5Dial firmware:
+   [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/).
+3. Configure Wi-Fi and Brewfather credentials from the Settings portal or from
+   `config.py`.
+4. Run the calibration wizard and save `scale_calibration.json`.
+5. Reboot the M5Dial and start from `main.py`.
 
-## Project Structure
+See [INSTALLATION.MD](INSTALLATION.MD) for the repository-level installation
+notes and [firmware/CustomFirmware.MD](firmware/CustomFirmware.MD) for details
+about the custom firmware build.
 
-```
-UltimateHomebrewingScale/
-├── api/                    # Python API module for brewing software integration
-│   ├── brewing_software_api.py   # Abstract API interface
-│   ├── brewfather_api.py         # Brewfather implementation
-│   └── ...                       # Examples, tests, documentation
-├── ScaleCalibration/       # Scale calibration tools
-└── README.md              # This file
-```
-
-See [api/README.md](api/README.md) for API documentation.
-
----
-
-## Main Features
-
----
-
-### 1. Basic Scale Mode
-
-A simple and reliable connected scale:
-
-* Live weight display
-* Manual tare at any time
-* Designed to handle large brewing containers (30L bucket)
-
-**Target specifications:**
-
-* Maximum load: 20 kg
-* Typical precision: ~5 g
-* Large platform suitable for a 30 L fermentation bucket
-
----
-
-### 2. Grain Assistant
-
-The Grain Assistant helps the brewer weigh malts accurately based on a brewing recipe.
-
-**How it works:**
-
-1. The scale connects to the Brewfather API
-2. It retrieves batches with status **Planning**
-3. The user selects a batch
-4. For each malt:
-
-   * The malt name and target weight are displayed
-   * The scale shows the remaining weight to add
-   * Once the target is reached, it automatically moves to the next malt
-
-This continues until all malts are weighed.
-
-**Requirements:**
-
-* Wi-Fi connectivity
-* Brewfather API integration
-* Stable and repeatable weighing
-
----
-
-### 3. Hop Assistant
-
-The Hop Assistant follows the same principle as the Grain Assistant, adapted for hops.
-
-**Key points:**
-
-* Step-by-step hop weighing
-* Designed for smaller quantities
-
-**Target precision:**
-
-* 1 g preferred
-* 5 g acceptable depending on hardware choice
-
----
-
-### 4. Keg Filler (Counter-Pressure Filling)
-
-This module enables automated counter-pressure keg filling using weight as the control variable.
-
-**Principle:**
-
-* The keg is placed on the scale
-* The user selects a predefined keg (empty weight stored beforehand)
-* A normally-closed solenoid valve controls the gas outlet via a spunding valve
-* Filling stops automatically when the target final weight is reached
-
-**Advantages:**
-
-* No liquid-contact sensor (reduced infection risk)
-* Works for full fills and partial top-ups
-* Independent of liquid flow rate
-
-**Filling sequence:**
-
-1. User selects a keg
-2. System asks to connect liquid and spunding
-3. Solenoid valve opens
-4. Filling stops slightly before 100% to account for system inertia
-
-**Safety & reliability:**
-
-* Normally-closed solenoid valve (failsafe)
-* Manual spunding valve for stable pressure control
-
----
-
-## Hardware Requirements
-
----
+## Hardware
 
 ### General Considerations
 
-* Suitable for a garage brewery environment
-* Resistant to splashes (water / beer)
-* Clean and integrated build (no exposed wiring)
+The reference build is designed for a garage brewery environment, with splash
+resistance, clean integration, and no exposed wiring.
 
----
+### Controller
 
-### Hardware
+The M5Stack Dial offers a good balance between cost, integration, and usability.
+Its rotary encoder with push button is well suited to menu navigation during
+brewing sessions, while the built-in screen, Wi-Fi, and ESP32-S3 reduce wiring,
+enclosure complexity, and overall project cost.
 
-## Controller
-The M5Stack Dial offers an excellent balance between cost, integration, and usability. Its rotary encoder with push button is ideal for menu navigation during brewing sessions, even with wet hands, while the built-in screen, Wi-Fi, and ESP32 microcontroller significantly reduce wiring, enclosure complexity, and overall project cost.
+- M5Dial: https://s.click.aliexpress.com/e/_c3fnF9C9
+- Weight Reader I2C: https://s.click.aliexpress.com/e/_c42It9IZ
+- Relay: https://s.click.aliexpress.com/e/_c3OikdVR
 
-* M5Dial : https://s.click.aliexpress.com/e/_c3fnF9C9
-* Weight Reader I2c : https://s.click.aliexpress.com/e/_c42It9IZ
-* Relay : https://s.click.aliexpress.com/e/_c3OikdVR
+### Scale Platform
 
-## Scale Platform
-Using a VEVOR postal scale platform provides a cost-effective and robust solution. It is designed to handle heavy loads in wet environments and offers very easy integration thanks to its standard RJ9 connector, which simplifies wiring and makes the platform reusable without mechanical redesign.
+Using a VEVOR postal scale platform provides a cost-effective and robust base.
+It is designed to handle heavy loads and offers easy integration through its
+standard RJ9 connector, which keeps the platform reusable without mechanical
+redesign.
 
-* VEVOR scale : https://s.click.aliexpress.com/e/_c3xr1w7n
-* RJ9 cable : https://s.click.aliexpress.com/e/_c2u5O1C5
+- VEVOR scale: https://s.click.aliexpress.com/e/_c3xr1w7n
+- RJ9 cable: https://s.click.aliexpress.com/e/_c2u5O1C5
 
-## Spunding valve
-This project is based on a mechanical spunding valve with a physical pressure gauge, chosen for reliability and simplicity.
+### Spunding Valve
 
-The spunding valve is only required for the keg filler function.
+The keg filler hardware is based on a mechanical spunding valve with a physical
+pressure gauge, chosen for reliability and simplicity.
 
-A 12V solenoid valve is added to the system to allow automated control while using the same power supply as the controller. The solenoid valve is normally closed for safety: if the system loses power or stops unexpectedly, the filling process is immediately shut off.
+The spunding valve is only required for the keg filler function. A 12 V
+normally-closed solenoid valve is added so the controller can automate the gas
+outlet while keeping a failsafe default: if the system loses power or stops
+unexpectedly, the valve closes.
 
-This design combines the robustness of purely mechanical pressure regulation with the flexibility of electronic control, ensuring safe and reliable operation.
+This combines the robustness of mechanical pressure regulation with electronic
+control. The software keg filler flow is still WIP, but the hardware target is
+documented here for the reference build.
 
-* Spunding valve : https://s.click.aliexpress.com/e/_c3Ccjltr
-* Solenoid valve : https://s.click.aliexpress.com/e/_c2Q1v85j
-* 1/8 Adapter : https://s.click.aliexpress.com/e/_c3iy7LDR
+- Spunding valve: https://s.click.aliexpress.com/e/_c3Ccjltr
+- Solenoid valve: https://s.click.aliexpress.com/e/_c2Q1v85j
+- 1/8 adapter: https://s.click.aliexpress.com/e/_c3iy7LDR
 
-## Integration Box
-* Waterproof ABS enclosure (REF: F200-120-75): https://s.click.aliexpress.com/e/_c2w8dSkf
-* Cable gland (REF: PG7 White): https://s.click.aliexpress.com/e/_c4UINtHd
-* Jack connectors: https://s.click.aliexpress.com/e/_c3Z0z0F5
-* Power supply (REF: EU plug, 12V 3A): https://s.click.aliexpress.com/e/_c353g2MJ
+### Integration Box
 
+- Waterproof ABS enclosure, ref. F200-120-75: https://s.click.aliexpress.com/e/_c2w8dSkf
+- Cable gland, ref. PG7 white: https://s.click.aliexpress.com/e/_c4UINtHd
+- Jack connectors: https://s.click.aliexpress.com/e/_c3Z0z0F5
+- Power supply, EU plug 12 V 3 A: https://s.click.aliexpress.com/e/_c353g2MJ
 
+Scale defaults in code:
 
+- I2C address: `0x26`
+- SCL pin: `15`
+- SDA pin: `13`
+- Calibration file: `scale_calibration.json`
+- Calibration points used by the wizard: `0 g`, `500 g`, `5000 g`, `20000 g`
 
+## Software Architecture
+
+The runtime entrypoint is [main.py](main.py). On boot it:
+
+1. Creates `config.py` from `config.py.example` if needed.
+2. Initializes M5, LVGL/m5ui, speaker and i18n.
+3. Builds shared hardware and API managers.
+4. Starts the calibration wizard if no calibration file exists.
+5. Starts Settings if this is the first generated configuration.
+6. Starts the hidden updater if the setup portal requested an update.
+7. Otherwise starts the launcher.
+
+Main packages:
+
+```text
+api/        Brewfather connector and brewing software API interface
+apps/       Application controllers and business logic
+core/       App, screen, hardware, API and updater managers
+devices/    Hardware abstractions for scale, Wi-Fi, button and rotary encoder
+i18n/       English/French translations
+ui/         LVGL screens and reusable UI helpers
+webportal/  Embedded HTTP settings portal
+firmware/   Custom UIFlow2 firmware image and notes
+docs/       Published hardware/software installation guides
+tests/      Host-side regression tests where possible
+```
+
+The app manager creates only the active app at boot and lazy-loads the others.
+This is intentional: the M5Dial has limited Python and C heap, and the project
+tries to avoid loading every UI and API flow at once.
+
+## Features
+
+### Scale Mode
+
+Scale mode shows the current calibrated weight in grams and supports tare from
+the device button. Readings use a moving average, cached hardware reads and a
+small reporting threshold to reduce UI jitter.
+
+### Malt Assistant
+
+The malt assistant connects to Brewfather, lists batches with status `Brewing`,
+loads fermentables for the selected batch, and guides weighing one malt at a
+time. Each target is shown as a countdown in grams. Validation is allowed once
+the remaining weight is within `GRAIN_WEIGHT_TOLERANCE`.
+
+### Hop Assistant
+
+The hop assistant loads Brewfather hop additions, groups them by hop name, then
+lets the brewer select each addition step. It prompts for recipient preparation,
+tares before each weighing step, and removes completed steps from the in-memory
+work list to keep RAM use low.
+
+### Calibration Wizard
+
+If `scale_calibration.json` is missing, the app starts directly in the
+calibration wizard. The wizard samples raw ADC values for the configured weight
+points and writes the calibration file used by `devices/scale.py` for piecewise
+linear interpolation.
+
+### Settings Portal
+
+The Settings app starts a lightweight HTTP server on port `8080` and displays
+the portal URL on the M5Dial. If station Wi-Fi is available, it serves the portal
+on the LAN address. Otherwise it starts the fallback access point `UHS-Setup`.
+
+Editable settings are defined in [webportal/config_keys.py](webportal/config_keys.py):
+
+- `LANGUAGE`
+- `WIFI_SSID`
+- `WIFI_PASSWORD`
+- `BREWFATHER_USER_ID`
+- `BREWFATHER_API_KEY`
+- `GRAIN_WEIGHT_TOLERANCE`
+- `DEBUG`
+- `UPDATE_BRANCH`
+- `BREWING_SOFTWARE`
+
+Saving settings reboots the device. The portal can also request an update, which
+sets a flag and reboots into the hidden updater app.
+
+### Updater
+
+The hidden updater downloads application files from
+`bnbbrewers/UltimateHomebrewingScale` for the configured branch. It skips docs,
+firmware, Markdown files, examples, `.gitignore`, `LICENSE`, and most example
+files so the device receives only runtime files.
+
+## Configuration
+
+Create `config.py` from `config.py.example` or let `main.py` create it on first
+boot.
+
+Important values:
+
+```python
+BREWING_SOFTWARE = "brewfather"
+BREWFATHER_USER_ID = "your_user_id_here"
+BREWFATHER_API_KEY = "your_api_key_here"
+LANGUAGE = "en"  # "en" or "fr"
+GRAIN_WEIGHT_TOLERANCE = 10
+DEBUG = False
+UPDATE_BRANCH = "main"
+```
+
+The Wi-Fi manager first tries UIFlow NVS credentials (`uiflow:ssid0` /
+`uiflow:pswd0`), then falls back to `WIFI_SSID` and `WIFI_PASSWORD` in
+`config.py`.
+
+## Brewfather Integration
+
+The current brewing software connector is Brewfather. It uses Basic Auth with
+`BREWFATHER_USER_ID` and `BREWFATHER_API_KEY`, then calls the Brewfather v2 API
+to retrieve:
+
+- batches with `status=Brewing`
+- fermentables for malt weighing
+- hops grouped into compact addition steps for hop weighing
+
+See [api/README.md](api/README.md) for the API interface and extension points
+for future brewing software connectors.
+
+## Development
+
+Most files are MicroPython/UIFlow2 code intended to run on the M5Dial, but a few
+host-side tests are available:
+
+```bash
+python -m unittest discover tests
+```
+
+Useful local docs:
+
+- [DEBUG_GUIDE.md](DEBUG_GUIDE.md) - memory and debug traces
+- [devices/DEVICES_GUIDE.md](devices/DEVICES_GUIDE.md) - hardware abstraction notes
+- [i18n/README.md](i18n/README.md) - translation system
+- [FONTS_GUIDE.md](FONTS_GUIDE.md) - font notes
+
+## License
+
+This project is licensed under GPL-3.0. See [LICENSE](LICENSE).
