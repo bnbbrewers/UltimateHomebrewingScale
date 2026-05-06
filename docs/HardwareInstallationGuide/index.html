@@ -153,9 +153,17 @@
 
       .diagram-row {
         display: grid;
-        grid-template-columns: 1fr auto 1fr;
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
         gap: 10px;
         align-items: center;
+      }
+
+      .diagram-row.secondary {
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+      }
+
+      .diagram-row.down-row {
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
       }
 
       .diagram-box {
@@ -178,6 +186,14 @@
       .diagram-arrow {
         color: var(--accent-dark);
         font-weight: 850;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .diagram-down {
+        color: var(--accent-dark);
+        font-weight: 850;
+        text-align: center;
       }
 
       .product-photo {
@@ -534,21 +550,30 @@
         <aside class="hero-panel" aria-label="Hardware summary">
           <div class="diagram" aria-hidden="true">
             <div class="diagram-row">
-              <div class="diagram-box">VEVOR Platform<span>Load cells via RJ9</span></div>
-              <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">Unit Weight I2C<span>Weight conversion</span></div>
-            </div>
-            <div class="diagram-row">
               <div class="diagram-box">M5Stack Dial<span>Display, Wi-Fi, control</span></div>
               <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">Unit Weight I2C<span>Weight conversion</span></div>
+              <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">VEVOR Platform<span>Load cells via RJ9</span></div>
+            </div>
+            <div class="diagram-row down-row">
+              <div class="diagram-down">v</div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+            <div class="diagram-row secondary">
               <div class="diagram-box">Unit Relay<span>Optional 12V valve</span></div>
+              <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">Spunding valve<span>Mechanical pressure control</span></div>
             </div>
           </div>
           <dl class="quick-list">
             <dt>Target load</dt>
             <dd>20 kg</dd>
             <dt>Typical precision</dt>
-            <dd>about 5 g after calibration</dd>
+            <dd>1 to 4 g after calibration</dd>
             <dt>Optional feature</dt>
             <dd>Keg filler with spunding valve</dd>
           </dl>
