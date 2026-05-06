@@ -42,24 +42,9 @@ class AppManager:
         mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._apis = apis
         self._apps = {}
-        if initial_app_id == "updater_app":
-            self._active_app_id = initial_app_id
-            self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
-            mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
-            self._apps[self._active_app_id].on_enter()
-            mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
-            return
-
-        self._create_launcher(screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_launcher", enabled=_DEBUG, collect=True)
-        self._create_scale(screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_scale", enabled=_DEBUG, collect=True)
-        self._create_malt(screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_malt", enabled=_DEBUG, collect=True)
-        self._create_hop(screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_hop", enabled=_DEBUG, collect=True)
-        self._create_keg(screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_keg", enabled=_DEBUG, collect=True)
+        # Only the active app is created during boot: the main loop needs one
+        # app to tick, but every other app stays lazy until the launcher or
+        # startup flow selects it. This keeps C/Python heap pressure low.
         self._active_app_id = _initial_app_id(initial_app_id=initial_app_id)
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
         mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
@@ -123,26 +108,31 @@ class AppManager:
         from apps.launcher_app import LauncherApp
 
         self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.lazy.launcher_created", enabled=_DEBUG, collect=True)
 
     def _create_scale(self, screen_manager, hardware, apis, i18n):
         from apps.scale_app import ScaleApp
 
         self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.lazy.scale_created", enabled=_DEBUG, collect=True)
 
     def _create_malt(self, screen_manager, hardware, apis, i18n):
         from apps.malt_app import GrainAssistantApp
 
         self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
 
     def _create_hop(self, screen_manager, hardware, apis, i18n):
         from apps.hop_app import HopAssistantApp
 
         self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
 
     def _create_keg(self, screen_manager, hardware, apis, i18n):
         from apps.keg_filler_app import KegFillerApp
 
         self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
+        mem_snapshot("app.lazy.keg_created", enabled=_DEBUG, collect=True)
 
     def _switch_to(self, app_id):
         if not self._ensure_app(
