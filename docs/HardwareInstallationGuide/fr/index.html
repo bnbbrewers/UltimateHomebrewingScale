@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Guide d'installation materielle Ultimate Homebrewing Scale</title>
+    <meta
+      name="description"
+      content="Guide materiel autonome pour choisir les pieces, preparer le boitier et assembler l'Ultimate Homebrewing Scale."
+    >
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101412;
+        --paper: #171d1a;
+        --paper-strong: #202823;
+        --ink: #f2f6f2;
+        --muted: #a6b4ad;
+        --line: #334139;
+        --accent: #28a977;
+        --accent-dark: #7ee0b3;
+        --amber: #d8903f;
+        --blue: #63a7e8;
+        --soft-green: #173428;
+        --soft-amber: #332617;
+        --soft-blue: #17293b;
+        --shadow: 0 22px 55px rgba(0, 0, 0, 0.38);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 18% 0%, rgba(40, 169, 119, 0.2), transparent 330px),
+          linear-gradient(180deg, rgba(19, 35, 29, 0.92), rgba(16, 20, 18, 0) 460px),
+          var(--bg);
+        color: var(--ink);
+        line-height: 1.58;
+      }
+
+      a {
+        color: var(--accent-dark);
+        font-weight: 650;
+        text-decoration-thickness: 0.08em;
+        text-underline-offset: 0.18em;
+      }
+
+      code {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #101714;
+        padding: 0.1rem 0.35rem;
+        color: #d9f7e9;
+        font-size: 0.92em;
+      }
+
+
+
+      .language-switch {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 20;
+        display: inline-flex;
+        gap: 4px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(18, 24, 21, 0.92);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+        padding: 4px;
+        backdrop-filter: blur(12px);
+      }
+
+      .language-switch a {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        color: var(--muted);
+        width: 38px;
+        padding: 0;
+        font-size: 0.9rem;
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      .language-switch a[aria-current="page"] {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .language-switch img {
+        width: 24px;
+        height: 16px;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32);
+        display: block;
+        flex: 0 0 auto;
+        object-fit: cover;
+      }
+
+      .site-header {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 20px 18px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 28px;
+        align-items: center;
+        min-height: 520px;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: var(--accent-dark);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.12;
+      }
+
+      h1 {
+        max-width: 820px;
+        margin: 0;
+        font-size: clamp(2.35rem, 5vw, 5rem);
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 690px;
+        margin: 20px 0 0;
+        color: var(--muted);
+        font-size: 1.15rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 28px;
+      }
+
+      .button-link {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #fff;
+        padding: 0 18px;
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      .button-link.secondary {
+        background: transparent;
+        color: var(--accent-dark);
+        border-color: #3d6958;
+      }
+
+      .hero-panel,
+      .product-photo {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(23, 29, 26, 0.88);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .diagram {
+        display: grid;
+        gap: 10px;
+        padding: 22px;
+        background:
+          linear-gradient(135deg, rgba(40, 169, 119, 0.12), rgba(99, 167, 232, 0.08)),
+          #101714;
+      }
+
+      .diagram-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+      }
+
+      .diagram-row.secondary {
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+      }
+
+      .diagram-row.down-row {
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
+      }
+
+      .diagram-box {
+        min-height: 54px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(23, 29, 26, 0.92);
+        padding: 12px;
+        font-weight: 760;
+      }
+
+      .diagram-box span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 520;
+      }
+
+      .diagram-arrow {
+        color: var(--accent-dark);
+        font-weight: 850;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .diagram-down {
+        color: var(--accent-dark);
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .product-photo {
+        margin: 0;
+      }
+
+      .product-photo img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: contain;
+        background: #f7f8f7;
+      }
+
+      .quick-list {
+        margin: 0;
+        padding: 20px 22px 22px;
+      }
+
+      .quick-list dt {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .quick-list dd {
+        margin: 4px 0 16px;
+        font-weight: 720;
+      }
+
+      .quick-list dd:last-child {
+        margin-bottom: 0;
+      }
+
+      nav {
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: rgba(18, 24, 21, 0.82);
+        backdrop-filter: blur(12px);
+      }
+
+      nav .inner {
+        display: flex;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 20px;
+        gap: 8px;
+        overflow-x: auto;
+      }
+
+      nav a {
+        flex: 0 0 auto;
+        padding: 14px 12px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        color: var(--accent-dark);
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 36px 20px 72px;
+      }
+
+      .section {
+        margin-top: 46px;
+      }
+
+      .section:first-child {
+        margin-top: 0;
+      }
+
+      .section-head {
+        max-width: 780px;
+        margin-bottom: 22px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: clamp(1.7rem, 3vw, 2.35rem);
+      }
+
+      .section-head p {
+        margin: 12px 0 0;
+        color: var(--muted);
+      }
+
+      .parts-grid,
+      .checklist {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .tile,
+      .part-card,
+      .step,
+      .check {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+      }
+
+      .tile,
+      .part-card,
+      .check {
+        padding: 18px;
+      }
+
+      .part-card {
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .part-card.wide {
+        grid-template-columns: 1fr;
+      }
+
+      .part-card h3,
+      .step h3,
+      .tile h3 {
+        margin: 0;
+        font-size: 1.04rem;
+      }
+
+      .part-card p,
+      .step p,
+      .step li,
+      .tile p,
+      .check span {
+        color: var(--muted);
+      }
+
+      .part-card p,
+      .tile p {
+        margin: 8px 0 0;
+        font-size: 0.95rem;
+      }
+
+      .part-card ul {
+        margin: 14px 0 0;
+        padding-left: 1.15rem;
+      }
+
+      .part-card li {
+        margin: 7px 0;
+      }
+
+      .requirements {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .guide-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 110px minmax(0, 1fr);
+        gap: 22px;
+        padding: 22px;
+        scroll-margin-top: 24px;
+      }
+
+      .step-number {
+        display: grid;
+        width: 72px;
+        height: 72px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--soft-green);
+        color: var(--accent-dark);
+        font-size: 1.6rem;
+        font-weight: 850;
+      }
+
+      .step h3 {
+        font-size: clamp(1.24rem, 2vw, 1.52rem);
+      }
+
+      .step-body > p:first-of-type {
+        margin-top: 10px;
+      }
+
+      .step-body > p:last-child,
+      .step-body > ul:last-child,
+      .step-body > ol:last-child {
+        margin-bottom: 0;
+      }
+
+      .callout {
+        border-left: 4px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        background: var(--soft-green);
+        margin: 16px 0;
+        padding: 14px 16px;
+      }
+
+      .callout.warning {
+        border-left-color: var(--amber);
+        background: var(--soft-amber);
+      }
+
+      .callout.info {
+        border-left-color: var(--blue);
+        background: var(--soft-blue);
+      }
+
+      .callout strong,
+      .check strong {
+        color: var(--ink);
+      }
+
+      .field-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .field-table th,
+      .field-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 14px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .field-table th {
+        background: var(--paper-strong);
+        color: #d8eee4;
+        font-size: 0.88rem;
+      }
+
+      .field-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .field-table td:first-child {
+        width: 240px;
+        font-weight: 720;
+        color: var(--ink);
+      }
+
+      .check strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .footer {
+        border-top: 1px solid var(--line);
+        background: #121815;
+      }
+
+      .footer-inner {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 22px 20px;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .footer-project {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent-dark);
+        text-decoration: none;
+      }
+
+      .footer-project img {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .requirements,
+        .parts-grid,
+        .checklist,
+        .part-card {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .step {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .site-header {
+          padding-top: 28px;
+        }
+
+        h1 {
+          font-size: 2.2rem;
+        }
+
+        main {
+          padding-inline: 14px;
+        }
+
+        .step,
+        .part-card,
+        .tile,
+        .check {
+          padding: 18px;
+        }
+
+        .field-table,
+        .field-table tbody,
+        .field-table tr,
+        .field-table td,
+        .field-table th {
+          display: block;
+          width: 100%;
+        }
+
+        .field-table thead {
+          display: none;
+        }
+
+        .field-table td:first-child {
+          width: 100%;
+          border-bottom: 0;
+          padding-bottom: 2px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="language-switch" aria-label="Selecteur de langue">
+      <a href="../en/" aria-label="English"><img src="../../assets/flags/en.svg" alt="" aria-hidden="true" title="English"></a>
+      <a href="./" aria-current="page" aria-label="Francais"><img src="../../assets/flags/fr.svg" alt="" aria-hidden="true" title="Francais"></a>
+    </div>
+    <header class="site-header">
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Assemblage materiel</p>
+          <h1 id="page-title">Guide d'installation materielle Ultimate Homebrewing Scale</h1>
+          <p class="hero-copy">
+            Choisissez les pieces, preparez le boitier et assemblez la balance de brassage connectee autour du
+            M5Stack Dial, de la plateforme de pesee VEVOR et du lecteur de poids I2C.
+          </p>
+          <div class="hero-actions">
+            <a class="button-link" href="#shopping-list">Voir la liste d'achat</a>
+            <a class="button-link secondary" href="../../SoftwareInstallationGuide/fr/">Guide logiciel</a>
+          </div>
+        </div>
+
+        <aside class="hero-panel" aria-label="Resume materiel">
+          <div class="diagram" aria-hidden="true">
+            <div class="diagram-row">
+              <div class="diagram-box">M5Stack Dial<span>Ecran, Wi-Fi, controle</span></div>
+              <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">Unit Weight I2C<span>Conversion du poids</span></div>
+              <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">Plateforme VEVOR<span>Capteurs via RJ9</span></div>
+            </div>
+            <div class="diagram-row down-row">
+              <div class="diagram-down">v</div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+            <div class="diagram-row secondary">
+              <div class="diagram-box">Unit Relay<span>Vanne 12 V optionnelle</span></div>
+              <div class="diagram-arrow">-&gt;</div>
+              <div class="diagram-box">Spunding valve<span>Controle mecanique de pression</span></div>
+            </div>
+          </div>
+          <dl class="quick-list">
+            <dt>Charge cible</dt>
+            <dd>20 kg</dd>
+            <dt>Precision typique</dt>
+            <dd>1 a 4 g apres calibration</dd>
+            <dt>Fonction optionnelle</dt>
+            <dd>Remplissage de keg avec spunding valve</dd>
+          </dl>
+        </aside>
+      </section>
+    </header>
+
+    <nav aria-label="Sections du guide materiel">
+      <div class="inner">
+        <a href="#before">Avant de commencer</a>
+        <a href="#shopping-list">Pieces</a>
+        <a href="#assembly">Assemblage</a>
+        <a href="#keg-filler">Keg filler</a>
+        <a href="#checks">Verifications</a>
+        <a href="#software">Logiciel</a>
+      </div>
+    </nav>
+
+    <main>
+      <section id="before" class="section">
+        <div class="section-head">
+          <h2>Avant De Commencer</h2>
+          <p>
+            L'objectif est d'obtenir une balance propre, robuste, facile a essuyer, sans cable expose pendant une journee de brassage.
+          </p>
+        </div>
+
+        <div class="requirements">
+          <article class="tile">
+            <h3>Outils</h3>
+            <p>Tournevis, perceuse, forets adaptes au boitier, pince coupante et pince a denuder.</p>
+          </article>
+          <article class="tile">
+            <h3>Cablage</h3>
+            <p>Fil souple, connecteurs jack, presse-etoupes PG7 et cable RJ9 pour la plateforme.</p>
+          </article>
+          <article class="tile">
+            <h3>Securite</h3>
+            <p>Travaillez alimentation debranchee. Verifiez la polarite 12 V avant de connecter le Dial ou la vanne.</p>
+          </article>
+          <article class="tile">
+            <h3>Logiciel</h3>
+            <p>Apres assemblage, utilisez le guide logiciel pour flasher le firmware et calibrer la balance.</p>
+          </article>
+        </div>
+
+        <div class="callout warning">
+          <strong>Environnement humide :</strong> ce projet est pense pour une brasserie de garage, mais l'electronique
+          doit rester protegee. Fermez le boitier, utilisez des presse-etoupes et evitez toute entree de liquide.
+        </div>
+      </section>
+
+      <section id="shopping-list" class="section">
+        <div class="section-head">
+          <h2>Liste D'Achat</h2>
+          <p>
+            Les liens d'achat ci-dessous conservent les liens affilies du README du projet. Chaque carte affiche
+            une image produit locale stockee dans <code>img/</code>.
+          </p>
+        </div>
+
+        <div class="parts-grid">
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/m5dial.jpg" alt="M5Dial photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>M5Dial</h3>
+              <p>
+                Le M5Stack Dial apporte l'ESP32, le Wi-Fi, l'ecran rond et l'encodeur rotatif. Il limite le cablage
+                et donne au brasseur une interface physique utilisable meme avec les mains humides.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/unit-weight-i2c.jpg" alt="Unit Weight I2C photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Unit Weight I2C</h3>
+              <p>
+                L'Unit Weight I2C convertit le signal des capteurs de charge en donnees lisibles par le Dial. Gardez le
+                cablage court et protege mecaniquement dans le boitier.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/unit-relay.png" alt="Unit Relay photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Unit Relay</h3>
+              <p>
+                L'Unit Relay pilote la vanne solenoide 12 V optionnelle pour le remplissage de keg, tout en separant
+                le signal de controle du circuit de puissance de la vanne.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/vevor-scale.jpg" alt="VEVOR scale photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>VEVOR Scale</h3>
+              <p>
+                La plateforme de pesee postale VEVOR est robuste, abordable et adaptee aux recipients lourds de brassage.
+                Son connecteur RJ9 facilite l'integration et permet de remplacer la plateforme.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/rj9-cable.png" alt="RJ9 cable photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>RJ9 Cable</h3>
+              <p>
+                Le cable RJ9 rend la connexion de la plateforme demontable et evite de cabler directement les capteurs
+                de charge dans le boitier.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c2u5O1C5">RJ9 cable</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article id="keg-filler" class="part-card">
+            <figure class="product-photo">
+              <img src="../img/spunding-valve.jpg" alt="Spunding valve photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Spunding Valve</h3>
+              <p>
+                La spunding valve est uniquement necessaire pour le remplissage de keg. Elle reste le regulateur
+                mecanique de pression pendant que la balance controle l'arret du remplissage au poids.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/solenoid-valve.jpg" alt="Solenoid valve photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Solenoid Valve</h3>
+              <p>
+                La vanne solenoide normalement fermee donne au controleur un moyen sur d'arreter le remplissage. En cas
+                de perte d'alimentation, le passage du gaz se ferme.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/adapter-1-8.jpg" alt="1/8 adapter photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>1/8 Adapter</h3>
+              <p>
+                L'adaptateur aide a integrer la vanne solenoide et la spunding valve dans le montage cote gaz utilise
+                par la fonction de remplissage de keg.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/8 Adapter</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/abs-enclosure.jpg" alt="Waterproof ABS enclosure photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Boitier ABS Etanche</h3>
+              <p>
+                Le boitier regroupe l'electronique, protege les connexions et ne laisse sortir que les cables utiles :
+                plateforme de pesee, alimentation et sortie de vanne optionnelle.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c2w8dSkf">Boitier ABS etanche (REF : F200-120-75)</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/cable-gland.jpg" alt="PG7 cable gland photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Presse-Etoupe PG7</h3>
+              <p>
+                Les presse-etoupes assurent le maintien mecanique des cables et aident a eloigner les projections
+                de l'electronique dans le boitier.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c4UINtHd">Presse-etoupe (REF : PG7 blanc)</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/jack-connectors.jpg" alt="Jack connectors photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Connecteurs Jack</h3>
+              <p>
+                Les connecteurs jack facilitent la deconnexion de l'alimentation et de la vanne optionnelle pour la
+                maintenance ou le transport.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/power-supply.jpg" alt="12V 3A power supply photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Alimentation 12 V 3 A</h3>
+              <p>
+                L'alimentation 12 V alimente le montage et correspond a la tension de la vanne solenoide utilisee
+                par l'option de remplissage de keg.
+              </p>
+              <ul>
+                <li><a href="https://s.click.aliexpress.com/e/_c353g2MJ">Alimentation (REF : prise EU, 12 V 3 A)</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="assembly" class="section">
+        <div class="section-head">
+          <h2>Hardware Assemblage</h2>
+          <p>
+            Montez d'abord la partie pesee, puis ajoutez la commande de vanne seulement si vous prevoyez le remplissage de keg.
+          </p>
+        </div>
+
+        <div class="guide-grid">
+          <article class="step">
+            <div class="step-number" aria-hidden="true">1</div>
+            <div class="step-body">
+              <h3>Preparer Le Boitier</h3>
+              <p>
+                Positionnez le M5Stack Dial pour que l'ecran et l'encodeur rotatif restent accessibles. Marquez ensuite
+                les sorties necessaires : alimentation 12 V, cable RJ9 de la balance et sortie de vanne si le keg filler est installe.
+              </p>
+              <ol>
+                <li>Marquez tous les trous avant d'installer l'electronique.</li>
+                <li>Installez un presse-etoupe PG7 pour chaque cable qui sort du boitier.</li>
+                <li>Laissez une petite boucle de service dans le boitier pour que les connecteurs ne soient pas sous tension mecanique.</li>
+              </ol>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-number" aria-hidden="true">2</div>
+            <div class="step-body">
+              <h3>Installer La Plateforme VEVOR</h3>
+              <p>
+                Placez la plateforme sur une surface plane et stable. Faites passer le cable RJ9 dans le boitier via
+                un presse-etoupe, puis connectez-le au lecteur de poids I2C.
+              </p>
+              <div class="callout info">
+                <strong>Integration simple :</strong> conservez le connecteur RJ9 quand c'est possible. Il permet de remplacer
+                ou de deconnecter la plateforme sans revoir l'assemblage mecanique.
+              </div>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-number" aria-hidden="true">3</div>
+            <div class="step-body">
+              <h3>Connecter Le Lecteur De Poids I2C Au Dial</h3>
+              <p>
+                Le lecteur de poids convertit le signal des capteurs de charge en mesures pour le M5Stack Dial. Connectez
+                l'alimentation, la masse et l'I2C selon les marquages de vos modules.
+              </p>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Connexion</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>VCC</code> / power</td>
+                    <td>Alimente le module lecteur de poids avec la tension attendue par cette carte.</td>
+                  </tr>
+                  <tr>
+                    <td><code>GND</code></td>
+                    <td>Masse commune entre le Dial, le lecteur de poids et l'alimentation.</td>
+                  </tr>
+                  <tr>
+                    <td><code>SDA</code> and <code>SCL</code></td>
+                    <td>Bus I2C entre le Dial et le lecteur de poids.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="callout warning">
+                <strong>Avant la mise sous tension :</strong> verifiez les marquages exacts sur vos cartes. Ne vous fiez pas
+                seulement aux couleurs des fils ; confirmez la polarite et la continuite au multimetre.
+              </div>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-number" aria-hidden="true">4</div>
+            <div class="step-body">
+              <h3>Distribuer L'Alimentation 12 V</h3>
+              <p>
+                L'alimentation 12 V 3 A est l'entree principale. Utilisez des connecteurs jack pour une entree propre, puis
+                distribuez l'alimentation aux modules qui en ont besoin.
+              </p>
+              <ol>
+                <li>Identifiez clairement le positif et le negatif sur l'entree jack.</li>
+                <li>Gardez une masse commune pour les modules qui communiquent entre eux.</li>
+                <li>Isolez les connexions avec de la gaine thermoretractable ou des borniers adaptes.</li>
+              </ol>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-number" aria-hidden="true">5</div>
+            <div class="step-body">
+              <h3>Ajouter Le Relais Et La Vanne Solenoide</h3>
+              <p>
+                Pour le remplissage de keg, le relais pilote la vanne solenoide 12 V normalement fermee. Si le systeme perd
+                l'alimentation ou redemarre, la vanne revient en position fermee et le remplissage s'arrete.
+              </p>
+              <ol>
+                <li>Fixez le relais dans le boitier, a l'abri de toute entree possible de liquide.</li>
+                <li>Faites sortir la commande de vanne par son propre presse-etoupe.</li>
+                <li>Installez la vanne sur le circuit gaz associe a la spunding valve, pas sur la ligne de biere.</li>
+              </ol>
+              <div class="callout warning">
+                <strong>Pression :</strong> la spunding valve reste l'organe de regulation de pression. La vanne
+                solenoide apporte le controle automatique ; elle ne remplace pas le reglage de pression.
+              </div>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-number" aria-hidden="true">6</div>
+            <div class="step-body">
+              <h3>Fermer Et Proteger Le Montage</h3>
+              <p>
+                Une fois les connexions verifiees hors charge, fixez les modules, serrez les presse-etoupes et fermez
+                le boitier. Aucun conducteur nu ne doit etre accessible pendant l'utilisation.
+              </p>
+              <ol>
+                <li>Verifiez que le bouton du Dial tourne librement.</li>
+                <li>Assurez-vous que le cable de la balance ne touche pas et ne contraint pas la plateforme de pesee.</li>
+                <li>Etiquetez les connecteurs externes si plusieurs sorties se ressemblent.</li>
+              </ol>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="checks" class="section">
+        <div class="section-head">
+          <h2>Verifications Avant La Configuration Logicielle</h2>
+          <p>
+            Ces controles evitent de chercher un probleme logiciel quand la cause vient en realite du montage materiel.
+          </p>
+        </div>
+
+        <div class="checklist">
+          <div class="check">
+            <strong>Plateforme libre</strong>
+            <span>La plateforme ne touche pas le boitier, les cables ou l'etabli lorsqu'une charge est posee dessus.</span>
+          </div>
+          <div class="check">
+            <strong>Maintien des cables</strong>
+            <span>Le cable RJ9, l'entree d'alimentation et la sortie de vanne ne peuvent pas etre arraches par une traction legere.</span>
+          </div>
+          <div class="check">
+            <strong>Polarite verifiee</strong>
+            <span>Le positif et le negatif de l'entree 12 V sont verifies avant de connecter l'electronique.</span>
+          </div>
+          <div class="check">
+            <strong>Vanne fermee au repos</strong>
+            <span>Pour le remplissage de keg, la vanne solenoide doit etre normalement fermee lorsque le systeme n'est pas alimente.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="software" class="section">
+        <div class="section-head">
+          <h2>Suite : Installation Logicielle</h2>
+          <p>
+            Quand l'assemblage materiel est termine, flashez le firmware et lancez l'assistant de calibration de la balance.
+          </p>
+        </div>
+
+        <div class="callout">
+          <strong>Etape suivante :</strong> ouvrez le
+          <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>, flashez le M5Stack Dial,
+          configurez le Wi-Fi et lancez la calibration. La precision finale depend beaucoup de la qualite de calibration
+          et de la stabilite mecanique de la plateforme.
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <a class="footer-project" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
+          Projet Git : https://github.com/bnbbrewers/UltimateHomebrewingScale
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>
