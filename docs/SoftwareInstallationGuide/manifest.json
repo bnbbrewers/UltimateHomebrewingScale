@@ -7,7 +7,7 @@
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/bnbbrewers/UltimateHomebrewingScale/main/firmware/firmwareM5DialCustom.bin",
+          "path": "https://github.com/bnbbrewers/UltimateHomebrewingScale/releases/latest/download/UHS-firmwareM5Dial.bin",
           "offset": 0
         }
       ]
