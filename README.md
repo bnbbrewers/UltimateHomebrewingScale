@@ -88,7 +88,7 @@ documented here for the reference build.
 
 - Spunding valve: https://s.click.aliexpress.com/e/_c3Ccjltr
 - Solenoid valve: https://s.click.aliexpress.com/e/_c2Q1v85j
-- 1/8 adapter: https://s.click.aliexpress.com/e/_c3iy7LDR
+- 1/4 adapter: https://s.click.aliexpress.com/e/_c3iy7LDR
 
 ### Integration Box
 
