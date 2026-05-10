@@ -1,0 +1,214 @@
+name: Repack M5Dial firmware
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  repack:
+    name: Repack firmware from main tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag commit belongs to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          HEAD_SHA=$(git rev-parse HEAD)
+          git merge-base --is-ancestor "$HEAD_SHA" origin/main
+
+      - name: Install ESP-IDF Python tools
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: v5.4.2
+
+      - name: Prepare release names
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          echo "HEAD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Unpack repack base
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist/base dist/fs-user dist/out
+          unzip -q firmware/UHS-m5dial-repack-base.zip -d dist/base
+          test -f dist/base/repack-base/artifacts/sdkconfig
+          test -f dist/base/repack-base/artifacts/bootloader/bootloader.bin
+          test -f dist/base/repack-base/artifacts/partition_table/partition-table.bin
+          test -f dist/base/repack-base/artifacts/nvs.bin
+          test -f dist/base/repack-base/artifacts/micropython.bin
+          test -f dist/base/repack-base/artifacts/fs-system.bin
+          test -f dist/base/repack-base/tools/fs_packed.py
+          test -f dist/base/repack-base/tools/littlefs2
+          test -f dist/base/repack-base/tools/makeimg.py
+          test -f dist/base/repack-base/version.txt
+          test -f dist/base/repack-base/micropython/tools/uf2conv.py
+          test -f dist/base/repack-base/micropython/tools/uf2families.json
+          chmod +x dist/base/repack-base/tools/littlefs2
+
+      - name: Build runtime file artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files | grep -Ev "(^docs/|^firmware/|^\\.git|[.][Mm][Dd]$|^config.py$)" > dist/included-files.txt
+          tar -cf - -T dist/included-files.txt | tar -C dist/fs-user -xf -
+          [ ! -f dist/fs-user/config.py ]
+          [ ! -d dist/fs-user/docs ]
+          [ ! -d dist/fs-user/firmware ]
+          [ ! -d dist/fs-user/.github ]
+          [ ! -f dist/fs-user/.gitignore ]
+          if find dist/fs-user -type f -iname "*.md" | grep -q .; then
+            echo "Markdown files must not be included in firmware runtime files." >&2
+            find dist/fs-user -type f -iname "*.md" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          src = Path("dist/fs-user")
+          out = Path("dist/out") / f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
+          with ZipFile(out, "w", ZIP_DEFLATED) as archive:
+              for path in sorted(p for p in src.rglob("*") if p.is_file()):
+                  archive.write(path, path.relative_to(src).as_posix())
+          print(f"Runtime files: {sum(1 for p in src.rglob('*') if p.is_file())}")
+          print(f"Runtime archive: {out}")
+          PY
+
+      - name: Repack firmware
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist/base/repack-base
+          rm -f artifacts/fs-user.bin
+          set +e
+          python3 tools/fs_packed.py \
+            tools/littlefs2 \
+            dial \
+            "$GITHUB_WORKSPACE/dist/fs-user" \
+            artifacts/fs-user.bin \
+            artifacts/partition_table/partition-table.bin 2>&1 | tee "$GITHUB_WORKSPACE/dist/out/fs-packed.log"
+          FS_PACK_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$FS_PACK_STATUS" -ne 0 ]; then
+            exit "$FS_PACK_STATUS"
+          fi
+          if grep -E "pack failed|write error|No more free space" "$GITHUB_WORKSPACE/dist/out/fs-packed.log"; then
+            exit 1
+          fi
+          test -s artifacts/fs-user.bin
+          python3 tools/makeimg.py \
+            artifacts/sdkconfig \
+            artifacts/bootloader/bootloader.bin \
+            artifacts/partition_table/partition-table.bin \
+            artifacts/nvs.bin \
+            artifacts/micropython.bin \
+            artifacts/fs-system.bin \
+            artifacts/fs-user.bin \
+            dial \
+            0 \
+            "$GITHUB_WORKSPACE/dist/out/UHS-firmwareM5Dial.bin" \
+            "$GITHUB_WORKSPACE/dist/out/UHS-firmwareM5Dial.uf2"
+
+      - name: Write release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist/out
+          sha256sum UHS-firmwareM5Dial.bin > UHS-firmwareM5Dial.sha256
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          firmware = Path("UHS-firmwareM5Dial.bin")
+          sha256 = Path("UHS-firmwareM5Dial.sha256").read_text(encoding="utf-8").split()[0]
+          included_count = sum(1 for _ in Path("../fs-user").rglob("*") if _.is_file())
+          code_archive = f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
+          release_download_base = (
+              "https://github.com/bnbbrewers/UltimateHomebrewingScale"
+              f"/releases/download/{os.environ['TAG_NAME']}"
+          )
+          build_manifest = {
+              "name": "Ultimate Homebrewing Scale M5Dial firmware",
+              "tag": os.environ["TAG_NAME"],
+              "commit": os.environ["HEAD_SHA"],
+              "short_commit": os.environ["SHORT_SHA"],
+              "source_branch": "main",
+              "firmware": "UHS-firmwareM5Dial.bin",
+              "code": code_archive,
+              "web_install_manifest": "UHS-web-install-manifest.json",
+              "sha256": sha256,
+              "size": firmware.stat().st_size,
+              "included_files": included_count,
+              "excluded": ["docs/", "firmware/", "*.md", "config.py"],
+          }
+          web_install_manifest = {
+              "name": "Ultimate Homebrewing Scale",
+              "version": os.environ["TAG_NAME"],
+              "new_install_prompt_erase": True,
+              "builds": [
+                  {
+                      "chipFamily": "ESP32-S3",
+                      "parts": [
+                          {
+                              "path": f"{release_download_base}/UHS-firmwareM5Dial.bin",
+                              "offset": 0,
+                          },
+                      ],
+                  },
+              ],
+          }
+          Path("UHS-build-manifest.json").write_text(
+              json.dumps(build_manifest, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          Path("UHS-web-install-manifest.json").write_text(
+              json.dumps(web_install_manifest, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload repacked firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UHS-firmware-${{ env.TAG_NAME }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            dist/out/UHS-firmwareM5Dial.bin
+            dist/out/UHS-firmwareM5Dial.sha256
+            dist/out/UHS-build-manifest.json
+            dist/out/UHS-web-install-manifest.json
+            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: UHS firmware ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          target_commitish: ${{ env.HEAD_SHA }}
+          make_latest: true
+          generate_release_notes: true
+          files: |
+            dist/out/UHS-firmwareM5Dial.bin
+            dist/out/UHS-firmwareM5Dial.sha256
+            dist/out/UHS-build-manifest.json
+            dist/out/UHS-web-install-manifest.json
+            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
