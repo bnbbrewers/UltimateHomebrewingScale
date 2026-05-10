@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   repack:
@@ -141,10 +143,7 @@ jobs:
           sha256 = Path("UHS-firmwareM5Dial.sha256").read_text(encoding="utf-8").split()[0]
           included_count = sum(1 for _ in Path("../fs-user").rglob("*") if _.is_file())
           code_archive = f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
-          release_download_base = (
-              "https://github.com/bnbbrewers/UltimateHomebrewingScale"
-              f"/releases/download/{os.environ['TAG_NAME']}"
-          )
+          web_download_base = "https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest"
           build_manifest = {
               "name": "Ultimate Homebrewing Scale M5Dial firmware",
               "tag": os.environ["TAG_NAME"],
@@ -154,6 +153,7 @@ jobs:
               "firmware": "UHS-firmwareM5Dial.bin",
               "code": code_archive,
               "web_install_manifest": "UHS-web-install-manifest.json",
+              "web_install_url": f"{web_download_base}/UHS-web-install-manifest.json",
               "sha256": sha256,
               "size": firmware.stat().st_size,
               "included_files": included_count,
@@ -168,7 +168,7 @@ jobs:
                       "chipFamily": "ESP32-S3",
                       "parts": [
                           {
-                              "path": f"{release_download_base}/UHS-firmwareM5Dial.bin",
+                              "path": f"{web_download_base}/UHS-firmwareM5Dial.bin",
                               "offset": 0,
                           },
                       ],
@@ -197,6 +197,30 @@ jobs:
             dist/out/UHS-build-manifest.json
             dist/out/UHS-web-install-manifest.json
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
+
+      - name: Prepare GitHub Pages files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/pages
+          cp -R docs/. dist/pages/
+          mkdir -p dist/pages/SoftwareInstallationGuide/latest
+          cp dist/out/UHS-firmwareM5Dial.bin dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-web-install-manifest.json dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-firmwareM5Dial.sha256 dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-build-manifest.json dist/pages/SoftwareInstallationGuide/latest/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
