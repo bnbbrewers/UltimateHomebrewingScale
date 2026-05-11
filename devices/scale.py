@@ -23,6 +23,9 @@ SDA_PIN = 13
 
 # Moving average for stable reading
 MOVING_AVERAGE_SIZE = 10
+FAST_MOVING_AVERAGE_SIZE = 3
+FAST_CHANGE_THRESHOLD_G = 5.0
+WEIGHT_HISTORY_SIZE = 10
 
 # Minimum interval between actual hardware reads (ms)
 READ_INTERVAL_MS = 100
@@ -53,6 +56,7 @@ class CalibratedScale:
         self.tare_offset = 0
         self.adc_buffer = []
         self._adc_sum = 0
+        self._weight_buffer = []
         self._read_interval_ms = read_interval_ms
         self._last_read_ms = None
         self._cached_weight = None
@@ -231,10 +235,17 @@ class CalibratedScale:
         if adc_value is None:
             return self._cached_weight
 
+        sample_weight = self._adc_to_weight(adc_value)
+        if sample_weight is None:
+            self._cached_weight = None
+            return self._cached_weight
+        sample_weight -= self.tare_offset
+        moving_average_size = self._moving_average_size_for(sample_weight)
+
         # Add to moving average
         self.adc_buffer.append(adc_value)
         self._adc_sum += adc_value
-        if len(self.adc_buffer) > MOVING_AVERAGE_SIZE:
+        while len(self.adc_buffer) > moving_average_size:
             self._adc_sum -= self.adc_buffer.pop(0)
 
         # Calculate average without re-summing full list each tick
@@ -252,7 +263,20 @@ class CalibratedScale:
         #         print(f"ADC: {adc_avg:.0f} | Weight: {weight:.1f}g | Tare: {self.tare_offset:.1f}g")
 
         self._cached_weight = weight
+        self._record_filtered_weight(weight)
         return self._cached_weight
+
+    def _moving_average_size_for(self, sample_weight):
+        if self._cached_weight is None:
+            return MOVING_AVERAGE_SIZE
+        if abs(sample_weight - self._cached_weight) > FAST_CHANGE_THRESHOLD_G:
+            return FAST_MOVING_AVERAGE_SIZE
+        return MOVING_AVERAGE_SIZE
+
+    def _record_filtered_weight(self, weight):
+        self._weight_buffer.append(weight)
+        if len(self._weight_buffer) > WEIGHT_HISTORY_SIZE:
+            self._weight_buffer.pop(0)
 
     def tare(self, num_samples=5, settle_ms=50):
         """
@@ -264,6 +288,7 @@ class CalibratedScale:
         """
         self.adc_buffer.clear()
         self._adc_sum = 0
+        self._weight_buffer.clear()
         self._cached_weight = None
         self._last_read_ms = None
         adc_samples = []
@@ -286,6 +311,7 @@ class CalibratedScale:
             self.tare_offset = weight
             self.adc_buffer.clear()
             self._adc_sum = 0
+            self._weight_buffer.clear()
             self._cached_weight = None
             self._last_read_ms = None
             if DEBUG_MODE:
@@ -318,16 +344,10 @@ class CalibratedScale:
         Returns:
             True if stable, False otherwise
         """
-        if len(self.adc_buffer) < samples:
+        if len(self._weight_buffer) < samples:
             return False
         
-        recent_weights = []
-        for adc in self.adc_buffer[-samples:]:
-            weight = self._adc_to_weight(adc)
-            if weight is None:
-                return False
-            weight -= self.tare_offset
-            recent_weights.append(weight)
+        recent_weights = self._weight_buffer[-samples:]
         
         # Check variation
         variation = max(recent_weights) - min(recent_weights)
