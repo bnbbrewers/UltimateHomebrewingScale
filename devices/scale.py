@@ -258,21 +258,20 @@ class CalibratedScale:
         """
         Perform tare (zero current weight).
 
-        Uses fewer samples with shorter settle time than the full moving
-        average to keep blocking time under 300 ms.  Calls M5.update()
+        Uses direct raw ADC samples so the tare is independent from the
+        moving-average state used for display smoothing.  Calls M5.update()
         between reads to prevent the system watchdog from rebooting.
         """
         self.adc_buffer.clear()
         self._adc_sum = 0
+        self._cached_weight = None
         self._reported_weight = None
-        samples = []
+        self._last_read_ms = None
+        adc_samples = []
         for _ in range(num_samples):
-            self._last_read_ms = None
-            # Force hardware reads for tare sampling, independent of report threshold.
-            weight = self._acquire_weight(force=True)
-            if weight is not None:
-                weight += self.tare_offset
-                samples.append(weight)
+            adc_value = self.read_raw_adc()
+            if adc_value is not None:
+                adc_samples.append(adc_value)
             try:
                 import M5
                 M5.update()
@@ -280,8 +279,14 @@ class CalibratedScale:
                 pass
             time.sleep_ms(settle_ms)
 
-        if samples:
-            self.tare_offset = sum(samples) / len(samples)
+        if adc_samples:
+            adc_avg = sum(adc_samples) / len(adc_samples)
+            weight = self._adc_to_weight(adc_avg)
+            if weight is None:
+                return False
+            self.tare_offset = weight
+            self.adc_buffer.clear()
+            self._adc_sum = 0
             self._cached_weight = None
             self._reported_weight = None
             self._last_read_ms = None
