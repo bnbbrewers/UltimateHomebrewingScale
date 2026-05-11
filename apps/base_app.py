@@ -66,3 +66,18 @@ class BaseApp:
         if not r:
             return idx, False
         return r.navigate_index(idx, count, wrap=False, invert=False)
+
+    def _read_and_update_weight(self, screen):
+        scale = self.hardware.scale
+        if scale is None:
+            if screen:
+                screen.set_status("Scale not found")
+            return None
+
+        weight = scale.read_weight_filtered()
+        if weight is None:
+            return None
+
+        if screen:
+            screen.update_from_weight(weight)
+        return weight

@@ -17,7 +17,6 @@ class ScaleApp(BaseApp):
         self._scale = self.hardware.scale
 
         self._status_reset_at = 0
-        self._last_weight = None
 
     def _weight(self):
         if self._screen is None:
@@ -39,7 +38,6 @@ class ScaleApp(BaseApp):
             screen.set_status(self.t("scale.taring"))
             if self._scale.tare():
                 screen.set_status(self.t("scale.tare_done"))
-                self._last_weight = None
                 self._status_reset_at = time.ticks_add(time.ticks_ms(), 1200)
             else:
                 screen.set_status(self.t("scale.tare_error"))
@@ -51,16 +49,14 @@ class ScaleApp(BaseApp):
         if self._check_return_to_launcher():
             return "launcher"
 
-        if self._scale is None:
-            self._weight().set_status("Scale not found")
-            return None
-
         if self.hardware.button and self.hardware.button.was_short_pressed():
+            if self._scale is None:
+                self._read_and_update_weight(self._weight())
+                return None
             self._weight().set_status(self.t("scale.taring"))
             ok = self._scale.tare()
             if ok:
                 self._weight().set_status(self.t("scale.tare_done"))
-                self._last_weight = None
             else:
                 self._weight().set_status(self.t("scale.tare_error"))
             self._status_reset_at = time.ticks_add(time.ticks_ms(), 1200)
@@ -70,11 +66,5 @@ class ScaleApp(BaseApp):
                 self._status_reset_at = 0
                 self._weight().set_status(self.t("scale.tare_ready"))
 
-        weight = self._scale.read_weight_filtered()
-        if weight is None:
-            return None
-
-        if self._last_weight != weight:
-            self._weight().update_from_weight(weight)
-        self._last_weight = weight
+        self._read_and_update_weight(self._weight())
         return None

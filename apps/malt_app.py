@@ -163,13 +163,9 @@ class GrainAssistantApp(BaseApp):
             self._start_weighing()
 
     def _tick_weigh(self):
-        if self._scale is None:
-            self._weight().set_status("Scale not found")
-            return
-        weight = self._scale.read_weight_filtered()
+        weight = self._read_and_update_weight(self._weight())
         if weight is None:
             return
-        self._weight().update_from_weight(weight)
         remaining = self._target_g - weight
         in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
         if in_range != self._last_in_range:
