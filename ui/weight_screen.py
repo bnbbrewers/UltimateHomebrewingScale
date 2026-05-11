@@ -236,7 +236,7 @@ class WeightScreen:
         if weight is None:
             return "---"
         abs_w = abs(weight)
-        if abs_w < 1:
+        if abs_w <= 1:
             return "0 g"
         if abs_w >= 1000:
             if weight < 0:

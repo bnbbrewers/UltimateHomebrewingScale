@@ -70,7 +70,7 @@ class ScaleApp(BaseApp):
                 self._status_reset_at = 0
                 self._weight().set_status(self.t("scale.tare_ready"))
 
-        weight = self._scale.read_weight()
+        weight = self._scale.read_weight_filtered()
         if weight is None:
             return None
 

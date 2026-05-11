@@ -44,7 +44,7 @@ scale = CalibratedScale(calibration_file="custom_cal.json")
 
 ```python
 # Read weight with moving average
-weight = scale.read_weight()  # Returns weight in grams as a float
+weight = scale.read_weight_filtered()  # Returns weight in grams as a float
 
 if weight is not None:
     print(f"Current weight: {weight:.1f}g")
@@ -85,7 +85,7 @@ print(f"Tare: {info['tare_offset']}g")
 - Initializes the scale with calibration data.
 - `calibration_file`: optional path to a JSON calibration file.
 
-#### `read_weight() -> float | None`
+#### `read_weight_filtered() -> float | None`
 - Reads the current weight using a moving average.
 - Returns the weight in grams, or `None` on error.
 
@@ -174,7 +174,7 @@ scale.tare()
 # Read weight continuously
 print("Add weight...")
 while True:
-    weight = scale.read_weight()
+    weight = scale.read_weight_filtered()
 
     if weight is not None:
         print(f"Weight: {weight:.1f}g")
