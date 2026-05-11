@@ -236,6 +236,8 @@ class WeightScreen:
         if weight is None:
             return "---"
         abs_w = abs(weight)
+        if abs_w < 1:
+            return "0 g"
         if abs_w >= 1000:
             if weight < 0:
                 return "-{:.2f} kg".format(abs_w / 1000.0)
