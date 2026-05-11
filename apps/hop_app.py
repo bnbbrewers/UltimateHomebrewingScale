@@ -249,7 +249,7 @@ class HopAssistantApp(BaseApp):
         if self._scale is None:
             self._weight().set_status("Scale not found")
             return
-        weight = self._scale.read_weight()
+        weight = self._scale.read_weight_filtered()
         if weight is None:
             return
         self._weight().update_from_weight(weight)

@@ -27,11 +27,6 @@ MOVING_AVERAGE_SIZE = 10
 # Minimum interval between actual hardware reads (ms)
 READ_INTERVAL_MS = 100
 
-# Minimum delta (grams) required before exposing a new weight to callers.
-# Set to 0 to disable value throttling.
-REPORT_THRESHOLD_G = 1.0
-
-
 class CalibratedScale:
     """
     Calibrated scale with tare functionality
@@ -44,7 +39,6 @@ class CalibratedScale:
         self,
         calibration_file=None,
         read_interval_ms=READ_INTERVAL_MS,
-        report_threshold_g=REPORT_THRESHOLD_G,
     ):
         """
         Initialize the scale with calibration
@@ -52,8 +46,6 @@ class CalibratedScale:
         Args:
             calibration_file: Path to calibration JSON file (optional)
             read_interval_ms: Minimum ms between actual hardware reads (default 100)
-            report_threshold_g: Minimum delta in grams before exposing a new
-                weight value to callers (default 1.0, set 0 to disable)
         """
         self.calibration_file = calibration_file or CALIBRATION_FILE
         self.weight_unit = None
@@ -64,8 +56,6 @@ class CalibratedScale:
         self._read_interval_ms = read_interval_ms
         self._last_read_ms = None
         self._cached_weight = None
-        self._report_threshold_g = report_threshold_g
-        self._reported_weight = None
         
         # Initialize Weight Unit
         self._init_weight_unit()
@@ -104,8 +94,8 @@ class CalibratedScale:
             # Load all calibration points and sort by ADC value
             self.calibration_points = sorted(points, key=lambda p: p['adc_average'])
             
-            if len(self.calibration_points) < 2:
-                raise ValueError("At least 2 calibration points required")
+            if not self._calibration_points_are_valid(self.calibration_points):
+                raise ValueError("Invalid calibration points")
             
             if DEBUG_MODE:
                 print(f"Calibration loaded from {self.calibration_file}")
@@ -113,6 +103,35 @@ class CalibratedScale:
         except Exception as e:
             print(f"Error loading calibration: {e}")
             self.calibration_points = []
+
+    def _calibration_points_are_valid(self, points):
+        """Return True when calibration points can be safely interpolated."""
+        if len(points) < 2:
+            return False
+
+        previous_adc = None
+        weights = []
+        for point in points:
+            try:
+                adc = point['adc_average']
+                weight = point['weight']
+            except KeyError:
+                return False
+
+            if previous_adc is not None and adc == previous_adc:
+                return False
+            previous_adc = adc
+            weights.append(weight)
+
+        increasing = True
+        decreasing = True
+        for i in range(len(weights) - 1):
+            if weights[i] > weights[i + 1]:
+                increasing = False
+            if weights[i] < weights[i + 1]:
+                decreasing = False
+
+        return increasing or decreasing
     
     def _adc_to_weight(self, adc_value):
         """
@@ -182,19 +201,14 @@ class CalibratedScale:
                 print(f"Error reading ADC: {e}")
             return None
     
-    def read_weight(self):
+    def read_weight_filtered(self):
         """
-        Read current weight with moving average for stability.
-
-        Hardware is only queried once per _read_interval_ms; calls within
-        that window return the last cached value immediately (non-blocking).
-        A report threshold can additionally suppress very small jitter updates.
+        Read current calibrated weight after hardware throttling and smoothing.
 
         Returns:
             Weight in grams (float), or None if no valid reading yet
         """
-        raw_weight = self._acquire_weight(force=False)
-        return self._apply_report_threshold(raw_weight)
+        return self._acquire_weight(force=False)
 
     def _acquire_weight(self, force=False):
         """
@@ -240,20 +254,6 @@ class CalibratedScale:
         self._cached_weight = weight
         return self._cached_weight
 
-    def _apply_report_threshold(self, weight):
-        """Throttle exposed values to reduce tiny UI-level jitter updates."""
-        if weight is None:
-            return None
-        if self._report_threshold_g <= 0:
-            self._reported_weight = weight
-            return weight
-        if self._reported_weight is None:
-            self._reported_weight = weight
-            return weight
-        if abs(weight - self._reported_weight) >= self._report_threshold_g:
-            self._reported_weight = weight
-        return self._reported_weight
-    
     def tare(self, num_samples=5, settle_ms=50):
         """
         Perform tare (zero current weight).
@@ -265,7 +265,6 @@ class CalibratedScale:
         self.adc_buffer.clear()
         self._adc_sum = 0
         self._cached_weight = None
-        self._reported_weight = None
         self._last_read_ms = None
         adc_samples = []
         for _ in range(num_samples):
@@ -288,7 +287,6 @@ class CalibratedScale:
             self.adc_buffer.clear()
             self._adc_sum = 0
             self._cached_weight = None
-            self._reported_weight = None
             self._last_read_ms = None
             if DEBUG_MODE:
                 print("Tare set to: {:.1f}g".format(self.tare_offset))
@@ -325,7 +323,10 @@ class CalibratedScale:
         
         recent_weights = []
         for adc in self.adc_buffer[-samples:]:
-            weight = self._adc_to_weight(adc) - self.tare_offset
+            weight = self._adc_to_weight(adc)
+            if weight is None:
+                return False
+            weight -= self.tare_offset
             recent_weights.append(weight)
         
         # Check variation
