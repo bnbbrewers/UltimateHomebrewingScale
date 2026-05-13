@@ -264,11 +264,13 @@ class HopAssistantApp(BaseApp):
     def _start_weighing(self):
         hop = self._hops_list[self._current_hop_idx]
         step = hop["steps"][self._step_idx]
+        vessel_number = self._step_idx + 1
         self._target_g = self._to_target_g(step[1])
         self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen = self._weight()
         weigh_screen.configure(
-            title=hop["name"], mode="countdown_g", target=self._target_g,
+            title=self.t("hop.weigh_title", hop["name"], vessel_number),
+            mode="countdown_g", target=self._target_g,
             title_bg_color=_COLOR_HOP, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
         weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
