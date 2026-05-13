@@ -41,7 +41,7 @@ class _HopStepItems:
 
     def __getitem__(self, index):
         step_name, amount = self._steps[index]
-        vessel_number = index + 1
+        vessel_number = self._app._vessel_number_for_step(step_name)
         return self._app._step_line(vessel_number, step_name, amount)
 
 
@@ -63,6 +63,7 @@ class HopAssistantApp(BaseApp):
         self._batch_id = None
         self._prep_flow_active = False
         self._hops_list = []
+        self._vessel_numbers_by_step = {}
         self._current_hop_idx = 0
         self._step_idx = 0
         self._target_g = 0
@@ -85,6 +86,7 @@ class HopAssistantApp(BaseApp):
             mem_snapshot("hop.on_exit.before_cleanup", enabled=True, collect=False)
         self._batches = []
         self._hops_list = []
+        self._vessel_numbers_by_step = {}
         self._batch_id = None
         self._prep_flow_active = False
         if self._select_screen:
@@ -264,7 +266,7 @@ class HopAssistantApp(BaseApp):
     def _start_weighing(self):
         hop = self._hops_list[self._current_hop_idx]
         step = hop["steps"][self._step_idx]
-        vessel_number = self._step_idx + 1
+        vessel_number = self._vessel_number_for_step(step[0])
         self._target_g = self._to_target_g(step[1])
         self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen = self._weight()
@@ -334,12 +336,20 @@ class HopAssistantApp(BaseApp):
         return hops_list
 
     @staticmethod
-    def _count_distinct_steps(hops_list):
-        distinct_steps = {}
+    def _build_step_vessel_numbers(hops_list):
+        vessel_numbers = {}
         for hop in hops_list:
             for step_name, _amount in hop.get("steps", []):
-                distinct_steps[step_name] = True
-        return len(distinct_steps)
+                if step_name not in vessel_numbers:
+                    vessel_numbers[step_name] = len(vessel_numbers) + 1
+        return vessel_numbers
+
+    def _vessel_number_for_step(self, step_name):
+        return self._vessel_numbers_by_step.get(step_name, 0)
+
+    @staticmethod
+    def _count_distinct_steps(hops_list):
+        return len(HopAssistantApp._build_step_vessel_numbers(hops_list))
 
     def _load_hops(self):
         self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
@@ -348,7 +358,8 @@ class HopAssistantApp(BaseApp):
         gc.collect()
         mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
         self._hops_list = self._fetch_hops_list()
-        recipient_count = self._count_distinct_steps(self._hops_list)
+        self._vessel_numbers_by_step = self._build_step_vessel_numbers(self._hops_list)
+        recipient_count = len(self._vessel_numbers_by_step)
         gc.collect()
         mem_snapshot("hop.load_hops.post_api", enabled=config.DEBUG, collect=False)
 
