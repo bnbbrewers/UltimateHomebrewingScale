@@ -59,7 +59,7 @@ TRANSLATIONS = {
         'prepare_recipients': 'Preparez {0} recipient(s) pour les ajouts de houblon',
         'no_hops': 'Aucun houblon',
         'loading_hops': 'Chargement des houblons...',
-        'step_line': '{0} ({1}g)',
+        'step_line': '{0} : {1} ({2}g)',
         'select_hop': 'Selectionner un houblon',
         'hop_weighed': '{0} : termine',
         'all_hops_weighed': 'Tous les houblons peses !',
