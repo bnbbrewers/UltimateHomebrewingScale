@@ -60,6 +60,7 @@ TRANSLATIONS = {
         'no_hops': 'No hops found',
         'loading_hops': 'Loading hops...',
         'step_line': '{0} : {1} ({2}g)',
+        'weigh_title': '{0}\nRecipient : {1}',
         'select_hop': 'Select a hop',
         'hop_weighed': '{0} weighed',
         'all_hops_weighed': 'All hops weighed!',

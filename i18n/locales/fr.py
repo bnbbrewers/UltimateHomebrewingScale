@@ -60,6 +60,7 @@ TRANSLATIONS = {
         'no_hops': 'Aucun houblon',
         'loading_hops': 'Chargement des houblons...',
         'step_line': '{0} : {1} ({2}g)',
+        'weigh_title': '{0}\nRecipient : {1}',
         'select_hop': 'Selectionner un houblon',
         'hop_weighed': '{0} : termine',
         'all_hops_weighed': 'Tous les houblons peses !',
