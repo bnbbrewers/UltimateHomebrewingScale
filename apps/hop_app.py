@@ -41,7 +41,8 @@ class _HopStepItems:
 
     def __getitem__(self, index):
         step_name, amount = self._steps[index]
-        return self._app._step_line(step_name, amount)
+        vessel_number = index + 1
+        return self._app._step_line(vessel_number, step_name, amount)
 
 
 class HopAssistantApp(BaseApp):
@@ -178,8 +179,8 @@ class HopAssistantApp(BaseApp):
         t = "{:.1f}".format(a)
         return t[:-2] if t.endswith(".0") else t
 
-    def _step_line(self, sn, amt):
-        return self.t("hop.step_line", sn, self._fmt_g(amt))
+    def _step_line(self, vessel_number, sn, amt):
+        return self.t("hop.step_line", vessel_number, sn, self._fmt_g(amt))
 
     @staticmethod
     def _to_target_g(amount):

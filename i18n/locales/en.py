@@ -59,7 +59,7 @@ TRANSLATIONS = {
         'prepare_recipients': 'Prepare {0} container(s) for hop additions',
         'no_hops': 'No hops found',
         'loading_hops': 'Loading hops...',
-        'step_line': '{0} ({1}g)',
+        'step_line': '{0} : {1} ({2}g)',
         'select_hop': 'Select a hop',
         'hop_weighed': '{0} weighed',
         'all_hops_weighed': 'All hops weighed!',
