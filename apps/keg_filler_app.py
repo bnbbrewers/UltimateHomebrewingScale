@@ -216,7 +216,7 @@ class KegFillerApp(BaseApp):
     def _show_calibration_done(self):
         self._simple().configure(
             title=self.t("keg.calibrated_title"),
-            message=self._pending_name,
+            message=self.t("keg.calibrated_message", self._pending_name),
             title_bg_color=_COLOR_KEG,
             show_ok_button=True,
         )

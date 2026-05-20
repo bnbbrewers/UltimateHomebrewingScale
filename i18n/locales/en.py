@@ -77,6 +77,7 @@ TRANSLATIONS = {
         'calibration_step_2_title': 'Calibration 2/2',
         'volume_hint': 'Turn to adjust',
         'calibrated_title': 'Keg Calibrated',
+        'calibrated_message': '{0}: Go to settings to edit the name',
         'existing_placeholder': '{0} selected',
         'error_title': 'Keg Error',
         'scale_not_found': 'Scale not found',
