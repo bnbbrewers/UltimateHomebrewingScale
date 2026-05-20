@@ -22,10 +22,11 @@ except Exception:
     _DEBUG = False
 
 
-MESSAGE_LINE_HEIGHT = 22
-MESSAGE_MAX_CHARS_PER_LINE = 20
+MESSAGE_LINE_HEIGHT = 18
+MESSAGE_MAX_CHARS_PER_LINE = 24
 MESSAGE_AREA_TOP = 50
 MESSAGE_AREA_BOTTOM = ACTION_BUTTON_LABEL_Y
+MESSAGE_TITLE_GAP = 8
 
 
 def _wrapped_line_count(text, max_chars=MESSAGE_MAX_CHARS_PER_LINE):
@@ -53,7 +54,7 @@ def message_area_top_for_title(title):
     line_count = len(formatted_title.split("\n"))
     y = TITLE_Y_TWO_LINES if line_count > 1 else TITLE_Y_ONE_LINE
     line_height = 18 if line_count > 1 else 20
-    return y + (line_count * line_height)
+    return y + (line_count * line_height) + MESSAGE_TITLE_GAP
 
 
 def centered_message_y(
