@@ -73,7 +73,7 @@ TRANSLATIONS = {
         'add': 'Add',
         'calibration_step_1_title': 'Calibration (1/2)',
         'calibration_step_1_message': 'Place empty keg + spunding + connected tube on the platform',
-        'calibration_in_progress': 'Calibration in progress',
+        'calibration_in_progress': 'Calibration in progress\n...',
         'calibration_step_2_title': 'Calibration 2/2',
         'volume_hint': 'Turn to adjust',
         'calibrated_title': 'Keg Calibrated',
