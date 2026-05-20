@@ -99,9 +99,9 @@ class UpdaterApp(BaseApp):
 
     def _clear_update_request(self):
         try:
-            from webportal import config_store
+            from storage import config_registry
 
-            config_store.set_update_requested(False)
+            config_registry.set_update_requested(False)
         except Exception as e:
             try:
                 print("[updater] clear update flag error:", e)

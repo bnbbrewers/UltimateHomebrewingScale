@@ -90,3 +90,32 @@ def append_keg(kegs, name, empty_weight_g, max_volume_l):
         }
     )
     return new_kegs
+
+
+def rename_keg(kegs, index, name):
+    clean_name = str(name or "").strip()
+    if not clean_name:
+        return None
+    try:
+        idx = int(index)
+    except Exception:
+        return None
+    if idx < 0 or idx >= len(kegs):
+        return None
+    new_kegs = list(kegs)
+    updated = dict(new_kegs[idx])
+    updated["name"] = clean_name
+    new_kegs[idx] = updated
+    return new_kegs
+
+
+def delete_keg(kegs, index):
+    try:
+        idx = int(index)
+    except Exception:
+        return None
+    if idx < 0 or idx >= len(kegs):
+        return None
+    new_kegs = list(kegs)
+    del new_kegs[idx]
+    return new_kegs
