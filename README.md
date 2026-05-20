@@ -60,6 +60,7 @@ enclosure complexity, and overall project cost.
 
 - M5Dial: https://s.click.aliexpress.com/e/_c3fnF9C9
 - Weight Reader I2C: https://s.click.aliexpress.com/e/_c42It9IZ
+- Weight Reader I2C alternative link: https://s.click.aliexpress.com/e/_c3VIvQvL
 - Relay: https://s.click.aliexpress.com/e/_c3OikdVR
 
 ### Scale Platform
