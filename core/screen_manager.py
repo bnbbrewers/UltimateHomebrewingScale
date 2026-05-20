@@ -44,6 +44,14 @@ class ScreenManager:
             self._screens[screen_id] = WeightScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.weight", enabled=_DEBUG, collect=True)
             return
+        if screen_id == screen_ids.KEG_VOLUME:
+            mem_snapshot("screen.lazy.keg_volume.before_import", enabled=_DEBUG, collect=True)
+            from ui.keg_volume_screen import KegVolumeScreen
+
+            mem_snapshot("screen.lazy.keg_volume.before_ctor", enabled=_DEBUG, collect=True)
+            self._screens[screen_id] = KegVolumeScreen(i18n=self._i18n)
+            mem_snapshot("screen.lazy.keg_volume", enabled=_DEBUG, collect=True)
+            return
         if screen_id == screen_ids.SIMPLE_MESSAGE:
             mem_snapshot("screen.lazy.simple.before_import", enabled=_DEBUG, collect=True)
             from ui.simple_message_screen import SimpleMessageScreen
