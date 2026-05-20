@@ -22,6 +22,7 @@ class KegFillerApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        self._screen = None
         self.screen_manager.show(screen_ids.WEIGHT)
         screen = self._weight()
         screen.configure(

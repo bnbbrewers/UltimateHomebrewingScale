@@ -62,6 +62,8 @@ class GrainAssistantApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        self._select_screen = None
+        self._weigh_screen = None
         try:
             import lvgl as lv
             lv.image_cache_drop(None)
