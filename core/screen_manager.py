@@ -79,5 +79,16 @@ class ScreenManager:
         self._active_id = screen_id
         screen.root().screen_load()
 
+    def release(self, screen_id):
+        screen = self._screens.pop(screen_id, None)
+        if screen is None:
+            return
+        if self._active_id == screen_id:
+            self._active_id = None
+        try:
+            screen.root().delete()
+        except Exception:
+            pass
+
     def active_screen_id(self):
         return self._active_id

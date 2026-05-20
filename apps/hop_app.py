@@ -351,10 +351,21 @@ class HopAssistantApp(BaseApp):
     def _count_distinct_steps(hops_list):
         return len(HopAssistantApp._build_step_vessel_numbers(hops_list))
 
+    def _release_heavy_screens_for_network(self):
+        self._select_screen = None
+        self._weigh_screen = None
+        release = getattr(self.screen_manager, "release", None)
+        if not release:
+            return
+        release(screen_ids.LAUNCHER)
+        release(screen_ids.SELECT_ITEM)
+        release(screen_ids.WEIGHT)
+
     def _load_hops(self):
         self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
         self._batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
+        self._release_heavy_screens_for_network()
         gc.collect()
         mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
         self._hops_list = self._fetch_hops_list()

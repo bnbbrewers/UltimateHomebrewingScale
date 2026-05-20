@@ -59,6 +59,7 @@ class LauncherApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
         try:
             import gc, config
             if getattr(config, "DEBUG", False):
