@@ -72,7 +72,7 @@ TRANSLATIONS = {
         'select_title': 'Choose a keg',
         'add': 'Add',
         'calibration_step_1_title': 'Calibration (1/2)',
-        'calibration_step_1_message': 'Place on the platform:\nempty keg\n+\nspunding\n+\nconnected tube',
+        'calibration_step_1_message': 'Place on the platform:\n\nempty keg\n+\nspunding\n+\nconnected tube',
         'calibration_in_progress': 'Calibration in progress\n...',
         'calibration_step_2_title': 'Calibration 2/2',
         'volume_hint': 'Turn to adjust',

@@ -72,7 +72,7 @@ TRANSLATIONS = {
         'select_title': 'Choisir un keg',
         'add': 'Ajouter',
         'calibration_step_1_title': 'Calibration (1/2)',
-        'calibration_step_1_message': 'Placer sur le plateau :\nkeg vide\n+\nspunding\n+\ntuyau branche',
+        'calibration_step_1_message': 'Placer sur le plateau :\n\nkeg vide\n+\nspunding\n+\ntuyau branche',
         'calibration_in_progress': 'Calibration en cours\n...',
         'calibration_step_2_title': 'Calibration 2/2',
         'volume_hint': 'Tourner pour ajuster',
