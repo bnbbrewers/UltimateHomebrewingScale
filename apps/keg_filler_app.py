@@ -203,9 +203,10 @@ class KegFillerApp(BaseApp):
         self._state = _STATE_VOLUME_SELECT
 
     def _show_existing_placeholder(self):
+        keg = self._kegs[self._selected_idx]
         self._simple().configure(
             title=self.t("keg.select_title"),
-            message=self.t("keg.existing_placeholder"),
+            message=self.t("keg.existing_placeholder", keg["name"]),
             title_bg_color=_COLOR_KEG,
             show_ok_button=True,
         )
