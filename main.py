@@ -70,9 +70,9 @@ def _load_i18n():
 
 def _update_requested():
     try:
-        from webportal import config_store
+        from storage import config_registry
 
-        return config_store.is_update_requested()
+        return config_registry.is_update_requested()
     except Exception:
         return False
 

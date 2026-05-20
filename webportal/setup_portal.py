@@ -3,7 +3,7 @@
 import socket
 import time
 
-from . import config_store
+from storage import config_registry, keg_registry
 from .config_keys import EDITABLE_KEYS, EDITABLE_ORDER
 
 PORTAL_HTTP_HOST = "0.0.0.0"
@@ -123,7 +123,70 @@ def _option_label(i18n, key, choice):
     return choice
 
 
-def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssid="", i18n=None):
+def _fmt_number(value, decimals=1):
+    try:
+        number = float(value)
+    except Exception:
+        return str(value)
+    if abs(number - round(number)) < 0.05:
+        return str(int(round(number)))
+    return ("{:." + str(decimals) + "f}").format(number)
+
+
+def _append_keg_html(p, kegs, token, i18n):
+    p.append("<hr><h4>{}</h4>".format(_html_escape(i18n.t("portal.kegs"))))
+    if not kegs:
+        p.append("<p>{}</p>".format(_html_escape(i18n.t("portal.no_kegs"))))
+        return
+
+    p.append("<form method='post' action='/kegs/save'>")
+    if token:
+        p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
+    for idx, keg in enumerate(kegs):
+        name = keg.get("name", "")
+        p.append("<fieldset><legend>{}</legend>".format(_html_escape(name)))
+        p.append(
+            "<p>{0}<br><input type='text' name='keg_name_{1}' value='{2}' maxlength='32'></p>".format(
+                _html_escape(i18n.t("portal.keg_name")),
+                idx,
+                _html_escape(name),
+            )
+        )
+        p.append(
+            "<p>{}: {} g<br>{}: {} L</p>".format(
+                _html_escape(i18n.t("portal.keg_empty_weight")),
+                _html_escape(_fmt_number(keg.get("empty_weight_g", 0), decimals=1)),
+                _html_escape(i18n.t("portal.keg_max_volume")),
+                _html_escape(_fmt_number(keg.get("max_volume_l", 0), decimals=1)),
+            )
+        )
+        p.append("</fieldset>")
+    p.append("<p><button type='submit'>{}</button></p></form>".format(_html_escape(i18n.t("portal.keg_save"))))
+
+    for idx, keg in enumerate(kegs):
+        p.append("<form method='post' action='/kegs/delete'>")
+        if token:
+            p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
+        p.append("<input type='hidden' name='idx' value='{}'>".format(idx))
+        p.append(
+            "<p><button type='submit'>{}: {}</button></p></form>".format(
+                _html_escape(i18n.t("portal.keg_delete")),
+                _html_escape(keg.get("name", "")),
+            )
+        )
+
+
+def _saved_location(token=""):
+    if token:
+        return "/?saved=1&k={}".format(token)
+    return "/?saved=1"
+
+
+def _token_for_redirect(require_token, token):
+    return token if require_token else ""
+
+
+def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssid="", i18n=None, kegs=None):
     errors = errors or {}
     i18n = _portal_i18n(values, i18n=i18n)
     p = []
@@ -182,6 +245,7 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
     if token:
         p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
     p.append("<p><button type='submit'>{}</button></p></form>".format(_html_escape(i18n.t("portal.update_app"))))
+    _append_keg_html(p, kegs or [], token, i18n)
     p.append("</body></html>")
     return "".join(p)
 
@@ -506,7 +570,8 @@ class SetupPortalService:
             if not self._token_ok(query, {}):
                 self._send(client, 403, body=_portal_i18n(i18n=self._i18n).t("portal.forbidden"))
                 return
-            values = config_store.load_current_values()
+            values = config_registry.load_current_values()
+            kegs = keg_registry.load_kegs()
             html = render_form_html(
                 values,
                 saved=(query.get("saved") == "1"),
@@ -515,6 +580,7 @@ class SetupPortalService:
                 mode=self._mode,
                 ssid=self._cfg.get("ap_ssid", ""),
                 i18n=self._i18n,
+                kegs=kegs,
             )
             self._send(client, 200, "text/html; charset=utf-8", html)
             return
@@ -533,7 +599,7 @@ class SetupPortalService:
                 elif key in form:
                     updates[key] = form.get(key)
 
-            ok, errors = config_store.save_updates(updates)
+            ok, errors = config_registry.save_updates(updates)
             i18n = _portal_i18n(updates, i18n=self._i18n)
             if ok:
                 self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.saved_rebooting"))
@@ -547,7 +613,8 @@ class SetupPortalService:
                     self._send(client, 200, "text/html; charset=utf-8", i18n.t("portal.saved_manual_reboot"))
                 return
 
-            values = config_store.load_current_values()
+            values = config_registry.load_current_values()
+            kegs = keg_registry.load_kegs()
             for k, v in updates.items():
                 values[k] = v
             html = render_form_html(
@@ -558,8 +625,89 @@ class SetupPortalService:
                 mode=self._mode,
                 ssid=self._cfg.get("ap_ssid", ""),
                 i18n=self._i18n,
+                kegs=kegs,
             )
             self._send(client, 400, "text/html; charset=utf-8", html)
+            return
+
+        if method == "POST" and path == "/kegs/save":
+            form = parse_form_urlencoded(body)
+            if not self._token_ok(query, form):
+                self._send(client, 403, body=_portal_i18n(form, i18n=self._i18n).t("portal.forbidden"))
+                return
+
+            kegs = keg_registry.load_kegs()
+            updated = kegs
+            for idx in range(len(kegs)):
+                field = "keg_name_{}".format(idx)
+                if field not in form:
+                    continue
+                next_kegs = keg_registry.rename_keg(updated, idx, form.get(field))
+                if next_kegs is None:
+                    self._send(
+                        client,
+                        400,
+                        "text/html; charset=utf-8",
+                        _portal_i18n(form, i18n=self._i18n).t("portal.invalid_fields"),
+                    )
+                    return
+                updated = next_kegs
+            if not keg_registry.save_kegs(keg_registry.KEG_FILE, updated):
+                self._send(
+                    client,
+                    500,
+                    "text/html; charset=utf-8",
+                    _portal_i18n(form, i18n=self._i18n).t("portal.keg_save_error"),
+                )
+                return
+            self._send(
+                client,
+                303,
+                "text/plain; charset=utf-8",
+                "",
+                headers={
+                    "Location": _saved_location(
+                        _token_for_redirect(self._cfg.get("require_token"), self._token)
+                    )
+                },
+            )
+            return
+
+        if method == "POST" and path == "/kegs/delete":
+            form = parse_form_urlencoded(body)
+            if not self._token_ok(query, form):
+                self._send(client, 403, body=_portal_i18n(form, i18n=self._i18n).t("portal.forbidden"))
+                return
+
+            kegs = keg_registry.load_kegs()
+            updated = keg_registry.delete_keg(kegs, form.get("idx"))
+            if updated is None:
+                self._send(
+                    client,
+                    400,
+                    "text/html; charset=utf-8",
+                    _portal_i18n(form, i18n=self._i18n).t("portal.invalid_fields"),
+                )
+                return
+            if not keg_registry.save_kegs(keg_registry.KEG_FILE, updated):
+                self._send(
+                    client,
+                    500,
+                    "text/html; charset=utf-8",
+                    _portal_i18n(form, i18n=self._i18n).t("portal.keg_save_error"),
+                )
+                return
+            self._send(
+                client,
+                303,
+                "text/plain; charset=utf-8",
+                "",
+                headers={
+                    "Location": _saved_location(
+                        _token_for_redirect(self._cfg.get("require_token"), self._token)
+                    )
+                },
+            )
             return
 
         if method == "POST" and path == "/update":
@@ -569,7 +717,7 @@ class SetupPortalService:
                 return
 
             i18n = _portal_i18n(i18n=self._i18n)
-            ok, error = config_store.set_update_requested(True)
+            ok, error = config_registry.set_update_requested(True)
             if not ok:
                 self._send(
                     client,
