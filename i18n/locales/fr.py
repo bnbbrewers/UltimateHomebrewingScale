@@ -68,6 +68,21 @@ TRANSLATIONS = {
 
     'keg': {
         'title': 'Remplisseur de Futs',
+        'empty_platform': 'Vider le plateau de la balance',
+        'select_title': 'Choisir un keg',
+        'add': 'Ajouter',
+        'calibration_step_1_title': 'Calibration (1/2)',
+        'calibration_step_1_message': 'Placer le keg vide + spunding + tuyau branche sur le plateau',
+        'calibration_in_progress': 'Calibration en cours',
+        'calibration_step_2_title': 'Calibration 2/2',
+        'volume_hint': 'Tourner pour ajuster',
+        'calibrated_title': 'Keg Calibre',
+        'existing_placeholder': '{0} selectionne',
+        'error_title': 'Erreur Keg',
+        'scale_not_found': 'Balance introuvable',
+        'tare_error': 'Erreur de tarage',
+        'calibration_no_sample': 'Aucun echantillon valide',
+        'save_error': 'Erreur sauvegarde keg',
     },
 
     'settings': {

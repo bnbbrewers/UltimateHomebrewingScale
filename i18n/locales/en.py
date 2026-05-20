@@ -68,6 +68,21 @@ TRANSLATIONS = {
 
     'keg': {
         'title': 'Keg Filler',
+        'empty_platform': 'Empty the scale platform',
+        'select_title': 'Choose a keg',
+        'add': 'Add',
+        'calibration_step_1_title': 'Calibration (1/2)',
+        'calibration_step_1_message': 'Place empty keg + spunding + connected tube on the platform',
+        'calibration_in_progress': 'Calibration in progress',
+        'calibration_step_2_title': 'Calibration 2/2',
+        'volume_hint': 'Turn to adjust',
+        'calibrated_title': 'Keg Calibrated',
+        'existing_placeholder': '{0} selected',
+        'error_title': 'Keg Error',
+        'scale_not_found': 'Scale not found',
+        'tare_error': 'Tare error',
+        'calibration_no_sample': 'No valid sample',
+        'save_error': 'Keg save error',
     },
 
     'settings': {
