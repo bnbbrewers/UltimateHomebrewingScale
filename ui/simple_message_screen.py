@@ -6,7 +6,7 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
-from .ui_helper import UIHelper
+from .ui_helper import ACTION_BUTTON_LABEL_Y, TITLE_BAR_H, UIHelper
 from memory_debug import snapshot as mem_snapshot
 
 try:
@@ -14,6 +14,26 @@ try:
     _DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     _DEBUG = False
+
+
+MESSAGE_LINE_HEIGHT = 22
+MESSAGE_AREA_TOP = TITLE_BAR_H
+MESSAGE_AREA_BOTTOM = ACTION_BUTTON_LABEL_Y
+
+
+def centered_message_y(
+    message,
+    area_top=MESSAGE_AREA_TOP,
+    area_bottom=MESSAGE_AREA_BOTTOM,
+    line_height=MESSAGE_LINE_HEIGHT,
+):
+    lines = str(message or "").split("\n")
+    line_count = max(1, len(lines))
+    text_height = line_count * line_height
+    available_height = max(0, area_bottom - area_top)
+    if text_height >= available_height:
+        return area_top
+    return area_top + ((available_height - text_height) // 2)
 
 
 class SimpleMessageScreen:
@@ -74,6 +94,7 @@ class SimpleMessageScreen:
         UIHelper.set_title(self._title_label, title)
 
     def set_message(self, message):
+        self._message_label.set_pos(20, centered_message_y(message))
         self._message_label.set_text(message)
 
     def set_title_color(self, color):
