@@ -77,7 +77,7 @@ TRANSLATIONS = {
         'calibration_step_2_title': 'Calibration 2/2',
         'volume_hint': 'Tourner pour ajuster',
         'calibrated_title': 'Keg Calibre',
-        'calibrated_message': '{0} : Aller dans parametres pour modifier le nom',
+        'calibrated_message': 'Keg enregistré : {0} \n\nAller dans parametres pour modifier le nom',
         'existing_placeholder': '{0} selectionne',
         'error_title': 'Erreur Keg',
         'scale_not_found': 'Balance introuvable',
