@@ -20,6 +20,7 @@ DEFAULT_VOLUME_L = 18.0
 MIN_VOLUME_L = 0.5
 MAX_VOLUME_L = 60.0
 VOLUME_STEP_L = 0.5
+VOLUME_STEP = VOLUME_STEP_L
 CALIBRATION_DURATION_MS = 10000
 SAMPLE_INTERVAL_MS = 200
 
@@ -33,6 +34,25 @@ _STATE_EXISTING_KEG_PLACEHOLDER_ACK = 7
 _STATE_ERROR_ACK = 8
 
 _COLOR_KEG = 0x607D8B
+
+__all__ = (
+    "KegFillerApp",
+    "DEFAULT_VOLUME_L",
+    "MIN_VOLUME_L",
+    "MAX_VOLUME_L",
+    "VOLUME_STEP",
+    "VOLUME_STEP_L",
+    "CALIBRATION_DURATION_MS",
+    "SAMPLE_INTERVAL_MS",
+    "_STATE_EMPTY_PLATFORM_ACK",
+    "_STATE_KEG_SELECT",
+    "_STATE_CALIBRATION_1_ACK",
+    "_STATE_CALIBRATING_WEIGHT",
+    "_STATE_VOLUME_SELECT",
+    "_STATE_CALIBRATION_DONE_ACK",
+    "_STATE_EXISTING_KEG_PLACEHOLDER_ACK",
+    "_STATE_ERROR_ACK",
+)
 
 
 def _ticks_ms():
@@ -154,7 +174,7 @@ class KegFillerApp(BaseApp):
     def _show_calibration_step_1(self):
         self._simple().configure(
             title=self.t("keg.calibration_step_1_title"),
-            message=self.t("keg.calibration_step_1"),
+            message=self.t("keg.calibration_step_1_message"),
             title_bg_color=_COLOR_KEG,
             show_ok_button=True,
         )
@@ -217,10 +237,10 @@ class KegFillerApp(BaseApp):
         if not self.hardware.button.was_short_pressed():
             return
         if not self._scale:
-            self._show_error("keg.scale_missing", _STATE_EMPTY_PLATFORM_ACK)
+            self._show_error("keg.scale_not_found", _STATE_EMPTY_PLATFORM_ACK)
             return
         if not self._scale.tare():
-            self._show_error("keg.tare_failed", _STATE_EMPTY_PLATFORM_ACK)
+            self._show_error("keg.tare_error", _STATE_EMPTY_PLATFORM_ACK)
             return
         self._show_select()
 
@@ -264,7 +284,7 @@ class KegFillerApp(BaseApp):
 
     def _finish_calibration(self):
         if not self._samples:
-            self._show_error("keg.calibration_failed", _STATE_CALIBRATION_1_ACK)
+            self._show_error("keg.calibration_no_sample", _STATE_CALIBRATION_1_ACK)
             return
         self._empty_weight_g = sum(self._samples) / len(self._samples)
         self._show_volume_select()
@@ -282,7 +302,7 @@ class KegFillerApp(BaseApp):
             self._selected_volume_l,
         )
         if not save_kegs(self._keg_file, updated):
-            self._show_error("keg.save_failed", _STATE_KEG_SELECT)
+            self._show_error("keg.save_error", _STATE_KEG_SELECT)
             return
         self._kegs = updated
         self._selected_idx = len(self._kegs) - 1
