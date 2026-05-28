@@ -2,6 +2,7 @@
 Keg filler calibration flow.
 """
 
+import gc
 import time
 
 from .base_app import BaseApp
@@ -110,6 +111,27 @@ class KegFillerApp(BaseApp):
         if self._volume_screen is None:
             self._volume_screen = self.screen_manager.get(screen_ids.KEG_VOLUME)
         return self._volume_screen
+
+    def on_exit(self):
+        super().on_exit()
+        self._kegs = []
+        self._items = []
+        self._samples = []
+        self._pending_name = None
+        self._empty_weight_g = None
+        self._scale = None
+        self._rotary = None
+        if self._select_screen:
+            self._select_screen.set_items([])
+        self._simple_screen = None
+        self._select_screen = None
+        self._volume_screen = None
+        release = getattr(self.screen_manager, "release", None)
+        if release:
+            release(screen_ids.SIMPLE_MESSAGE)
+            release(screen_ids.SELECT_ITEM)
+            release(screen_ids.KEG_VOLUME)
+        gc.collect()
 
     def on_enter(self):
         super().on_enter()
