@@ -56,6 +56,7 @@ class LauncherApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
+        self._screen = None
 
     def on_enter(self):
         super().on_enter()
