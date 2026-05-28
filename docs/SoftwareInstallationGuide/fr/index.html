@@ -6,7 +6,7 @@
     <title>Guide d'installation logicielle Ultimate Homebrewing Scale</title>
     <meta
       name="description"
-      content="Guide pas a pas pour flasher le firmware, configurer le Wi-Fi, Brewfather et la calibration de l'Ultimate Homebrewing Scale sur M5Stack Dial."
+      content="Guide pas à pas pour flasher le firmware, configurer le Wi-Fi, Brewfather et la calibration de l'Ultimate Homebrewing Scale sur M5Stack Dial."
     >
     <script
       type="module"
@@ -589,9 +589,9 @@
   </head>
   <body>
 
-    <div class="language-switch" aria-label="Selecteur de langue">
+    <div class="language-switch" aria-label="Sélecteur de langue">
       <a href="../en/" aria-label="English"><img src="../../assets/flags/en.svg" alt="" aria-hidden="true" title="English"></a>
-      <a href="./" aria-current="page" aria-label="Francais"><img src="../../assets/flags/fr.svg" alt="" aria-hidden="true" title="Francais"></a>
+      <a href="./" aria-current="page" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" aria-hidden="true" title="Français"></a>
     </div>
     <header class="site-header">
       <section class="hero" aria-labelledby="page-title">
@@ -599,21 +599,21 @@
           <p class="eyebrow">Configuration M5Stack Dial</p>
           <h1 id="page-title">Guide d'installation logicielle Ultimate Homebrewing Scale</h1>
           <p class="hero-copy">
-            Flashez le firmware personnalise, connectez le Dial au Wi-Fi, renseignez vos identifiants Brewfather
-            et calibrez la balance depuis l'assistant integre.
+            Flashez le firmware personnalisé, connectez le Dial au Wi-Fi, renseignez vos identifiants Brewfather
+            et calibrez la balance depuis l'assistant intégré.
           </p>
           <div class="hero-actions">
             <a class="button-link" href="#flash">Commencer par le firmware</a>
-            <a class="button-link secondary" href="#calibrate">Aller a la calibration</a>
+            <a class="button-link secondary" href="#calibrate">Aller à la calibration</a>
           </div>
         </div>
 
-        <aside class="hero-panel" aria-label="Resume de l'installation">
-          <img src="../img/DialQRCode.jpg" alt="Ecran de reglages du M5Stack Dial affichant un QR code vers le portail de configuration">
+        <aside class="hero-panel" aria-label="Résumé de l'installation">
+          <img src="../img/DialQRCode.jpg" alt="Écran de réglages du M5Stack Dial affichant un QR code vers le portail de configuration">
           <dl class="quick-list">
             <dt>Appareil</dt>
             <dd>M5Stack Dial / ESP32-S3</dd>
-            <dt>Point d'acces de configuration</dt>
+            <dt>Point d'accès de configuration</dt>
             <dd><code>UHS-Setup</code></dd>
             <dt>Adresse du portail</dt>
             <dd><code>http://192.168.4.1:8080/</code></dd>
@@ -622,9 +622,9 @@
       </section>
     </header>
 
-    <nav aria-label="Etapes d'installation">
+    <nav aria-label="Étapes d'installation">
       <div class="inner">
-        <a href="#requirements">Prerequis</a>
+        <a href="#requirements">Prérequis</a>
         <a href="#flash">Flash</a>
         <a href="#wifi">Configuration Wi-Fi</a>
         <a href="#brewfather">Brewfather</a>
@@ -636,16 +636,16 @@
     <main>
       <section id="requirements" class="section">
         <div class="section-head">
-          <h2>Avant De Commencer</h2>
+          <h2>Avant de commencer</h2>
           <p>
-            Preparez le Dial, le materiel de pesee et les identifiants que vous renseignerez apres le premier demarrage.
+            Préparez le Dial, le matériel de pesée et les identifiants que vous renseignerez après le premier démarrage.
           </p>
         </div>
 
         <div class="requirements">
           <article class="tile">
             <h3>M5Stack Dial</h3>
-            <p>Utilisez un cable USB-C data. Les cables uniquement prevus pour la charge echouent souvent au flash.</p>
+            <p>Utilisez un câble USB-C data. Les câbles uniquement prévus pour la charge échouent souvent au flash.</p>
           </article>
           <article class="tile">
             <h3>Navigateur ordinateur</h3>
@@ -653,20 +653,20 @@
           </article>
           <article class="tile">
             <h3>Smartphone</h3>
-            <p>Utilisez-le apres le flash pour rejoindre le Wi-Fi de configuration du Dial et scanner le QR code.</p>
+            <p>Utilisez-le après le flash pour rejoindre le Wi-Fi de configuration du Dial et scanner le QR code.</p>
           </article>
           <article class="tile">
             <h3>Poids de calibration</h3>
-            <p>L'assistant utilise par defaut les points 0 g, 500 g, 5000 g et 20000 g.</p>
+            <p>L'assistant utilise par défaut les points 0 g, 500 g, 5000 g et 20000 g.</p>
           </article>
         </div>
       </section>
 
       <section class="section">
         <div class="section-head">
-          <h2>Etapes D'Installation</h2>
+          <h2>Étapes d'installation</h2>
           <p>
-            Suivez les etapes dans l'ordre. Le Dial redemarrera plusieurs fois ; c'est normal.
+            Suivez les étapes dans l'ordre. Le Dial redémarrera plusieurs fois ; c'est normal.
           </p>
         </div>
 
@@ -676,22 +676,22 @@
             <div class="step-body">
               <h3>Mettre le Dial en mode flash firmware</h3>
               <p>
-                Debranchez l'USB-C. Maintenez le bouton arriere <strong>BOOT / G0</strong>, branchez le Dial a votre
-                ordinateur en gardant le bouton appuye, puis relachez-le une fois la connexion USB etablie.
+                Débranchez l'USB-C. Maintenez le bouton arrière <strong>BOOT / G0</strong>, branchez le Dial à votre
+                ordinateur en gardant le bouton appuyé, puis relâchez-le une fois la connexion USB établie.
               </p>
               <div class="media-row">
                 <figure class="photo-card">
                   <img src="../img/HoldG0.jpg" alt="Arriere du M5Stack Dial avec le bouton G0 maintenu pendant la connexion USB-C">
-                  <figcaption>Maintenez le bouton arriere G0 pendant le branchement USB-C.</figcaption>
+                  <figcaption>Maintenez le bouton arrière G0 pendant le branchement USB-C.</figcaption>
                 </figure>
                 <div>
                   <div class="callout info">
-                    <strong>Astuce :</strong> si le navigateur ne trouve aucun port serie a l'etape suivante,
-                    debranchez le Dial et repetez cette sequence de mode flash.
+                    <strong>Astuce :</strong> si le navigateur ne trouve aucun port série à l'étape suivante,
+                    débranchez le Dial et répétez cette séquence de mode flash.
                   </div>
                   <p>
-                    Sur le M5Stack Dial, c'est la sequence de mode telechargement de l'ESP32-S3 : maintenez G0
-                    avant la mise sous tension, puis relachez apres l'alimentation. M5Stack le documente dans les
+                    Sur le M5Stack Dial, c'est la séquence de mode téléchargement de l'ESP32-S3 : maintenez G0
+                    avant la mise sous tension, puis relâchez après l'alimentation. M5Stack le documente dans les
                     <a href="https://docs.m5stack.com/en/core/M5Dial#download-mode">notes du mode download du Dial</a>.
                   </p>
                 </div>
@@ -704,15 +704,15 @@
             <div class="step-body">
               <h3>Flasher le firmware depuis cette page</h3>
               <p>
-                Cliquez sur le bouton d'installation, choisissez le port serie du Dial et suivez les instructions du navigateur.
-                Si l'effacement de l'appareil est propose, choisissez l'option d'effacement pour une premiere installation propre.
+                Cliquez sur le bouton d'installation, choisissez le port série du Dial et suivez les instructions du navigateur.
+                Si l'effacement de l'appareil est proposé, choisissez l'option d'effacement pour une première installation propre.
               </p>
               <div class="flash-box">
                 <esp-web-install-button manifest="https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest/UHS-web-install-manifest.json"></esp-web-install-button>
               </div>
               <div class="callout warning">
-                <strong>Compatibilite navigateur :</strong> le flash web fonctionne depuis Chrome ou Edge sur ordinateur.
-                Les navigateurs mobiles et Safari n'exposent generalement pas la connexion serie requise.
+                <strong>Compatibilité navigateur :</strong> le flash web fonctionne depuis Chrome ou Edge sur ordinateur.
+                Les navigateurs mobiles et Safari n'exposént généralement pas la connexion série requise.
               </div>
             </div>
           </article>
@@ -720,15 +720,15 @@
           <article class="step">
             <div class="step-number" aria-hidden="true">3</div>
             <div class="step-body">
-              <h3>Redemarrer apres le flash</h3>
+              <h3>Redémarrer après le flash</h3>
               <p>
-                Quand le flash est termine, debranchez et rebranchez l'USB-C, ou appuyez sur reset.
-                Lors d'une installation neuve, l'application cree sa configuration par defaut et ouvre automatiquement
-                l'ecran de configuration.
+                Quand le flash est terminé, débranchez et rebranchez l'USB-C, ou appuyez sur reset.
+                Lors d'une installation neuve, l'application crée sa configuration par défaut et ouvre automatiquement
+                l'écran de configuration.
               </p>
               <p>
-                Comme aucun identifiant Wi-Fi n'est encore enregistre, le Dial demarre son propre point d'acces de configuration
-                et affiche un QR code sur l'ecran rond.
+                Comme aucun identifiant Wi-Fi n'est encore enregistré, le Dial démarre son propre point d'accès de configuration
+                et affiche un QR code sur l'écran rond.
               </p>
             </div>
           </article>
@@ -738,12 +738,12 @@
             <div class="step-body">
               <h3>Connecter votre smartphone au Wi-Fi de configuration du Dial</h3>
               <p>
-                Sur votre smartphone, ouvrez les reglages Wi-Fi et rejoignez <code>UHS-Setup</code>. Le reseau de configuration
-                n'a pas de mot de passe par defaut.
+                Sur votre smartphone, ouvrez les réglages Wi-Fi et rejoignez <code>UHS-Setup</code>. Le réseau de configuration
+                n'a pas de mot de passe par défaut.
               </p>
               <p>
-                Restez connecte a ce Wi-Fi meme si le telephone indique qu'il n'a pas acces a Internet.
-                Le telephone doit seulement joindre le Dial en local.
+                Restez connecté à ce Wi-Fi même si le téléphone indique qu'il n'a pas accès à Internet.
+                Le téléphone doit seulement joindre le Dial en local.
               </p>
             </div>
           </article>
@@ -753,16 +753,16 @@
             <div class="step-body">
               <h3>Scanner le QR code et ouvrir le portail de configuration</h3>
               <p>
-                Scannez le QR code affiche sur le Dial. Il ouvre la page de configuration integree, normalement a
+                Scannez le QR code affiché sur le Dial. Il ouvre la page de configuration intégrée, normalement à
                 <code>http://192.168.4.1:8080/</code>.
               </p>
               <div class="media-row">
                 <figure class="photo-card">
-                  <img src="../img/DialQRCode.jpg" alt="Ecran de reglages du Dial affichant le QR code a scanner">
-                  <figcaption>Le QR code apparait sur l'ecran de reglages du Dial.</figcaption>
+                  <img src="../img/DialQRCode.jpg" alt="Écran de réglages du Dial affichant le QR code à scanner">
+                  <figcaption>Le QR code apparaît sur l'écran de réglages du Dial.</figcaption>
                 </figure>
                 <p>
-                  Si l'application appareil photo n'ouvre pas la page, gardez le telephone connecte a <code>UHS-Setup</code>
+                  Si l'application appareil photo n'ouvre pas la page, gardez le téléphone connecté à <code>UHS-Setup</code>
                   et saisissez l'adresse manuellement dans le navigateur.
                 </p>
               </div>
@@ -772,21 +772,21 @@
           <article id="brewfather" class="step">
             <div class="step-number" aria-hidden="true">6</div>
             <div class="step-body">
-              <h3>Renseigner le Wi-Fi, Brewfather et les reglages de l'app</h3>
+              <h3>Renseigner le Wi-Fi, Brewfather et les réglages de l'app</h3>
               <p>
-                La page du portail est volontairement simple. Renseignez les valeurs ci-dessous, puis verifiez-les avant de sauvegarder.
+                La page du portail est volontairement simple. Renseignez les valeurs ci-dessous, puis vérifiez-les avant de sauvegarder.
               </p>
 
               <figure class="photo-card">
                 <img src="../img/PortalPage.png" alt="Navigateur smartphone affichant les champs du portail de configuration Ultimate Homebrewing Scale">
-                <figcaption>Portail de configuration ouvert depuis le QR code en etant connecte a <code>UHS-Setup</code>.</figcaption>
+                <figcaption>Portail de configuration ouvert depuis le QR code en étant connecté à <code>UHS-Setup</code>.</figcaption>
               </figure>
 
               <table class="field-table">
                 <thead>
                   <tr>
                     <th>Champ</th>
-                    <th>Valeur a saisir</th>
+                    <th>Valeur à saisir</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -796,38 +796,38 @@
                   </tr>
                   <tr>
                     <td>SSID Wi-Fi</td>
-                    <td>Saisissez le nom exact de votre reseau Wi-Fi 2,4 GHz.</td>
+                    <td>Saisissez le nom exact de votre réseau Wi-Fi 2,4 GHz.</td>
                   </tr>
                   <tr>
                     <td>Mot de passe Wi-Fi</td>
-                    <td>Saisissez le mot de passe de ce reseau Wi-Fi.</td>
+                    <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
                   </tr>
                   <tr>
                     <td>User ID Brewfather</td>
                     <td>Collez votre user ID API Brewfather.</td>
                   </tr>
                   <tr>
-                    <td>Cle API Brewfather</td>
-                    <td>Collez votre cle API Brewfather. Elle est masquee pendant la saisie.</td>
+                    <td>Clé API Brewfather</td>
+                    <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
                   </tr>
                   <tr>
-                    <td>Tolerance grains (g)</td>
-                    <td>Gardez la valeur par defaut sauf si vous voulez une tolerance de pesee plus large ou plus stricte.</td>
+                    <td>Tolérance grains (g)</td>
+                    <td>Gardez la valeur par défaut sauf si vous voulez une tolerance de pesée plus large ou plus stricte.</td>
                   </tr>
                   <tr>
-                    <td>Branche de mise a jour</td>
+                    <td>Branche de mise à jour</td>
                     <td>Gardez <code>main</code> pour les installations normales.</td>
                   </tr>
                   <tr>
                     <td>Logiciel de brassage</td>
-                    <td>Laissez <code>brewfather</code> selectionne.</td>
+                    <td>Laissez <code>brewfather</code> sélectionné.</td>
                   </tr>
                 </tbody>
               </table>
 
               <div class="callout">
-                <strong>Sauvegarder et redemarrer :</strong> appuyez sur <strong>Save and reboot</strong>. Le Dial enregistre
-                les identifiants Wi-Fi et les reglages de l'app, puis redemarre automatiquement.
+                <strong>Sauvegarder et redémarrer :</strong> appuyez sur <strong>Save and reboot</strong>. Le Dial enregistre
+                les identifiants Wi-Fi et les réglages de l'app, puis redémarre automatiquement.
               </div>
             </div>
           </article>
@@ -837,33 +837,33 @@
             <div class="step-body">
               <h3>Lancer l'assistant de calibration de la balance</h3>
               <p>
-                Apres redemarrage, l'app cherche <code>scale_calibration.json</code>. Lors d'une installation neuve,
+                Apres redémarrage, l'app cherche <code>scale_calibration.json</code>. Lors d'une installation neuve,
                 ce fichier n'existe pas encore : le Dial ouvre donc automatiquement l'assistant de calibration.
               </p>
               <ol>
-                <li>Connectez le materiel de pesee lorsque le Dial le demande, puis appuyez sur le bouton du Dial pour continuer.</li>
-                <li>A chaque etape, placez le poids demande sur la balance.</li>
-                <li>Si votre poids physique ne correspond pas exactement a la valeur demandee, tournez le Dial pour ajuster la cible.</li>
-                <li>Appuyez sur le bouton du Dial pour lancer la mesure et gardez le poids immobile pendant le compte a rebours de 30 secondes.</li>
-                <li>Repetez l'operation pour tous les points de calibration.</li>
+                <li>Connectez le matériel de pesée lorsque le Dial le demande, puis appuyez sur le bouton du Dial pour continuer.</li>
+                <li>À chaque étape, placez le poids demandé sur la balance.</li>
+                <li>Si votre poids physique ne correspond pas exactement à la valeur demandée, tournez le Dial pour ajuster la cible.</li>
+                <li>Appuyez sur le bouton du Dial pour lancer la mesure et gardez le poids immobile pendant le compte à rebours de 30 secondes.</li>
+                <li>Répétez l'opération pour tous les points de calibration.</li>
               </ol>
               <div class="photo-grid">
                 <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-connect-scale.jpg" alt="Ecran d'introduction de calibration demandant de connecter la balance">
+                  <img src="../img/ScaleCalibration-connect-scale.jpg" alt="Écran d'introduction de calibration demandant de connecter la balance">
                   <figcaption>Connectez la balance et appuyez sur OK.</figcaption>
                 </figure>
                 <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-ajust-weight.jpg" alt="Ecran de calibration du Dial pour ajuster le poids cible">
-                  <figcaption>Tournez le Dial si le poids cible doit etre ajuste.</figcaption>
+                  <img src="../img/ScaleCalibration-ajust-weight.jpg" alt="Écran de calibration du Dial pour ajuster le poids cible">
+                  <figcaption>Tournez le Dial si le poids cible doit être ajusté.</figcaption>
                 </figure>
                 <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-process-steo.jpg" alt="Ecran de mesure de calibration avec barre de progression et compte a rebours">
+                  <img src="../img/ScaleCalibration-process-steo.jpg" alt="Écran de mesure de calibration avec barre de progression et compte à rebours">
                   <figcaption>Gardez la balance immobile pendant chaque mesure de 30 secondes.</figcaption>
                 </figure>
               </div>
               <div class="callout warning">
-                <strong>La stabilite compte :</strong> placez la balance sur une surface plane et evitez de toucher la
-                charge pendant chaque mesure de 30 secondes. De meilleures donnees de calibration donnent de meilleurs poids de brassage.
+                <strong>La stabilité compte :</strong> placez la balance sur une surface plane et évitez de toucher la
+                charge pendant chaque mesure de 30 secondes. De meilleures données de calibration donnent de meilleurs poids de brassage.
               </div>
             </div>
           </article>
@@ -871,14 +871,14 @@
           <article id="done" class="step">
             <div class="step-number" aria-hidden="true">8</div>
             <div class="step-body">
-              <h3>Redemarrer depuis la fin de l'assistant</h3>
+              <h3>Redémarrer depuis la fin de l'assistant</h3>
               <p>
-                Quand le dernier point de calibration est termine, le Dial enregistre le fichier de calibration et affiche
+                Quand le dernier point de calibration est terminé, le Dial enregistre le fichier de calibration et affiche
                 <strong>Calibration complete, OK to restart</strong>. Appuyez une fois sur le bouton du Dial.
               </p>
               <p>
-                L'application effectue un redemarrage logiciel. Au demarrage suivant, le Wi-Fi et la calibration sont enregistres,
-                le launcher s'ouvre normalement et la balance est prete a etre utilisee avec les recettes Brewfather.
+                L'application effectue un redémarrage logiciel. Au démarrage suivant, le Wi-Fi et la calibration sont enregistrés,
+                le launcher s'ouvre normalement et la balance est prête à être utilisée avec les recettes Brewfather.
               </p>
             </div>
           </article>
@@ -887,24 +887,24 @@
 
       <section class="section">
         <div class="section-head">
-          <h2>Depannage Rapide</h2>
+          <h2>Dépannage rapide</h2>
           <p>
-            La plupart des problemes de configuration viennent du cable USB, du mode flash, du basculement Wi-Fi du telephone ou d'un mouvement pendant la calibration.
+            La plupart des problèmes de configuration viennent du câble USB, du mode flash, du basculement Wi-Fi du téléphone ou d'un mouvement pendant la calibration.
           </p>
         </div>
 
         <div class="checklist">
           <div class="check">
-            <strong>Aucun port serie n'apparait</strong>
-            <span>Utilisez un cable USB-C compatible data et repetez la sequence de mode flash avec le bouton arriere BOOT / G0.</span>
+            <strong>Aucun port série n'apparaît</strong>
+            <span>Utilisez un câble USB-C compatible data et répétez la séquence de mode flash avec le bouton arrière BOOT / G0.</span>
           </div>
           <div class="check">
-            <strong>Le telephone n'ouvre pas la page QR</strong>
-            <span>Reconnectez-vous a <code>UHS-Setup</code> et ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</span>
+            <strong>Le téléphone n'ouvre pas la page QR</strong>
+            <span>Reconnectez-vous à <code>UHS-Setup</code> et ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</span>
           </div>
           <div class="check">
-            <strong>Le Wi-Fi ne se connecte pas apres sauvegarde</strong>
-            <span>Rouvrez le portail de configuration depuis Settings, verifiez l'orthographe du SSID et confirmez qu'il s'agit d'un reseau 2,4 GHz.</span>
+            <strong>Le Wi-Fi ne se connecté pas après sauvegarde</strong>
+            <span>Rouvrez le portail de configuration depuis Settings, vérifiez l'orthographe du SSID et confirmez qu'il s'agit d'un réseau 2,4 GHz.</span>
           </div>
           <div class="check">
             <strong>Les poids semblent incorrects</strong>
