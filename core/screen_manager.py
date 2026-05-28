@@ -92,7 +92,16 @@ class ScreenManager:
         if screen is None:
             return
         if self._active_id == screen_id:
-            self._active_id = None
+            fallback = self._screens.get(screen_ids.LAUNCHER)
+            if screen_id == screen_ids.LAUNCHER or fallback is None:
+                self._screens[screen_id] = screen
+                return
+            try:
+                fallback.root().screen_load()
+                self._active_id = screen_ids.LAUNCHER
+            except Exception:
+                self._screens[screen_id] = screen
+                return
         try:
             screen.root().delete()
         except Exception:
