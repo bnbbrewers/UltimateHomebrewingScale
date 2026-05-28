@@ -28,6 +28,11 @@ class ScreenManager:
     def _create_lazy_screen(self, screen_id):
         if screen_id in self._screens:
             return
+        if screen_id == screen_ids.LAUNCHER:
+            mem_snapshot("screen.lazy.launcher.before_ctor", enabled=_DEBUG, collect=True)
+            self._screens[screen_id] = LauncherScreen(i18n=self._i18n)
+            mem_snapshot("screen.lazy.launcher", enabled=_DEBUG, collect=True)
+            return
         if screen_id == screen_ids.SELECT_ITEM:
             mem_snapshot("screen.lazy.select.before_import", enabled=_DEBUG, collect=True)
             from ui.select_item_screen import SelectItemScreen
