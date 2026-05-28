@@ -126,12 +126,31 @@ class SettingsApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
+        portal = self._portal
+        if portal:
+            try:
+                suspend = getattr(portal, "suspend", None)
+                if suspend:
+                    suspend()
+                else:
+                    portal.stop()
+                    self._portal = None
+            except Exception as e:
+                self._print_exception("[settings] portal stop error:", e)
+        self._screen = None
+        release = getattr(self.screen_manager, "release", None)
+        if release:
+            try:
+                self.screen_manager.get(screen_ids.LAUNCHER)
+            except Exception:
+                pass
+            release(screen_ids.SETTINGS)
         try:
-            if self._portal:
-                self._portal.stop()
-        except Exception as e:
-            self._print_exception("[settings] portal stop error:", e)
-        self._portal = None
+            import gc
+
+            gc.collect()
+        except Exception:
+            pass
 
     def tick(self):
         if self._check_return_to_launcher():
