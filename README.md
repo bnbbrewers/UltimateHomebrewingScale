@@ -182,6 +182,7 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 - `BREWFATHER_API_KEY`
 - `GRAIN_WEIGHT_TOLERANCE`
 - `HOP_WEIGHT_TOLERANCE`
+- `KEG_SPUNDING_VALVE_INERTIA_ML`
 - `DEBUG`
 - `UPDATE_BRANCH`
 
@@ -209,6 +210,7 @@ BREWFATHER_API_KEY = "your_api_key_here"
 LANGUAGE = "en"  # "en" or "fr"
 GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
+KEG_SPUNDING_VALVE_INERTIA_ML = 200
 DEBUG = False
 UPDATE_BRANCH = "main"
 ```
