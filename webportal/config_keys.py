@@ -21,6 +21,13 @@ EDITABLE_KEYS = {
         "default": 1,
         "label": "Hop tolerance (g)",
     },
+    "KEG_SPUNDING_VALVE_INERTIA_ML": {
+        "type": "int",
+        "min": 0,
+        "max": 5000,
+        "default": 200,
+        "label": "Spunding valve inertia (ml)",
+    },
     "DEBUG": {
         "type": "bool",
         "default": False,
@@ -73,6 +80,7 @@ EDITABLE_ORDER = [
     "BREWFATHER_API_KEY",
     "GRAIN_WEIGHT_TOLERANCE",
     "HOP_WEIGHT_TOLERANCE",
+    "KEG_SPUNDING_VALVE_INERTIA_ML",
     "DEBUG",
     "UPDATE_BRANCH",
 ]
