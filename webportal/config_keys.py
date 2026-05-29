@@ -14,6 +14,13 @@ EDITABLE_KEYS = {
         "default": 10,
         "label": "Grain tolerance (g)",
     },
+    "HOP_WEIGHT_TOLERANCE": {
+        "type": "int",
+        "min": 0,
+        "max": 500,
+        "default": 1,
+        "label": "Hop tolerance (g)",
+    },
     "DEBUG": {
         "type": "bool",
         "default": False,
@@ -65,6 +72,7 @@ EDITABLE_ORDER = [
     "BREWFATHER_USER_ID",
     "BREWFATHER_API_KEY",
     "GRAIN_WEIGHT_TOLERANCE",
+    "HOP_WEIGHT_TOLERANCE",
     "DEBUG",
     "UPDATE_BRANCH",
 ]

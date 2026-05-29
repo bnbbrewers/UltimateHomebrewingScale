@@ -145,6 +145,7 @@ TRANSLATIONS = {
         'fields': {
             'LANGUAGE': 'Language',
             'GRAIN_WEIGHT_TOLERANCE': 'Grain tolerance (g)',
+            'HOP_WEIGHT_TOLERANCE': 'Hop tolerance (g)',
             'DEBUG': 'Debug mode',
             'WIFI_SSID': 'Wi-Fi SSID',
             'WIFI_PASSWORD': 'Wi-Fi password',
