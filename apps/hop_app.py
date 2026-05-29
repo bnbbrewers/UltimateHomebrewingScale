@@ -20,6 +20,10 @@ _STATE_ALL_DONE_ACK = 7
 _COLOR_HOP = 0x388E3C
 
 
+def _hop_weight_tolerance():
+    return getattr(config, "HOP_WEIGHT_TOLERANCE", 1)
+
+
 class _HopNameItems:
     def __init__(self, hops_list):
         self._hops_list = hops_list
@@ -253,7 +257,7 @@ class HopAssistantApp(BaseApp):
         if weight is None:
             return
         remaining = self._target_g - weight
-        in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
+        in_range = abs(remaining) <= _hop_weight_tolerance()
         if in_range != self._last_in_range:
             self._last_in_range = in_range
             self._weight().set_status(self.t("common.ok") if in_range else "")
@@ -273,7 +277,7 @@ class HopAssistantApp(BaseApp):
         weigh_screen.configure(
             title=self.t("hop.weigh_title", hop["name"], vessel_number),
             mode="countdown_g", target=self._target_g,
-            title_bg_color=_COLOR_HOP, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
+            title_bg_color=_COLOR_HOP, tolerance=_hop_weight_tolerance())
         weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
         if self._scale:
