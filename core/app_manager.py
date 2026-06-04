@@ -41,6 +41,7 @@ class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None, initial_app_id=None):
         mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._screen_manager = screen_manager
+        self._i18n = i18n
         self._apis = apis
         self._apps = {}
         # Only the active app is created during boot: the main loop needs one
@@ -136,35 +137,61 @@ class AppManager:
         mem_snapshot("app.lazy.keg_created", enabled=_DEBUG, collect=True)
 
     def _switch_to(self, app_id):
-        if not self._ensure_app(
-            app_id,
-            self._apps[self._active_app_id].screen_manager,
-            self._apps[self._active_app_id].hardware,
-            self._apis,
-            self._apps[self._active_app_id].i18n,
-        ):
-            app_id = "launcher"
         if app_id == self._active_app_id:
             return
         old = self._active_app_id
-        mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
-        self._apps[old].on_exit()
+        current_app = self._apps[old]
+        target_app_id = app_id
+        target_exists = app_id in self._apps
+        if not target_exists and not self._is_known_app_id(app_id):
+            target_app_id = "launcher"
+            target_exists = target_app_id in self._apps
+        mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
+        current_app.on_exit()
         mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
-        self._memory_cleanup_before_enter()
-        gc.collect()
-        gc.collect()
+        self._memory_cleanup_before_enter(target_app_id)
         mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
+        if not target_exists and not self._ensure_app(
+            target_app_id,
+            current_app.screen_manager,
+            current_app.hardware,
+            self._apis,
+            current_app.i18n,
+        ):
+            target_app_id = "launcher"
+            if target_app_id not in self._apps:
+                self._ensure_app(
+                    target_app_id,
+                    current_app.screen_manager,
+                    current_app.hardware,
+                    self._apis,
+                    current_app.i18n,
+                )
+        mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
         try:
             import config
             if getattr(config, "DEBUG", False):
-                print("[MEM] switch {}->{} free={}".format(old, app_id, gc.mem_free()))
+                print("[MEM] switch {}->{} free={}".format(old, target_app_id, gc.mem_free()))
         except Exception:
             pass
-        self._active_app_id = app_id
+        self._active_app_id = target_app_id
         mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
         mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
+
+    @staticmethod
+    def _is_known_app_id(app_id):
+        return app_id in (
+            "launcher",
+            "scale_app",
+            "malt_app",
+            "hop_app",
+            "keg_filler_app",
+            "settings_app",
+            CALIBRATION_WIZARD_APP_ID,
+            "updater_app",
+        )
 
     def _release_app_screen_refs(self):
         for app in self._apps.values():
@@ -175,10 +202,44 @@ class AppManager:
                 except Exception:
                     pass
 
-    def _memory_cleanup_before_enter(self):
+    def _memory_cleanup_before_enter(self, app_id):
         cleanup = getattr(self._screen_manager, "memory_cleanup", None)
         if cleanup:
-            cleanup()
+            cleanup(loading_message=self._loading_message_for(app_id))
+
+    def _loading_message_for(self, app_id):
+        app_key_by_id = {
+            "scale_app": "launcher.scale",
+            "malt_app": "launcher.malt",
+            "hop_app": "launcher.hop",
+            "keg_filler_app": "launcher.keg",
+            "settings_app": "launcher.settings",
+            CALIBRATION_WIZARD_APP_ID: "scale_calibration.title",
+            "updater_app": "updater.title",
+        }
+        fallback_by_id = {
+            "launcher": "Launcher",
+            "scale_app": "Scale",
+            "malt_app": "Malt",
+            "hop_app": "Hop",
+            "keg_filler_app": "Keg",
+            "settings_app": "Settings",
+            CALIBRATION_WIZARD_APP_ID: "Calibration",
+            "updater_app": "Updater",
+        }
+        app_name = fallback_by_id.get(app_id, app_id)
+        key = app_key_by_id.get(app_id)
+        if self._i18n and key:
+            try:
+                app_name = self._i18n.t(key)
+            except Exception:
+                pass
+        if self._i18n:
+            try:
+                return self._i18n.t("common.loading_app", app_name)
+            except Exception:
+                pass
+        return "Loading {}".format(app_name)
 
     def tick(self):
         next_app = self._apps[self._active_app_id].tick()

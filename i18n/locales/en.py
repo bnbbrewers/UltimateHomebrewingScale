@@ -6,6 +6,7 @@ English translations for Ultimate Homebrewing Scale
 TRANSLATIONS = {
     'common': {
         'ok': 'OK',
+        'loading_app': 'Loading {0}',
     },
 
     'scale': {

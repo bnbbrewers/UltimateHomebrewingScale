@@ -25,6 +25,7 @@ class ScreenManager:
             screen_ids.LAUNCHER: launcher,
         }
         self._active_id = None
+        self._cleanup_screen = None
         mem_snapshot("screen.init.done", enabled=_DEBUG, collect=True)
 
     def _create_lazy_screen(self, screen_id):
@@ -124,6 +125,8 @@ class ScreenManager:
 
     def release_all(self, keep_ids=()):
         keep = set(keep_ids or ())
+        if self._active_id is not None and self._active_id not in keep:
+            self._load_cleanup_screen()
         for screen_id in list(self._screens.keys()):
             if screen_id in keep:
                 continue
@@ -137,8 +140,35 @@ class ScreenManager:
         if self._active_id not in self._screens:
             self._active_id = None
 
-    def memory_cleanup(self, keep_ids=()):
-        self.release_all(keep_ids=keep_ids)
+    def _load_cleanup_screen(self):
+        try:
+            import lvgl as lv
+
+            if self._cleanup_screen is None:
+                self._cleanup_screen = lv.obj()
+                try:
+                    self._cleanup_screen.set_style_bg_color(lv.color_hex(0x000000), 0)
+                    self._cleanup_screen.set_style_bg_opa(255, 0)
+                except Exception:
+                    pass
+
+            loader = getattr(lv, "screen_load", None)
+            if loader:
+                loader(self._cleanup_screen)
+            else:
+                loader = getattr(lv, "scr_load", None)
+                if loader:
+                    loader(self._cleanup_screen)
+                elif hasattr(self._cleanup_screen, "screen_load"):
+                    self._cleanup_screen.screen_load()
+        except Exception:
+            pass
+
+    def memory_cleanup(self, keep_ids=(), loading_message=None):
+        keep = tuple(keep_ids or ())
+        if loading_message:
+            keep = self._show_loading_screen(loading_message, keep)
+        self.release_all(keep_ids=keep)
         try:
             import lvgl as lv
 
@@ -148,6 +178,28 @@ class ScreenManager:
         gc.collect()
         gc.collect()
         mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
+
+    def _show_loading_screen(self, message, keep_ids):
+        try:
+            screen = self.get(screen_ids.SIMPLE_MESSAGE)
+            if screen is None:
+                return keep_ids
+            screen.configure(
+                title="",
+                message=message,
+                title_bg_color=0x333333,
+                show_ok_button=False,
+            )
+            self.show(screen_ids.SIMPLE_MESSAGE)
+            try:
+                import lvgl as lv
+
+                lv.task_handler()
+            except Exception:
+                pass
+            return tuple(keep_ids) + (screen_ids.SIMPLE_MESSAGE,)
+        except Exception:
+            return keep_ids
 
     def active_screen_id(self):
         return self._active_id
