@@ -359,6 +359,7 @@ class HopAssistantApp(BaseApp):
         self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
         self._batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
+        self._release_screens_for_hops_loading()
         gc.collect()
         mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
         self._hops_list = self._fetch_hops_list()
@@ -387,3 +388,10 @@ class HopAssistantApp(BaseApp):
             gc.collect()
             print("[MEM] hop.hops_loaded recipients={}".format(recipient_count))
             mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
+
+    def _release_screens_for_hops_loading(self):
+        self._select_screen = None
+        self._weigh_screen = None
+        cleanup = getattr(self.screen_manager, "memory_cleanup", None)
+        if cleanup:
+            cleanup()
