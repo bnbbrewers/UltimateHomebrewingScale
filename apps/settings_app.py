@@ -48,7 +48,6 @@ class SettingsApp(BaseApp):
             self.screen_manager.show(screen_ids.SETTINGS)
             self._flush_lvgl()
             if self._portal is None:
-                self._release_heavy_screens_for_portal()
                 if self._debug:
                     try:
                         import gc
@@ -106,24 +105,6 @@ class SettingsApp(BaseApp):
             except Exception:
                 pass
 
-    def _release_heavy_screens_for_portal(self):
-        release = getattr(self.screen_manager, "release", None)
-        if not release:
-            return
-        release(screen_ids.LAUNCHER)
-        release(screen_ids.SELECT_ITEM)
-        release(screen_ids.WEIGHT)
-        release(screen_ids.KEG_VOLUME)
-        release(screen_ids.SIMPLE_MESSAGE)
-        release(screen_ids.UPDATER)
-        try:
-            import gc
-
-            gc.collect()
-            gc.collect()
-        except Exception:
-            pass
-
     def on_exit(self):
         super().on_exit()
         portal = self._portal
@@ -138,13 +119,6 @@ class SettingsApp(BaseApp):
             except Exception as e:
                 self._print_exception("[settings] portal stop error:", e)
         self._screen = None
-        release = getattr(self.screen_manager, "release", None)
-        if release:
-            try:
-                self.screen_manager.get(screen_ids.LAUNCHER)
-            except Exception:
-                pass
-            release(screen_ids.SETTINGS)
         try:
             import gc
 

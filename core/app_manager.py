@@ -40,6 +40,7 @@ def _initial_app_id(initial_app_id=None):
 class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None, initial_app_id=None):
         mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
+        self._screen_manager = screen_manager
         self._apis = apis
         self._apps = {}
         # Only the active app is created during boot: the main loop needs one
@@ -149,6 +150,8 @@ class AppManager:
         mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
         self._apps[old].on_exit()
         mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
+        self._release_app_screen_refs()
+        self._memory_cleanup_before_enter()
         gc.collect()
         gc.collect()
         mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
@@ -162,6 +165,20 @@ class AppManager:
         mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
         mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
+
+    def _release_app_screen_refs(self):
+        for app in self._apps.values():
+            release_refs = getattr(app, "release_screen_refs", None)
+            if release_refs:
+                try:
+                    release_refs()
+                except Exception:
+                    pass
+
+    def _memory_cleanup_before_enter(self):
+        cleanup = getattr(self._screen_manager, "memory_cleanup", None)
+        if cleanup:
+            cleanup()
 
     def tick(self):
         next_app = self._apps[self._active_app_id].tick()

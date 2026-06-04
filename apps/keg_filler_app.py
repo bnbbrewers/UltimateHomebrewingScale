@@ -150,12 +150,6 @@ class KegFillerApp(BaseApp):
         self._select_screen = None
         self._volume_screen = None
         self._weight_screen = None
-        release = getattr(self.screen_manager, "release", None)
-        if release:
-            release(screen_ids.SIMPLE_MESSAGE)
-            release(screen_ids.SELECT_ITEM)
-            release(screen_ids.KEG_VOLUME)
-            release(screen_ids.WEIGHT)
         gc.collect()
 
     def on_enter(self):
