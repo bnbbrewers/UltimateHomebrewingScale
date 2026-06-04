@@ -49,7 +49,7 @@ class LauncherApp(BaseApp):
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
-        self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
+        self._screen = None
         self._rotary = self.hardware.rotary
         self._items = LAUNCHER_ITEMS
         self._selected = 0

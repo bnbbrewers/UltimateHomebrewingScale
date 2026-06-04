@@ -2,6 +2,8 @@
 Screen manager that instantiates all screens once at boot.
 """
 
+import gc
+
 from ui import screen_ids
 from ui.launcher_screen import LauncherScreen
 from memory_debug import snapshot as mem_snapshot
@@ -80,6 +82,14 @@ class ScreenManager:
             mem_snapshot("screen.lazy.updater.before_ctor", enabled=_DEBUG, collect=True)
             self._screens[screen_id] = UpdaterScreen(i18n=self._i18n)
             mem_snapshot("screen.lazy.updater", enabled=_DEBUG, collect=True)
+            return
+        if screen_id == screen_ids.CALIBRATION_WIZARD:
+            mem_snapshot("screen.lazy.calibration.before_import", enabled=_DEBUG, collect=True)
+            from ui.scale_calibration_wizard_screen import ScaleCalibrationWizardScreen
+
+            mem_snapshot("screen.lazy.calibration.before_ctor", enabled=_DEBUG, collect=True)
+            self._screens[screen_id] = ScaleCalibrationWizardScreen(i18n=self._i18n)
+            mem_snapshot("screen.lazy.calibration", enabled=_DEBUG, collect=True)
 
     def get(self, screen_id):
         self._create_lazy_screen(screen_id)
@@ -111,6 +121,33 @@ class ScreenManager:
             screen.root().delete()
         except Exception:
             pass
+
+    def release_all(self, keep_ids=()):
+        keep = set(keep_ids or ())
+        for screen_id in list(self._screens.keys()):
+            if screen_id in keep:
+                continue
+            screen = self._screens.pop(screen_id, None)
+            if screen is None:
+                continue
+            try:
+                screen.root().delete()
+            except Exception:
+                pass
+        if self._active_id not in self._screens:
+            self._active_id = None
+
+    def memory_cleanup(self, keep_ids=()):
+        self.release_all(keep_ids=keep_ids)
+        try:
+            import lvgl as lv
+
+            lv.image_cache_drop(None)
+        except Exception:
+            pass
+        gc.collect()
+        gc.collect()
+        mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
 
     def active_screen_id(self):
         return self._active_id
