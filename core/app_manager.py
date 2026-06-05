@@ -205,7 +205,10 @@ class AppManager:
     def _memory_cleanup_before_enter(self, app_id):
         cleanup = getattr(self._screen_manager, "memory_cleanup", None)
         if cleanup:
-            cleanup(loading_message=self._loading_message_for(app_id))
+            cleanup(
+                loading_message=self._loading_message_for(app_id),
+                loading_color=self._loading_color_for(app_id),
+            )
 
     def _loading_message_for(self, app_id):
         app_key_by_id = {
@@ -240,6 +243,18 @@ class AppManager:
             except Exception:
                 pass
         return "Loading {}".format(app_name)
+
+    @staticmethod
+    def _loading_color_for(app_id):
+        return {
+            "scale_app": 0x00A8E8,
+            "malt_app": 0xD4840A,
+            "hop_app": 0x388E3C,
+            "keg_filler_app": 0x607D8B,
+            "settings_app": 0x7E57C2,
+            CALIBRATION_WIZARD_APP_ID: 0x00897B,
+            "updater_app": 0x1565C0,
+        }.get(app_id, 0x333333)
 
     def tick(self):
         next_app = self._apps[self._active_app_id].tick()
