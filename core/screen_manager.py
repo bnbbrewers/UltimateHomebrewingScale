@@ -164,10 +164,10 @@ class ScreenManager:
         except Exception:
             pass
 
-    def memory_cleanup(self, keep_ids=(), loading_message=None):
+    def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
         keep = tuple(keep_ids or ())
         if loading_message:
-            keep = self._show_loading_screen(loading_message, keep)
+            keep = self._show_loading_screen(loading_message, keep, loading_color)
         self.release_all(keep_ids=keep)
         try:
             import lvgl as lv
@@ -179,7 +179,7 @@ class ScreenManager:
         gc.collect()
         mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
 
-    def _show_loading_screen(self, message, keep_ids):
+    def _show_loading_screen(self, message, keep_ids, loading_color=0x333333):
         try:
             screen = self.get(screen_ids.SIMPLE_MESSAGE)
             if screen is None:
@@ -187,7 +187,7 @@ class ScreenManager:
             screen.configure(
                 title="",
                 message=message,
-                title_bg_color=0x333333,
+                title_bg_color=loading_color,
                 show_ok_button=False,
             )
             self.show(screen_ids.SIMPLE_MESSAGE)
