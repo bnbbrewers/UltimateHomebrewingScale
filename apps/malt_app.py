@@ -76,7 +76,7 @@ class GrainAssistantApp(BaseApp):
         if self._check_return_to_launcher():
             return "launcher"
         if self._state == _STATE_RECIPE:
-            self._tick_recipe()
+            return self._tick_recipe()
         elif self._state == _STATE_MALT:
             self._tick_malt()
         elif self._state == _STATE_WEIGHT:
@@ -100,7 +100,8 @@ class GrainAssistantApp(BaseApp):
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
-            items=names, accent_color=_COLOR_RECIPE, selected_index=0)
+            items=names if names else [self.t("common.back")],
+            accent_color=_COLOR_RECIPE, selected_index=0)
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_RECIPE
@@ -146,6 +147,8 @@ class GrainAssistantApp(BaseApp):
 
     def _tick_recipe(self):
         if not self._batches:
+            if self.hardware.button.was_short_pressed():
+                return "launcher"
             return
         self._batch_idx, changed = self._rotary_navigate(
             self._batch_idx, len(self._batches))

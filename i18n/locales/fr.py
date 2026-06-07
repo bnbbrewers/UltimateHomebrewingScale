@@ -6,6 +6,7 @@ Traductions francaises pour Ultimate Homebrewing Scale
 TRANSLATIONS = {
     'common': {
         'ok': 'OK',
+        'back': 'Retour',
         'loading_app': 'Chargement {0}',
     },
 
