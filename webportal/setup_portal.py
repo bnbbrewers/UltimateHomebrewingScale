@@ -372,6 +372,12 @@ class SetupPortalService:
             client.close()
         except Exception:
             pass
+        try:
+            import gc
+
+            gc.collect()
+        except Exception:
+            pass
 
     def _ensure_network(self):
         self._cfg = _load_setup_cfg()

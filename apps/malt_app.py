@@ -52,13 +52,13 @@ class GrainAssistantApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
-        if config.DEBUG:
-            gc.collect()
-            print("[MEM] grain.on_exit before_cleanup free={}".format(gc.mem_free()))
         self._batches = []
         self._malts = []
         if self._select_screen:
             self._select_screen.set_items([])
+        gc.collect()
+        if config.DEBUG:
+            print("[MEM] grain.on_exit after_cleanup free={}".format(gc.mem_free()))
 
     def on_enter(self):
         super().on_enter()
@@ -116,6 +116,7 @@ class GrainAssistantApp(BaseApp):
         gc.collect()
 
         self._malts = self._api.get_malts(batch_id) if self._api else []
+        gc.collect()
         self._malt_idx = 0
         names = [m.name for m in self._malts]
 
@@ -139,7 +140,6 @@ class GrainAssistantApp(BaseApp):
         if self._rotary:
             self._rotary.reset()
         if config.DEBUG:
-            gc.collect()
             print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
 
     # ── tick handlers ──────────────────────────────────────────────
@@ -212,6 +212,5 @@ class GrainAssistantApp(BaseApp):
             self._scale.tare()
         self._state = _STATE_WEIGHT
         if config.DEBUG:
-            gc.collect()
             print("[MEM] grain.start_weigh '{}' target={}g free={}".format(
                 malt.name, self._target_g, gc.mem_free()))

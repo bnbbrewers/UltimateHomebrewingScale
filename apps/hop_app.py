@@ -5,10 +5,15 @@ Memory-safe hop assistant app (business logic only).
 import gc
 
 import config
-from memory_debug import snapshot as mem_snapshot
 
 from .base_app import BaseApp
 from ui import screen_ids
+
+if getattr(config, "DEBUG", False):
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 _STATE_RECIPE = 1
 _STATE_PREP_ACK = 2
@@ -85,9 +90,6 @@ class HopAssistantApp(BaseApp):
 
     def on_exit(self):
         super().on_exit()
-        if config.DEBUG:
-            gc.collect()
-            mem_snapshot("hop.on_exit.before_cleanup", enabled=True, collect=False)
         self._batches = []
         self._hops_list = []
         self._vessel_numbers_by_step = {}
@@ -95,6 +97,8 @@ class HopAssistantApp(BaseApp):
         self._prep_flow_active = False
         if self._select_screen:
             self._select_screen.set_items([])
+        gc.collect()
+        mem_snapshot("hop.on_exit.after_cleanup", enabled=config.DEBUG, collect=False)
 
     def on_enter(self):
         super().on_enter()
@@ -167,7 +171,6 @@ class HopAssistantApp(BaseApp):
         if self._rotary:
             self._rotary.reset()
         if config.DEBUG:
-            gc.collect()
             print("[MEM] hop.sessions_ready hops={}".format(len(self._hops_list)))
             mem_snapshot("hop.sessions_ready", enabled=True, collect=False)
 
@@ -284,7 +287,6 @@ class HopAssistantApp(BaseApp):
             self._scale.tare()
         self._state = _STATE_WEIGHT
         if config.DEBUG:
-            gc.collect()
             print("[MEM] hop.start_weigh hop={} target={}g".format(
                 hop["name"], self._target_g))
             mem_snapshot("hop.start_weigh", enabled=True, collect=False)
@@ -385,7 +387,6 @@ class HopAssistantApp(BaseApp):
         if self._rotary:
             self._rotary.reset()
         if config.DEBUG:
-            gc.collect()
             print("[MEM] hop.hops_loaded recipients={}".format(recipient_count))
             mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
 

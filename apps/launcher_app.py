@@ -62,9 +62,10 @@ class LauncherApp(BaseApp):
         super().on_enter()
         self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
         try:
-            import gc, config
+            import gc
+            import config
+
             if getattr(config, "DEBUG", False):
-                gc.collect()
                 print("[MEM] launcher.on_enter free={}".format(gc.mem_free()))
         except Exception:
             pass

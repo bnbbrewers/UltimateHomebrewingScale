@@ -7,13 +7,18 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import UIHelper
-from memory_debug import snapshot as mem_snapshot
 
 try:
     import config
     _DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     _DEBUG = False
+
+if _DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
 

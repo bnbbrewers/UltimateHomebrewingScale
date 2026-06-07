@@ -5,17 +5,33 @@ App manager with persistent one-time app instances.
 import gc
 import os
 
-from memory_debug import snapshot as mem_snapshot
-
 try:
     import config
     _DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     _DEBUG = False
 
+if _DEBUG:
+    try:
+        from memory_debug import snapshot as _debug_snapshot
+    except Exception:
+        _debug_snapshot = None
+else:
+    _debug_snapshot = None
+
 
 CALIBRATION_FILE = "scale_calibration.json"
 CALIBRATION_WIZARD_APP_ID = "scale_calibration_wizard_app"
+
+
+def _collect_runtime(cycles=1):
+    for _ in range(max(1, cycles)):
+        gc.collect()
+
+
+def _mem_snapshot(tag, enabled=True, collect=False):
+    if enabled and _debug_snapshot:
+        _debug_snapshot(tag, enabled=True, collect=False)
 
 
 def _file_exists(path):
@@ -39,7 +55,8 @@ def _initial_app_id(initial_app_id=None):
 
 class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None, initial_app_id=None):
-        mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
         self._screen_manager = screen_manager
         self._i18n = i18n
         self._apis = apis
@@ -49,9 +66,11 @@ class AppManager:
         # startup flow selects it. This keeps C/Python heap pressure low.
         self._active_app_id = _initial_app_id(initial_app_id=initial_app_id)
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
-        mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
         self._apps[self._active_app_id].on_enter()
-        mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
 
     def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
         if app_id in self._apps:
@@ -80,7 +99,8 @@ class AppManager:
                 apis,
                 i18n=i18n,
             )
-            mem_snapshot("app.lazy.settings_created", enabled=_DEBUG, collect=True)
+            _collect_runtime()
+            _mem_snapshot("app.lazy.settings_created", enabled=_DEBUG, collect=True)
             return True
         if app_id == CALIBRATION_WIZARD_APP_ID:
             from apps.scale_calibration_wizard_app import ScaleCalibrationWizardApp
@@ -91,7 +111,8 @@ class AppManager:
                 apis,
                 i18n=i18n,
             )
-            mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
+            _collect_runtime()
+            _mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
             return True
         if app_id == "updater_app":
             from apps.updater_app import UpdaterApp
@@ -102,7 +123,8 @@ class AppManager:
                 apis,
                 i18n=i18n,
             )
-            mem_snapshot("app.lazy.updater_created", enabled=_DEBUG, collect=True)
+            _collect_runtime()
+            _mem_snapshot("app.lazy.updater_created", enabled=_DEBUG, collect=True)
             return True
         return False
 
@@ -110,31 +132,36 @@ class AppManager:
         from apps.launcher_app import LauncherApp
 
         self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
-        mem_snapshot("app.lazy.launcher_created", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.lazy.launcher_created", enabled=_DEBUG, collect=True)
 
     def _create_scale(self, screen_manager, hardware, apis, i18n):
         from apps.scale_app import ScaleApp
 
         self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
-        mem_snapshot("app.lazy.scale_created", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.lazy.scale_created", enabled=_DEBUG, collect=True)
 
     def _create_malt(self, screen_manager, hardware, apis, i18n):
         from apps.malt_app import GrainAssistantApp
 
         self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
-        mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
 
     def _create_hop(self, screen_manager, hardware, apis, i18n):
         from apps.hop_app import HopAssistantApp
 
         self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
-        mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
 
     def _create_keg(self, screen_manager, hardware, apis, i18n):
         from apps.keg_filler_app import KegFillerApp
 
         self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
-        mem_snapshot("app.lazy.keg_created", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("app.lazy.keg_created", enabled=_DEBUG, collect=True)
 
     def _switch_to(self, app_id):
         if app_id == self._active_app_id:
@@ -146,12 +173,14 @@ class AppManager:
         if not target_exists and not self._is_known_app_id(app_id):
             target_app_id = "launcher"
             target_exists = target_app_id in self._apps
-        mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
+        _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
         current_app.on_exit()
-        mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
         self._memory_cleanup_before_enter(target_app_id)
-        mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
+        _collect_runtime()
+        _mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
         if not target_exists and not self._ensure_app(
             target_app_id,
             current_app.screen_manager,
@@ -168,7 +197,8 @@ class AppManager:
                     self._apis,
                     current_app.i18n,
                 )
-        mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
         try:
             import config
             if getattr(config, "DEBUG", False):
@@ -176,9 +206,10 @@ class AppManager:
         except Exception:
             pass
         self._active_app_id = target_app_id
-        mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
+        _mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
-        mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
+        _collect_runtime()
+        _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
 
     @staticmethod
     def _is_known_app_id(app_id):

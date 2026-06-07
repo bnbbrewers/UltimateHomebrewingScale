@@ -13,13 +13,18 @@ from .ui_helper import (
     UIHelper,
     format_title_text,
 )
-from memory_debug import snapshot as mem_snapshot
 
 try:
     import config
     _DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     _DEBUG = False
+
+if _DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 MESSAGE_LINE_HEIGHT = 18

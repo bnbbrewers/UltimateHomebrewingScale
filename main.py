@@ -45,15 +45,20 @@ def _ensure_config_file():
 
 _CONFIG_CREATED = _ensure_config_file()
 
-from core import ScreenManager, HardwareManager, AppManager, ApiFactory
-from memory_debug import snapshot as mem_snapshot
-
 try:
     import config
     DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     config = None
     DEBUG = False
+
+if DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
+
+from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 
 _RUNNING = True
 

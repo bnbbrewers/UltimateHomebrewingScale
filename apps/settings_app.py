@@ -50,9 +50,6 @@ class SettingsApp(BaseApp):
             if self._portal is None:
                 if self._debug:
                     try:
-                        import gc
-
-                        gc.collect()
                         print("[MEM] settings.pre_import free={}".format(gc.mem_free()))
                     except Exception:
                         pass
@@ -66,11 +63,9 @@ class SettingsApp(BaseApp):
                     pass
 
                 self._portal = SetupPortalService(wifi_device=self.hardware.wifi, debug=debug_portal, i18n=self.i18n)
+                gc.collect()
                 if self._debug:
                     try:
-                        import gc
-
-                        gc.collect()
                         print("[MEM] settings.post_import free={}".format(gc.mem_free()))
                     except Exception:
                         pass

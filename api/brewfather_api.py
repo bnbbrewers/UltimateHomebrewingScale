@@ -8,13 +8,18 @@ import binascii
 import json
 import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
-from memory_debug import snapshot as mem_snapshot
 
 try:
     import config as _config
     _DEBUG = getattr(_config, "DEBUG", False)
 except Exception:
     _DEBUG = False
+
+if _DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 class BrewfatherAPI(ApiBase):
@@ -135,6 +140,7 @@ class BrewfatherAPI(ApiBase):
         url = "https://{}{}".format(self._HOST, path)
         if _DEBUG:
             print("[API] GET {}".format(path))
+        gc.collect()
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         resp = None
         self._remove_file(self._TMP_JSON_PATH)
@@ -210,6 +216,13 @@ class BrewfatherAPI(ApiBase):
                     batch_id=batch_data.get('_id', ''),
                     name=recipe.get('name', 'Unknown Recipe'),
                 ))
+            try:
+                del batch_data
+                del recipe
+            except Exception:
+                pass
+            del data
+            gc.collect()
             return batches
 
         except Exception as e:
@@ -235,6 +248,13 @@ class BrewfatherAPI(ApiBase):
                         ebc=f.get('color', 0.0),
                         amount=f.get('amount', 0.0),
                     ))
+            try:
+                del f
+                del fermentables
+            except Exception:
+                pass
+            del data
+            gc.collect()
             return malts
 
         except Exception as e:
