@@ -67,12 +67,14 @@ def snapshot(tag, enabled=False, collect=False):
     Args:
         tag: Short label for the snapshot.
         enabled: Usually config.DEBUG.
-        collect: Run gc.collect() before taking the snapshot.
+        collect: Kept for backward-compatible call sites; ignored here.
+            Runtime code must call gc.collect() explicitly where resources
+            are released.
     """
     if not enabled:
         return
 
-    py_free, c_free, c_largest = stats(collect=collect)
+    py_free, c_free, c_largest = stats(collect=False)
 
     if c_free is None:
         print("[MEM] {} py_free={}".format(tag, py_free))

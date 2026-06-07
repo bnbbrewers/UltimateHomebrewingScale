@@ -10,7 +10,6 @@ import time
 
 from .base_app import BaseApp
 from ui import screen_ids
-from memory_debug import snapshot as mem_snapshot
 
 
 CALIBRATION_POINTS = [0, 500, 5000, 20000]
@@ -25,6 +24,12 @@ try:
     DEBUG_MODE = getattr(config, "DEBUG", False)
 except Exception:
     DEBUG_MODE = False
+
+if DEBUG_MODE:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 class ScaleCalibrationWizardApp(BaseApp):

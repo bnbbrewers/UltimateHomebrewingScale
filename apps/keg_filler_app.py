@@ -159,6 +159,7 @@ class KegFillerApp(BaseApp):
         self._relay = getattr(self.hardware, "relay", None)
         self._close_relay()
         self._kegs = load_kegs(self._keg_file)
+        gc.collect()
         self._items = []
         self._selected_idx = 0
         self._pending_name = None
