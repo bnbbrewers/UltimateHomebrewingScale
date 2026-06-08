@@ -44,7 +44,6 @@ class BrewfatherAPI(ApiBase):
         b64 = binascii.b2a_base64(credentials.encode()).decode().strip()
         self._headers = {
             'Authorization': 'Basic {}'.format(b64),
-            'Content-Type': 'application/json',
         }
 
     # ── stateless HTTP helpers ─────────────────────────────────────
@@ -161,7 +160,7 @@ class BrewfatherAPI(ApiBase):
                 print("[API] stream raw={} iter={} content={}".format(
                     bool(raw is not None and hasattr(raw, "read")),
                     bool(getattr(resp, "iter_content", None)),
-                    hasattr(resp, "content"),
+                    "not_checked",
                 ))
             spool_mode = self._spool_response_to_file(resp, self._TMP_JSON_PATH)
             if _DEBUG:

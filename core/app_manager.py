@@ -242,6 +242,13 @@ class AppManager:
             )
 
     def _loading_message_for(self, app_id):
+        if app_id == "hop_app":
+            if self._i18n:
+                try:
+                    return self._i18n.t("recipe.loading_recipes")
+                except Exception:
+                    pass
+            return "Loading recipes..."
         app_key_by_id = {
             "scale_app": "launcher.scale",
             "malt_app": "launcher.malt",

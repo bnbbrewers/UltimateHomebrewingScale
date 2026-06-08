@@ -320,7 +320,6 @@ class HopAssistantApp(BaseApp):
     # ── API loading ────────────────────────────────────────────────
 
     def _load_batches(self):
-        self._show_msg(self.t("hop.title"), self.t("recipe.loading_recipes"), _COLOR_HOP)
         self._batches = self._api.get_batches() if self._api else []
         names = [b.name for b in self._batches]
         self._batch_idx = 0
@@ -361,7 +360,6 @@ class HopAssistantApp(BaseApp):
         return len(HopAssistantApp._build_step_vessel_numbers(hops_list))
 
     def _load_hops(self):
-        self._show_msg(self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
         self._batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
         self._release_screens_for_hops_loading()
@@ -398,4 +396,13 @@ class HopAssistantApp(BaseApp):
         self._weigh_screen = None
         cleanup = getattr(self.screen_manager, "memory_cleanup", None)
         if cleanup:
-            cleanup()
+            try:
+                cleanup(
+                    loading_message=self.t("hop.loading_hops"),
+                    loading_color=_COLOR_HOP,
+                )
+            except TypeError:
+                cleanup(loading_message=self.t("hop.loading_hops"))
+        else:
+            self._show_msg(
+                self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)

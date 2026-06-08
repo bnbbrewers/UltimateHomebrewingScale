@@ -166,10 +166,14 @@ class ScreenManager:
         except Exception:
             pass
 
-    def release_all(self, keep_ids=()):
+    def release_all(self, keep_ids=(), cleanup_message=None, cleanup_color=0x333333):
         keep = set(keep_ids or ())
         if self._active_id is not None and self._active_id not in keep:
-            self._load_cleanup_screen()
+            self._load_cleanup_screen(
+                cleanup_message,
+                cleanup_color,
+                clear_message=cleanup_message is None,
+            )
         for screen_id in list(self._screens.keys()):
             if screen_id in keep:
                 continue
@@ -183,15 +187,48 @@ class ScreenManager:
         if self._active_id not in self._screens:
             self._active_id = None
 
-    def _load_cleanup_screen(self):
+    def _load_cleanup_screen(
+            self, message=None, loading_color=0x333333, clear_message=False):
         try:
             import lvgl as lv
 
             if self._cleanup_screen is None:
                 self._cleanup_screen = lv.obj()
+                self._cleanup_label = None
                 try:
                     self._cleanup_screen.set_style_bg_color(lv.color_hex(0x000000), 0)
                     self._cleanup_screen.set_style_bg_opa(255, 0)
+                except Exception:
+                    pass
+            if message:
+                if getattr(self, "_cleanup_label", None) is None:
+                    self._cleanup_label = lv.label(self._cleanup_screen)
+                    try:
+                        self._cleanup_label.set_width(220)
+                    except Exception:
+                        pass
+                    try:
+                        self._cleanup_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+                    except Exception:
+                        pass
+                try:
+                    self._cleanup_label.set_text(message)
+                except Exception:
+                    pass
+                try:
+                    self._cleanup_label.set_style_text_color(lv.color_hex(0xE5E7EB), 0)
+                except Exception:
+                    pass
+                try:
+                    self._cleanup_label.align(lv.ALIGN.CENTER, 0, 0)
+                except Exception:
+                    try:
+                        self._cleanup_label.set_pos(20, 110)
+                    except Exception:
+                        pass
+            elif clear_message and getattr(self, "_cleanup_label", None) is not None:
+                try:
+                    self._cleanup_label.set_text("")
                 except Exception:
                     pass
 
@@ -209,9 +246,11 @@ class ScreenManager:
 
     def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
         keep = tuple(keep_ids or ())
-        if loading_message:
-            keep = self._show_loading_screen(loading_message, keep, loading_color)
-        self.release_all(keep_ids=keep)
+        self.release_all(
+            keep_ids=keep,
+            cleanup_message=loading_message,
+            cleanup_color=loading_color,
+        )
         try:
             import lvgl as lv
 
@@ -220,28 +259,6 @@ class ScreenManager:
             pass
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
-
-    def _show_loading_screen(self, message, keep_ids, loading_color=0x333333):
-        try:
-            screen = self.get(screen_ids.SIMPLE_MESSAGE)
-            if screen is None:
-                return keep_ids
-            screen.configure(
-                title="",
-                message=message,
-                title_bg_color=loading_color,
-                show_ok_button=False,
-            )
-            self.show(screen_ids.SIMPLE_MESSAGE)
-            try:
-                import lvgl as lv
-
-                lv.task_handler()
-            except Exception:
-                pass
-            return tuple(keep_ids) + (screen_ids.SIMPLE_MESSAGE,)
-        except Exception:
-            return keep_ids
 
     def active_screen_id(self):
         return self._active_id
