@@ -45,15 +45,20 @@ def _ensure_config_file():
 
 _CONFIG_CREATED = _ensure_config_file()
 
-from core import ScreenManager, HardwareManager, AppManager, ApiFactory
-from memory_debug import snapshot as mem_snapshot
-
 try:
     import config
     DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     config = None
     DEBUG = False
+
+if DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
+
+from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 
 _RUNNING = True
 
@@ -70,9 +75,9 @@ def _load_i18n():
 
 def _update_requested():
     try:
-        from webportal import config_store
+        from storage import config_registry
 
-        return config_store.is_update_requested()
+        return config_registry.is_update_requested()
     except Exception:
         return False
 

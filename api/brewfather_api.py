@@ -8,13 +8,18 @@ import binascii
 import json
 import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
-from memory_debug import snapshot as mem_snapshot
 
 try:
     import config as _config
     _DEBUG = getattr(_config, "DEBUG", False)
 except Exception:
     _DEBUG = False
+
+if _DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 class BrewfatherAPI(ApiBase):
@@ -39,7 +44,6 @@ class BrewfatherAPI(ApiBase):
         b64 = binascii.b2a_base64(credentials.encode()).decode().strip()
         self._headers = {
             'Authorization': 'Basic {}'.format(b64),
-            'Content-Type': 'application/json',
         }
 
     # ── stateless HTTP helpers ─────────────────────────────────────
@@ -55,33 +59,71 @@ class BrewfatherAPI(ApiBase):
         # On the M5Dial, parsing JSON while the HTTPS response is still open
         # can exhaust ESP-IDF's largest contiguous heap block. Spool the body
         # in small chunks so TLS/socket buffers can be released before parsing.
+        mem_snapshot("api.spool.start", enabled=_DEBUG, collect=False)
         mode = "content"
         with open(path, "wb") as f:
             raw = getattr(resp, "raw", None)
             if raw is not None and hasattr(raw, "read"):
                 mode = "raw"
+                total = 0
+                chunks = 0
+                mem_snapshot("api.spool.raw.start", enabled=_DEBUG, collect=False)
                 while True:
-                    chunk = raw.read(512)
+                    try:
+                        chunk = raw.read(512)
+                    except Exception as e:
+                        if _DEBUG:
+                            print("[API] raw.read error chunks={} bytes={}: {}".format(
+                                chunks, total, e))
+                        mem_snapshot("api.spool.raw.error", enabled=_DEBUG, collect=False)
+                        raise
+                    if chunks == 0:
+                        mem_snapshot("api.spool.raw.after_first_read", enabled=_DEBUG, collect=False)
                     if not chunk:
                         break
                     f.write(chunk)
+                    total += len(chunk)
+                    chunks += 1
                     del chunk
+                if _DEBUG:
+                    print("[API] raw.done chunks={} bytes={}".format(chunks, total))
+                mem_snapshot("api.spool.raw.done", enabled=_DEBUG, collect=False)
                 return mode
 
             iter_content = getattr(resp, "iter_content", None)
             if iter_content:
                 mode = "iter"
-                for chunk in iter_content(512):
-                    if chunk:
-                        f.write(chunk)
-                    del chunk
+                total = 0
+                chunks = 0
+                mem_snapshot("api.spool.iter.start", enabled=_DEBUG, collect=False)
+                try:
+                    for chunk in iter_content(512):
+                        if chunks == 0:
+                            mem_snapshot("api.spool.iter.after_first_read", enabled=_DEBUG, collect=False)
+                        if chunk:
+                            f.write(chunk)
+                            total += len(chunk)
+                            chunks += 1
+                        del chunk
+                except Exception as e:
+                    if _DEBUG:
+                        print("[API] iter_content error chunks={} bytes={}: {}".format(
+                            chunks, total, e))
+                    mem_snapshot("api.spool.iter.error", enabled=_DEBUG, collect=False)
+                    raise
+                if _DEBUG:
+                    print("[API] iter.done chunks={} bytes={}".format(chunks, total))
+                mem_snapshot("api.spool.iter.done", enabled=_DEBUG, collect=False)
                 return mode
 
             # Last-resort fallback for request implementations without a raw
             # stream. This may allocate the full body while TLS buffers remain.
+            mem_snapshot("api.spool.content.before", enabled=_DEBUG, collect=False)
             content = getattr(resp, "content", b"")
+            mem_snapshot("api.spool.content.after_get", enabled=_DEBUG, collect=False)
             f.write(content)
             del content
+            mem_snapshot("api.spool.content.done", enabled=_DEBUG, collect=False)
         return mode
 
     @staticmethod
@@ -97,6 +139,7 @@ class BrewfatherAPI(ApiBase):
         url = "https://{}{}".format(self._HOST, path)
         if _DEBUG:
             print("[API] GET {}".format(path))
+        gc.collect()
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         resp = None
         self._remove_file(self._TMP_JSON_PATH)
@@ -112,6 +155,13 @@ class BrewfatherAPI(ApiBase):
                     print("[API] HTTP {}".format(status))
                 return status, None
 
+            if _DEBUG:
+                raw = getattr(resp, "raw", None)
+                print("[API] stream raw={} iter={} content={}".format(
+                    bool(raw is not None and hasattr(raw, "read")),
+                    bool(getattr(resp, "iter_content", None)),
+                    "not_checked",
+                ))
             spool_mode = self._spool_response_to_file(resp, self._TMP_JSON_PATH)
             if _DEBUG:
                 print("[API] body_spooled mode={}".format(spool_mode))
@@ -165,6 +215,13 @@ class BrewfatherAPI(ApiBase):
                     batch_id=batch_data.get('_id', ''),
                     name=recipe.get('name', 'Unknown Recipe'),
                 ))
+            try:
+                del batch_data
+                del recipe
+            except Exception:
+                pass
+            del data
+            gc.collect()
             return batches
 
         except Exception as e:
@@ -190,6 +247,13 @@ class BrewfatherAPI(ApiBase):
                         ebc=f.get('color', 0.0),
                         amount=f.get('amount', 0.0),
                     ))
+            try:
+                del f
+                del fermentables
+            except Exception:
+                pass
+            del data
+            gc.collect()
             return malts
 
         except Exception as e:

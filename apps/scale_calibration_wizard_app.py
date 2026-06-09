@@ -9,9 +9,7 @@ import json
 import time
 
 from .base_app import BaseApp
-from ui.scale_calibration_wizard_screen import ScaleCalibrationWizardScreen
 from ui import screen_ids
-from memory_debug import snapshot as mem_snapshot
 
 
 CALIBRATION_POINTS = [0, 500, 5000, 20000]
@@ -26,6 +24,12 @@ try:
     DEBUG_MODE = getattr(config, "DEBUG", False)
 except Exception:
     DEBUG_MODE = False
+
+if DEBUG_MODE:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 class ScaleCalibrationWizardApp(BaseApp):
@@ -138,8 +142,8 @@ class ScaleCalibrationWizardApp(BaseApp):
 
     def _show_wizard(self):
         if self._screen is None:
-            self._screen = ScaleCalibrationWizardScreen(i18n=self.i18n)
-        self._screen.show()
+            self._screen = self.screen_manager.get(screen_ids.CALIBRATION_WIZARD)
+        self.screen_manager.show(screen_ids.CALIBRATION_WIZARD)
         if self._rotary:
             self._rotary.reset()
         self._render()

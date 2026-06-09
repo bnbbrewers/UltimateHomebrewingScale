@@ -177,12 +177,14 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 - `LANGUAGE`
 - `WIFI_SSID`
 - `WIFI_PASSWORD`
+- `BREWING_SOFTWARE`
 - `BREWFATHER_USER_ID`
 - `BREWFATHER_API_KEY`
 - `GRAIN_WEIGHT_TOLERANCE`
+- `HOP_WEIGHT_TOLERANCE`
+- `KEG_SPUNDING_VALVE_INERTIA_ML`
 - `DEBUG`
 - `UPDATE_BRANCH`
-- `BREWING_SOFTWARE`
 
 Saving settings reboots the device. The portal can also request an update, which
 sets a flag and reboots into the hidden updater app.
@@ -207,6 +209,8 @@ BREWFATHER_USER_ID = "your_user_id_here"
 BREWFATHER_API_KEY = "your_api_key_here"
 LANGUAGE = "en"  # "en" or "fr"
 GRAIN_WEIGHT_TOLERANCE = 10
+HOP_WEIGHT_TOLERANCE = 1
+KEG_SPUNDING_VALVE_INERTIA_ML = 200
 DEBUG = False
 UPDATE_BRANCH = "main"
 ```

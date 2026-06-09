@@ -1,9 +1,9 @@
-"""Read/validate/save config.py for web portal."""
+"""Read/validate/save config.py for the embedded setup portal."""
 
 import os
 import re
 
-from .config_keys import EDITABLE_KEYS, EDITABLE_ORDER
+from webportal.config_keys import EDITABLE_KEYS, EDITABLE_ORDER
 
 _ASSIGN_RE = re.compile(r"^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$")
 _WIFI_KEYS = ("WIFI_SSID", "WIFI_PASSWORD")

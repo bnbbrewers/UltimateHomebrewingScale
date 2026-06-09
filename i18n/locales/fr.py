@@ -6,6 +6,8 @@ Traductions francaises pour Ultimate Homebrewing Scale
 TRANSLATIONS = {
     'common': {
         'ok': 'OK',
+        'back': 'Retour',
+        'loading_app': 'Chargement {0}',
     },
 
     'scale': {
@@ -68,6 +70,25 @@ TRANSLATIONS = {
 
     'keg': {
         'title': 'Remplisseur de Futs',
+        'empty_platform': 'Vider le plateau de la balance',
+        'select_title': 'Choisir un keg',
+        'add': 'Ajouter',
+        'calibration_step_1_title': 'Calibration (1/2)',
+        'calibration_step_1_message': 'Placer sur le plateau :\n\nkeg vide\n+\nspunding\n+\ntuyau branche',
+        'calibration_in_progress': 'Calibration en cours\n...',
+        'calibration_step_2_title': 'Calibration 2/2',
+        'volume_hint': 'Tourner pour ajuster',
+        'calibrated_title': 'Keg Calibre',
+        'calibrated_message': 'Keg enregistre : {0} \n\nAller dans parametres pour modifier le nom',
+        'existing_placeholder': '{0} selectionne',
+        'filling_title': 'remplissage {0}',
+        'filling_setup_message': '1) Poser le keg sur la balance\n2) Brancher la spunding\n3) Brancher la biere',
+        'error_title': 'Erreur Keg',
+        'scale_not_found': 'Balance introuvable',
+        'relay_not_found': 'Relais introuvable',
+        'tare_error': 'Erreur de tarage',
+        'calibration_no_sample': 'Aucun echantillon valide',
+        'save_error': 'Erreur sauvegarde keg',
     },
 
     'settings': {
@@ -110,6 +131,14 @@ TRANSLATIONS = {
         'saved': 'Enregistre',
         'invalid_fields': 'Champs invalides',
         'save_reboot': 'Enregistrer et redemarrer',
+        'kegs': 'Kegs',
+        'no_kegs': 'Aucun keg enregistre',
+        'keg_name': 'Nom du keg',
+        'keg_empty_weight': 'Poids vide',
+        'keg_max_volume': 'Volume max',
+        'keg_save': 'Enregistrer les kegs',
+        'keg_delete': 'Supprimer',
+        'keg_save_error': 'Erreur sauvegarde kegs',
         'saved_rebooting': 'Enregistre. Redemarrage...',
         'saved_manual_reboot': 'Enregistre. Redemarrez manuellement.',
         'update_app': 'UPDATE APP',
@@ -121,6 +150,8 @@ TRANSLATIONS = {
         'fields': {
             'LANGUAGE': 'Langue',
             'GRAIN_WEIGHT_TOLERANCE': 'Tolerance malt (g)',
+            'HOP_WEIGHT_TOLERANCE': 'Tolerance houblon (g)',
+            'KEG_SPUNDING_VALVE_INERTIA_ML': 'Inertie spunding valve (ml)',
             'DEBUG': 'Mode debug',
             'WIFI_SSID': 'SSID Wi-Fi',
             'WIFI_PASSWORD': 'Mot de passe Wi-Fi',

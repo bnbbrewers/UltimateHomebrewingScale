@@ -45,12 +45,11 @@ class SettingsApp(BaseApp):
             gc.collect()
             if self._screen is None:
                 self._screen = self.screen_manager.get(screen_ids.SETTINGS)
+            self.screen_manager.show(screen_ids.SETTINGS)
+            self._flush_lvgl()
             if self._portal is None:
                 if self._debug:
                     try:
-                        import gc
-
-                        gc.collect()
                         print("[MEM] settings.pre_import free={}".format(gc.mem_free()))
                     except Exception:
                         pass
@@ -64,11 +63,9 @@ class SettingsApp(BaseApp):
                     pass
 
                 self._portal = SetupPortalService(wifi_device=self.hardware.wifi, debug=debug_portal, i18n=self.i18n)
+                gc.collect()
                 if self._debug:
                     try:
-                        import gc
-
-                        gc.collect()
                         print("[MEM] settings.post_import free={}".format(gc.mem_free()))
                     except Exception:
                         pass
@@ -103,15 +100,26 @@ class SettingsApp(BaseApp):
             except Exception:
                 pass
 
-
     def on_exit(self):
         super().on_exit()
+        portal = self._portal
+        if portal:
+            try:
+                suspend = getattr(portal, "suspend", None)
+                if suspend:
+                    suspend()
+                else:
+                    portal.stop()
+                    self._portal = None
+            except Exception as e:
+                self._print_exception("[settings] portal stop error:", e)
+        self._screen = None
         try:
-            if self._portal:
-                self._portal.stop()
-        except Exception as e:
-            self._print_exception("[settings] portal stop error:", e)
-        self._portal = None
+            import gc
+
+            gc.collect()
+        except Exception:
+            pass
 
     def tick(self):
         if self._check_return_to_launcher():

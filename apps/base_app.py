@@ -31,6 +31,21 @@ class BaseApp:
     def on_exit(self):
         self._active = False
 
+    def release_screen_refs(self):
+        for attr in (
+            "_screen",
+            "_select_screen",
+            "_weigh_screen",
+            "_simple_screen",
+            "_volume_screen",
+            "_weight_screen",
+        ):
+            try:
+                if hasattr(self, attr):
+                    setattr(self, attr, None)
+            except Exception:
+                pass
+
     def tick(self):
         return None
 

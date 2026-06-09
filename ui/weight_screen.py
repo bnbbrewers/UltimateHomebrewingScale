@@ -7,7 +7,6 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import UIHelper
-from memory_debug import snapshot as mem_snapshot
 
 try:
     import config
@@ -15,13 +14,19 @@ try:
 except Exception:
     _DEBUG = False
 
+if _DEBUG:
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
+
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
 
 
 class WeightScreen:
     MODE_SIMPLE = "simple"
     MODE_COUNTDOWN_G = "countdown_g"
-    MODE_COUNTDOWN_L = "countdown_l"
+    MODE_FILLING_L = "filling_l"
 
     def __init__(self, i18n=None):
         mem_snapshot("weight.init.start", enabled=_DEBUG, collect=True)
@@ -33,6 +38,7 @@ class WeightScreen:
 
         self._mode = self.MODE_SIMPLE
         self._target = 0
+        self._empty_weight_g = 0
         self._density = 1.005
         self._tolerance = 0
         self._ok_visible = None
@@ -130,10 +136,19 @@ class WeightScreen:
             return self._i18n.t("common.ok")
         return "common.ok"
 
-    def configure(self, title, mode, target=0, title_bg_color=0x333333, tolerance=0):
+    def configure(
+        self,
+        title,
+        mode,
+        target=0,
+        title_bg_color=0x333333,
+        tolerance=0,
+        empty_weight_g=0,
+    ):
         self._mode = mode
         self._target = target
         self._tolerance = tolerance
+        self._empty_weight_g = empty_weight_g
         self._ok_visible = None
         self._last_raw_weight = None
         self._last_progress_pct = -1
@@ -157,7 +172,7 @@ class WeightScreen:
             self._status.set_pos(0, 210)
             self._status.set_flag(lv.obj.FLAG.HIDDEN, True)
             self.set_progress(0, overloaded=False)
-            if mode == self.MODE_COUNTDOWN_L:
+            if mode == self.MODE_FILLING_L:
                 self.set_weight_text("0.00 L")
             else:
                 self.set_weight_text("0 g")
@@ -278,8 +293,11 @@ class WeightScreen:
             self.set_ok_visible(in_range)
             return
 
-        # countdown_l
-        volume = (weight / 1000.0) / self._density
+        # filling_l
+        filled_weight = weight - self._empty_weight_g
+        if filled_weight < 0:
+            filled_weight = 0
+        volume = (filled_weight / 1000.0) / self._density
         if self._target > 0:
             target_volume = (self._target / 1000.0) / self._density
             remaining_volume = target_volume - volume
