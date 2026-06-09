@@ -6,6 +6,8 @@ English translations for Ultimate Homebrewing Scale
 TRANSLATIONS = {
     'common': {
         'ok': 'OK',
+        'back': 'Back',
+        'loading_app': 'Loading {0}',
     },
 
     'scale': {
@@ -68,6 +70,25 @@ TRANSLATIONS = {
 
     'keg': {
         'title': 'Keg Filler',
+        'empty_platform': 'Empty the scale platform',
+        'select_title': 'Choose a keg',
+        'add': 'Add',
+        'calibration_step_1_title': 'Calibration (1/2)',
+        'calibration_step_1_message': 'Place on the platform:\n\nempty keg\n+\nspunding\n+\nconnected tube',
+        'calibration_in_progress': 'Calibration in progress\n...',
+        'calibration_step_2_title': 'Calibration 2/2',
+        'volume_hint': 'Turn to adjust',
+        'calibrated_title': 'Keg Calibrated',
+        'calibrated_message': 'Keg saved {0}: \n\nGo to settings to edit the name',
+        'existing_placeholder': '{0} selected',
+        'filling_title': 'filling {0}',
+        'filling_setup_message': '1) Put the keg on the scale\n2) Connect the spunding valve\n3) Connect the beer line',
+        'error_title': 'Keg Error',
+        'scale_not_found': 'Scale not found',
+        'relay_not_found': 'Relay not found',
+        'tare_error': 'Tare error',
+        'calibration_no_sample': 'No valid sample',
+        'save_error': 'Keg save error',
     },
 
     'settings': {
@@ -110,6 +131,14 @@ TRANSLATIONS = {
         'saved': 'Saved',
         'invalid_fields': 'Invalid fields',
         'save_reboot': 'Save and reboot',
+        'kegs': 'Kegs',
+        'no_kegs': 'No saved keg',
+        'keg_name': 'Keg name',
+        'keg_empty_weight': 'Empty weight',
+        'keg_max_volume': 'Max volume',
+        'keg_save': 'Save kegs',
+        'keg_delete': 'Delete',
+        'keg_save_error': 'Keg save error',
         'saved_rebooting': 'Saved. Rebooting...',
         'saved_manual_reboot': 'Saved. Please reboot manually.',
         'update_app': 'UPDATE APP',
@@ -121,6 +150,8 @@ TRANSLATIONS = {
         'fields': {
             'LANGUAGE': 'Language',
             'GRAIN_WEIGHT_TOLERANCE': 'Grain tolerance (g)',
+            'HOP_WEIGHT_TOLERANCE': 'Hop tolerance (g)',
+            'KEG_SPUNDING_VALVE_INERTIA_ML': 'Spunding valve inertia (ml)',
             'DEBUG': 'Debug mode',
             'WIFI_SSID': 'Wi-Fi SSID',
             'WIFI_PASSWORD': 'Wi-Fi password',

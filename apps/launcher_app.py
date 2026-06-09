@@ -49,21 +49,23 @@ class LauncherApp(BaseApp):
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
-        self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
+        self._screen = None
         self._rotary = self.hardware.rotary
         self._items = LAUNCHER_ITEMS
         self._selected = 0
 
     def on_exit(self):
         super().on_exit()
+        self._screen = None
 
     def on_enter(self):
         super().on_enter()
         self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
         try:
-            import gc, config
+            import gc
+            import config
+
             if getattr(config, "DEBUG", False):
-                gc.collect()
                 print("[MEM] launcher.on_enter free={}".format(gc.mem_free()))
         except Exception:
             pass
