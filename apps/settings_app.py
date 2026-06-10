@@ -43,17 +43,13 @@ class SettingsApp(BaseApp):
 
             gc.collect()
             gc.collect()
-            if self._screen is None:
-                self._screen = self.screen_manager.get(screen_ids.SETTINGS)
-            self.screen_manager.show(screen_ids.SETTINGS)
-            self._flush_lvgl()
             if self._portal is None:
                 if self._debug:
                     try:
                         print("[MEM] settings.pre_import free={}".format(gc.mem_free()))
                     except Exception:
                         pass
-                from webportal.setup_portal import SetupPortalService
+                from webportal.setup_portal_service import SetupPortalService
                 debug_portal = False
                 try:
                     import config
@@ -62,7 +58,12 @@ class SettingsApp(BaseApp):
                 except Exception:
                     pass
 
-                self._portal = SetupPortalService(wifi_device=self.hardware.wifi, debug=debug_portal, i18n=self.i18n)
+                self._portal = SetupPortalService(
+                    wifi_device=self.hardware.wifi,
+                    debug=debug_portal,
+                    i18n=self.i18n,
+                    before_client=self._release_screen_for_portal_client,
+                )
                 gc.collect()
                 if self._debug:
                     try:
@@ -76,6 +77,8 @@ class SettingsApp(BaseApp):
                     print("[settings] portal mode={} url={}".format(info.get("mode", "?"), info.get("url", "")))
                 except Exception:
                     pass
+            if self._screen is None:
+                self._screen = self.screen_manager.get(screen_ids.SETTINGS)
             mode = info.get("mode", "sta")
             if mode == "ap":
                 status = self.t("settings.portal_connect_ap")
@@ -114,6 +117,23 @@ class SettingsApp(BaseApp):
             import gc
 
             gc.collect()
+        except Exception:
+            pass
+
+    def _release_screen_for_portal_client(self):
+        self._screen = None
+        cleanup = getattr(self.screen_manager, "memory_cleanup", None)
+        if cleanup:
+            try:
+                cleanup(
+                    loading_message=self.t("settings.portal_in_progress"),
+                    loading_color=0x7E57C2,
+                )
+                return
+            except Exception:
+                pass
+        try:
+            self.screen_manager.release(screen_ids.SETTINGS)
         except Exception:
             pass
 

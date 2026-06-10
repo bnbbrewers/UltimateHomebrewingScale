@@ -98,6 +98,7 @@ TRANSLATIONS = {
         'about': 'A propos',
         'portal_connect_sta': 'Scanner le QR pour ouvrir la config',
         'portal_connect_ap': 'Connectez le tel au Wi-Fi du Dial puis scannez',
+        'portal_in_progress': 'Parametrage en cours...',
         'portal_error': 'Erreur portail, verifier le reseau',
     },
 
