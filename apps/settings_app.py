@@ -103,14 +103,10 @@ class SettingsApp(BaseApp):
     def on_exit(self):
         super().on_exit()
         portal = self._portal
+        self._portal = None
         if portal:
             try:
-                suspend = getattr(portal, "suspend", None)
-                if suspend:
-                    suspend()
-                else:
-                    portal.stop()
-                    self._portal = None
+                portal.stop()
             except Exception as e:
                 self._print_exception("[settings] portal stop error:", e)
         self._screen = None
