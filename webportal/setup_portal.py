@@ -3,9 +3,6 @@
 import socket
 import time
 
-from storage import config_registry, keg_registry
-from .config_keys import EDITABLE_KEYS, EDITABLE_ORDER
-
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 
@@ -13,6 +10,30 @@ SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
 SETUP_REQUIRE_TOKEN = False
 SETUP_TOKEN = ""
+
+
+class _LazyModule:
+    def __init__(self, module_name):
+        self._module_name = module_name
+        self._module = None
+
+    def _load(self):
+        if self._module is None:
+            self._module = __import__(self._module_name, None, None, ("*",))
+        return self._module
+
+    def __getattr__(self, name):
+        return getattr(self._load(), name)
+
+
+config_registry = _LazyModule("storage.config_registry")
+keg_registry = _LazyModule("storage.keg_registry")
+
+
+def _editable_schema():
+    from .config_keys import EDITABLE_KEYS, EDITABLE_ORDER
+
+    return EDITABLE_KEYS, EDITABLE_ORDER
 
 
 def _load_setup_cfg():
@@ -222,6 +243,7 @@ def _token_for_redirect(require_token, token):
 def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssid="", i18n=None, kegs=None):
     errors = errors or {}
     i18n = _portal_i18n(values, i18n=i18n)
+    editable_keys, editable_order = _editable_schema()
     p = []
     p.append("<!doctype html><html><head><meta charset='utf-8'>")
     p.append("<meta name='viewport' content='width=device-width,initial-scale=1'>")
@@ -237,8 +259,8 @@ def render_form_html(values, saved=False, errors=None, token="", mode="sta", ssi
     if token:
         p.append("<input type='hidden' name='k' value='{}'>".format(_html_escape(token)))
 
-    for key in EDITABLE_ORDER:
-        spec = EDITABLE_KEYS[key]
+    for key in editable_order:
+        spec = editable_keys[key]
         val = values.get(key, spec.get("default"))
         p.append("<p>{}<br>".format(_html_escape(i18n.t("portal.fields.{}".format(key)))))
         typ = spec.get("type")
@@ -644,8 +666,9 @@ class SetupPortalService:
                 return
 
             updates = {}
-            for key in EDITABLE_ORDER:
-                spec = EDITABLE_KEYS[key]
+            editable_keys, editable_order = _editable_schema()
+            for key in editable_order:
+                spec = editable_keys[key]
                 if spec.get("type") == "bool":
                     updates[key] = key in form and str(form.get(key, "")).lower() in ("1", "true", "on", "yes")
                 elif key in form:
