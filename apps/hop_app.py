@@ -323,6 +323,9 @@ class HopAssistantApp(BaseApp):
         self._batches = self._api.get_batches() if self._api else []
         names = [b.name for b in self._batches]
         self._batch_idx = 0
+        if len(self._batches) == 1:
+            self._load_hops()
+            return
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
