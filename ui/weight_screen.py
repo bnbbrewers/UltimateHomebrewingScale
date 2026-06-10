@@ -33,7 +33,7 @@ class WeightScreen:
         self._i18n = i18n
         self.page = m5ui.M5Page(bg_c=0x000000)
         mem_snapshot("weight.after_page", enabled=_DEBUG, collect=True)
-        self._weight_font = self._load_custom_weight_font()
+        self._weight_font = None
         mem_snapshot("weight.after_font", enabled=_DEBUG, collect=True)
 
         self._mode = self.MODE_SIMPLE
@@ -66,7 +66,7 @@ class WeightScreen:
             text_c=0xFFFFFF,
             bg_c=0x000000,
             bg_opa=0,
-            font=self._weight_font,
+            font=self._fallback_weight_font(),
             parent=self.page,
         )
         self._value.set_width(240)
@@ -128,6 +128,38 @@ class WeightScreen:
             msg = "Weight font load failed ({}): {}".format(CUSTOM_WEIGHT_FONT_PATH, e)
             raise RuntimeError(msg)
 
+    @staticmethod
+    def _fallback_weight_font():
+        try:
+            return getattr(lv, "font_montserrat_24", lv.font_montserrat_16)
+        except Exception:
+            return None
+
+    def _ensure_weight_font(self):
+        if self._weight_font is not None:
+            return self._weight_font
+        self._weight_font = self._load_custom_weight_font()
+        try:
+            self._value.set_style_text_font(self._weight_font, 0)
+        except Exception:
+            try:
+                self._value.set_font(self._weight_font)
+            except Exception:
+                pass
+        return self._weight_font
+
+    def release_resources(self):
+        font = self._weight_font
+        self._weight_font = None
+        if font is None:
+            return
+        try:
+            destroy = getattr(lv, "binfont_destroy", None)
+            if destroy:
+                destroy(font)
+        except Exception:
+            pass
+
     def root(self):
         return self.page
 
@@ -154,6 +186,7 @@ class WeightScreen:
         self._last_progress_pct = -1
         self._last_overloaded = None
         self._last_indicator_overloaded = None
+        self._ensure_weight_font()
         self.set_title(title)
         self.set_title_color(title_bg_color)
         self.set_ok_visible(False)

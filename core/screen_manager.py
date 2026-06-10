@@ -146,6 +146,15 @@ class ScreenManager:
         self._active_id = screen_id
         screen.root().screen_load()
 
+    @staticmethod
+    def _release_screen_resources(screen):
+        release_resources = getattr(screen, "release_resources", None)
+        if release_resources:
+            try:
+                release_resources()
+            except Exception:
+                pass
+
     def release(self, screen_id):
         screen = self._screens.pop(screen_id, None)
         if screen is None:
@@ -162,6 +171,7 @@ class ScreenManager:
                 self._screens[screen_id] = screen
                 return
         try:
+            self._release_screen_resources(screen)
             screen.root().delete()
         except Exception:
             pass
@@ -181,6 +191,7 @@ class ScreenManager:
             if screen is None:
                 continue
             try:
+                self._release_screen_resources(screen)
                 screen.root().delete()
             except Exception:
                 pass
