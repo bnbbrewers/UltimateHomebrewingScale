@@ -14,10 +14,10 @@ BREWFATHER_API_KEY = "your_api_key_here"
 LANGUAGE = "en"
 
 # Grain weighing tolerance in grams
-GRAIN_WEIGHT_TOLERANCE = 10
+GRAIN_WEIGHT_TOLERANCE = 20
 
 # Hop weighing tolerance in grams
-HOP_WEIGHT_TOLERANCE = 1
+HOP_WEIGHT_TOLERANCE = 5
 
 # Spunding valve inertia compensation for keg filling, in milliliters
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
