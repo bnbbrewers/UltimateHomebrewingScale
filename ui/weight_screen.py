@@ -6,7 +6,7 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
-from .ui_helper import UIHelper
+from .ui_helper import ACTION_BUTTON_Y, UIHelper
 
 try:
     import config
@@ -21,6 +21,10 @@ else:
         return None
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
+PERCENT_TEXT_H = 16
+PERCENT_BUTTON_GAP = 2
+PERCENT_LABEL_Y = ACTION_BUTTON_Y - PERCENT_TEXT_H - PERCENT_BUTTON_GAP
+PROGRESS_BAR_Y = PERCENT_LABEL_Y - 26
 
 
 class WeightScreen:
@@ -74,7 +78,7 @@ class WeightScreen:
         mem_snapshot("weight.after_value_label", enabled=_DEBUG, collect=True)
 
         self._progress = m5ui.M5Bar(
-            x=30, y=162, w=180, h=20,
+            x=30, y=PROGRESS_BAR_Y, w=180, h=20,
             min_value=0, max_value=100, value=0,
             bg_c=0x3A3A3A, color=0x4CAF50,
             parent=self.page,
@@ -85,7 +89,7 @@ class WeightScreen:
         self._percent = m5ui.M5Label(
             "",
             x=0,
-            y=188,
+            y=PERCENT_LABEL_Y,
             text_c=0x888888,
             bg_c=0x000000,
             bg_opa=0,
