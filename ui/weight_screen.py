@@ -21,6 +21,7 @@ else:
         return None
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
+ZERO_WEIGHT_DISPLAY_THRESHOLD_G = 1
 PERCENT_TEXT_H = 16
 PERCENT_BUTTON_GAP = 2
 PERCENT_LABEL_Y = ACTION_BUTTON_Y - PERCENT_TEXT_H - PERCENT_BUTTON_GAP
@@ -288,7 +289,7 @@ class WeightScreen:
         if weight is None:
             return "---"
         abs_w = abs(weight)
-        if abs_w <= 1:
+        if abs_w <= ZERO_WEIGHT_DISPLAY_THRESHOLD_G:
             return "0 g"
         if abs_w >= 1000:
             if weight < 0:
@@ -321,6 +322,8 @@ class WeightScreen:
                 progress = int((weight * 100) / self._target)
             else:
                 progress = 0
+            if abs(remaining) <= ZERO_WEIGHT_DISPLAY_THRESHOLD_G:
+                progress = 100
             if progress < 0:
                 progress = 0
             if progress > 100:
