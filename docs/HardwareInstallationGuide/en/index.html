@@ -499,6 +499,28 @@
         color: var(--ink);
       }
 
+      .wiring-diagram {
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f7f8f7;
+      }
+
+      .wiring-diagram img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .wiring-diagram figcaption {
+        padding: 12px 14px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        border-top: 1px solid var(--line);
+        background: var(--paper-strong);
+      }
+
       .check strong {
         display: block;
         margin-bottom: 4px;
@@ -929,6 +951,36 @@
                 Place the platform on a flat and stable surface. Route the RJ9 cable into the enclosure through
                 a cable gland, then connect it to the I2C weight reader.
               </p>
+              <figure class="wiring-diagram">
+                <img src="../img/unit-weight-rj9-wiring.svg" alt="Unit Weight to RJ9 cable wiring diagram: A+ green, A- red, E- black, E+ white">
+                <figcaption>RJ9 scale cable wiring on the Unit Weight I2C terminal block.</figcaption>
+              </figure>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Unit Weight Terminal</th>
+                    <th>RJ9 Cable Wire</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>A+</code></td>
+                    <td>Green</td>
+                  </tr>
+                  <tr>
+                    <td><code>A-</code></td>
+                    <td>Red</td>
+                  </tr>
+                  <tr>
+                    <td><code>E-</code></td>
+                    <td>Black</td>
+                  </tr>
+                  <tr>
+                    <td><code>E+</code></td>
+                    <td>White</td>
+                  </tr>
+                </tbody>
+              </table>
               <div class="callout info">
                 <strong>Simple integration:</strong> keep the RJ9 connector when possible. It lets you replace
                 or disconnect the platform without redesigning the mechanical assembly.
