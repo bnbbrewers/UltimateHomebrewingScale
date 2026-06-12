@@ -12,7 +12,7 @@ from .base_app import BaseApp
 from ui import screen_ids
 
 
-CALIBRATION_POINTS = [0, 500, 5000, 20000]
+CALIBRATION_POINTS = [0, 100, 500, 5000, 25000]
 CALIBRATION_DURATION = 30
 CALIBRATION_FILE = "scale_calibration.json"
 SAMPLE_INTERVAL_MS = 100

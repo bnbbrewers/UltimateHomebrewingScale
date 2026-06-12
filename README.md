@@ -104,7 +104,7 @@ Scale defaults in code:
 - SCL pin: `15`
 - SDA pin: `13`
 - Calibration file: `scale_calibration.json`
-- Calibration points used by the wizard: `0 g`, `500 g`, `5000 g`, `20000 g`
+- Calibration points used by the wizard: `0 g`, `100 g`, `500 g`, `5000 g`, `25000 g`
 
 ## Software Architecture
 

@@ -23,8 +23,8 @@ SDA_PIN = 13
 
 # Moving average for stable reading
 MOVING_AVERAGE_SIZE = 10
-FAST_MOVING_AVERAGE_SIZE = 3
-FAST_CHANGE_THRESHOLD_G = 5.0
+FAST_MOVING_AVERAGE_SIZE = 2
+FAST_CHANGE_THRESHOLD_G = 3.0
 WEIGHT_HISTORY_SIZE = 10
 
 # Minimum interval between actual hardware reads (ms)
