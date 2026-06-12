@@ -656,8 +656,12 @@
             <p>Use it after flashing to join the Dial setup Wi-Fi and scan the QR code.</p>
           </article>
           <article class="tile">
+            <h3>Brewfather Access</h3>
+            <p>Have your Brewfather API user ID and API key available on your phone so you can paste them into the portal.</p>
+          </article>
+          <article class="tile">
             <h3>Calibration Weights</h3>
-            <p>The wizard defaults to 0 g, 500 g, 5000 g, and 20000 g points.</p>
+            <p>The wizard defaults to 0 g, 100 g, 500 g, 5000 g, and 25000 g points.</p>
           </article>
         </div>
       </section>
@@ -745,6 +749,11 @@
                 Stay connected to that Wi-Fi even if the phone warns that it has no internet access.
                 The phone only needs to reach the Dial locally.
               </p>
+              <div class="callout warning">
+                <strong>Important:</strong> If the setup page does not open, temporarily turn off mobile data/5G.
+                Some phones prefer mobile data when the <code>UHS-Setup</code> Wi-Fi has no internet access, which
+                prevents the browser from reaching the Dial locally.
+              </div>
             </div>
           </article>
 
@@ -908,7 +917,7 @@
           </div>
           <div class="check">
             <strong>Phone cannot open the QR page</strong>
-            <span>Reconnect to <code>UHS-Setup</code> and manually open <code>http://192.168.4.1:8080/</code>.</span>
+            <span>Reconnect to <code>UHS-Setup</code>, temporarily turn off mobile data/5G, then manually open <code>http://192.168.4.1:8080/</code>.</span>
           </div>
           <div class="check">
             <strong>Wi-Fi does not connect after saving</strong>

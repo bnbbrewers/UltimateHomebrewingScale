@@ -499,6 +499,28 @@
         color: var(--ink);
       }
 
+      .wiring-diagram {
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f7f8f7;
+      }
+
+      .wiring-diagram img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .wiring-diagram figcaption {
+        padding: 12px 14px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        border-top: 1px solid var(--line);
+        background: var(--paper-strong);
+      }
+
       .check strong {
         display: block;
         margin-bottom: 4px;
@@ -635,8 +657,8 @@
             </div>
           </div>
           <dl class="quick-list">
-            <dt>Charge cible</dt>
-            <dd>20 kg</dd>
+            <dt>Plage de calibration</dt>
+            <dd>25 kg</dd>
             <dt>Précision typique</dt>
             <dd>1 à 4 g après calibration</dd>
             <dt>Fonction optionnelle</dt>
@@ -929,6 +951,36 @@
                 Placez la plateforme sur une surface plane et stable. Faites passer le câble RJ9 dans le boîtier via
                 un presse-étoupe, puis connectez-le au lecteur de poids I2C.
               </p>
+              <figure class="wiring-diagram">
+                <img src="../img/unit-weight-rj9-wiring.svg" alt="Schéma de câblage Unit Weight vers câble RJ9 : A+ vert, A- rouge, E- noir, E+ blanc">
+                <figcaption>Câblage du câble RJ9 de la balance sur les borniers de l'Unit Weight I2C.</figcaption>
+              </figure>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Borne Unit Weight</th>
+                    <th>Fil du câble RJ9</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>A+</code></td>
+                    <td>Vert</td>
+                  </tr>
+                  <tr>
+                    <td><code>A-</code></td>
+                    <td>Rouge</td>
+                  </tr>
+                  <tr>
+                    <td><code>E-</code></td>
+                    <td>Noir</td>
+                  </tr>
+                  <tr>
+                    <td><code>E+</code></td>
+                    <td>Blanc</td>
+                  </tr>
+                </tbody>
+              </table>
               <div class="callout info">
                 <strong>Intégration simple :</strong> conservez le connecteur RJ9 quand c'est possible. Il permet de remplacer
                 ou de déconnecter la plateforme sans revoir l'assemblage mécanique.
