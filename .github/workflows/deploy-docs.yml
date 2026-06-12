@@ -1,0 +1,65 @@
+name: Deploy documentation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy-docs:
+    name: Deploy docs from main
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout main documentation
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Prepare GitHub Pages files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist/pages
+          mkdir -p dist/pages
+          cp -R docs/. dist/pages/
+
+      - name: Preserve latest web installer files
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_dir="dist/pages/SoftwareInstallationGuide/latest"
+          latest_base="https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest"
+          mkdir -p "$latest_dir"
+          for file in \
+            UHS-firmwareM5Dial.bin \
+            UHS-web-install-manifest.json \
+            UHS-firmwareM5Dial.sha256 \
+            UHS-build-manifest.json
+          do
+            curl --fail --location --retry 3 --retry-delay 2 \
+              "$latest_base/$file" \
+              --output "$latest_dir/$file"
+          done
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
