@@ -521,6 +521,7 @@
         background: var(--paper-strong);
       }
 
+
       .check strong {
         display: block;
         margin-bottom: 4px;
@@ -610,6 +611,7 @@
           border-bottom: 0;
           padding-bottom: 2px;
         }
+
       }
     </style>
   </head>
@@ -1051,9 +1053,47 @@
               </p>
               <ol>
                 <li>Fixez le relais dans le boîtier, à l'abri de toute entrée possible de liquide.</li>
-                  <li>Faites sortir la commande de vanne par son propre presse-étoupe.</li>
+                <li>Faites sortir la commande de vanne par son propre presse-étoupe.</li>
                 <li>Installez la vanne sur le circuit gaz associé à la spunding valve, pas sur la ligne de bière.</li>
               </ol>
+              <figure class="wiring-diagram">
+                <img src="../img/unit-relay-solenoid-wiring.svg" alt="Schéma de câblage Unit Relay vers vanne solénoïde 12 V : positif 12 V sur COM, NO vers le positif de la vanne, négatif de la vanne vers le négatif 12 V, NC inutilisé">
+                <figcaption>Câblage du relais pour alimenter la vanne uniquement quand le remplissage est actif.</figcaption>
+              </figure>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Borne ou connexion</th>
+                    <th>Rôle</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>Port B</code> / Grove</td>
+                    <td>Commande le module Unit Relay depuis le M5Stack Dial. C'est le signal de contrôle, pas le circuit de puissance de la vanne.</td>
+                  </tr>
+                  <tr>
+                    <td><code>COM</code></td>
+                    <td>Reçoit le positif de l'alimentation 12 V.</td>
+                  </tr>
+                  <tr>
+                    <td><code>NO</code></td>
+                    <td>Envoie le 12 V vers le positif de la vanne quand le relais est activé.</td>
+                  </tr>
+                  <tr>
+                    <td><code>NC</code></td>
+                    <td>À laisser inutilisé pour ce montage, afin que la vanne reste non alimentée relais au repos.</td>
+                  </tr>
+                  <tr>
+                    <td>Négatif vanne</td>
+                    <td>Retour direct vers le négatif de l'alimentation 12 V.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="callout info">
+                <strong>Principe de sécurité :</strong> la vanne normalement fermée doit être alimentée seulement
+                pendant le remplissage. Ne faites pas passer le courant 12 V de la vanne par le Dial ou par le câble Grove.
+              </div>
               <div class="callout warning">
                 <strong>Pression :</strong> la spunding valve reste l'organe de régulation de pression. La vanne
                 solénoïde apporte le contrôle automatique ; elle ne remplace pas le réglage de pression.
