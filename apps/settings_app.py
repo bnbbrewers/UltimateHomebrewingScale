@@ -2,6 +2,8 @@
 Settings app: QR-only entrypoint for smartphone setup portal.
 """
 
+import os
+
 from .base_app import BaseApp
 from ui import screen_ids
 
@@ -35,9 +37,44 @@ class SettingsApp(BaseApp):
         except Exception:
             pass
 
+    @staticmethod
+    def _file_exists(path):
+        try:
+            return os.path.exists(path)
+        except AttributeError:
+            try:
+                os.stat(path)
+                return True
+            except OSError:
+                return False
+
+    @staticmethod
+    def _copy_file(src, dst):
+        with open(src, "rb") as source:
+            with open(dst, "wb") as target:
+                while True:
+                    chunk = source.read(1024)
+                    if not chunk:
+                        break
+                    target.write(chunk)
+
+    @classmethod
+    def _ensure_config_file(cls, config_path="config.py", example_path="config.py.example"):
+        if cls._file_exists(config_path):
+            return False
+        if not cls._file_exists(example_path):
+            return False
+        cls._copy_file(example_path, config_path)
+        try:
+            print("[settings] config.py created from config.py.example")
+        except Exception:
+            pass
+        return True
+
     def on_enter(self):
         super().on_enter()
         self._tick_error_logged = False
+        self._ensure_config_file()
         try:
             import gc
 
@@ -62,7 +99,6 @@ class SettingsApp(BaseApp):
                     wifi_device=self.hardware.wifi,
                     debug=debug_portal,
                     i18n=self.i18n,
-                    before_client=self._release_screen_for_portal_client,
                 )
                 gc.collect()
                 if self._debug:
