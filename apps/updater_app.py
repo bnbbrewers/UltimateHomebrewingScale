@@ -3,7 +3,7 @@
 Hidden updater app.
 
 This app is intentionally not present in the launcher. It can be selected as an
-initial app by firmware/startup code when maintenance update mode is needed.
+initial app by firmware/startup code when an update has been requested.
 """
 
 from .base_app import BaseApp
