@@ -127,6 +127,13 @@ def _split_target(target):
 
 
 def _current_values():
+    try:
+        from storage import config_registry
+
+        return config_registry.load_current_values()
+    except Exception:
+        pass
+
     values = {}
     try:
         import config
