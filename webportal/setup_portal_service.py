@@ -8,6 +8,10 @@ import time
 
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
+AP_SETTLE_MS = 300
+RESPONSE_DRAIN_MS = 200
+SEND_CHUNK_SIZE = 256
+SEND_YIELD_MS = 5
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
@@ -27,6 +31,10 @@ _EDITABLE_FIELDS = (
     ("DEBUG", "Debug mode", "checkbox", ()),
     ("UPDATE_BRANCH", "Update branch", "text", ()),
 )
+
+
+class _SendTimeout(Exception):
+    pass
 
 
 def _load_setup_cfg():
@@ -62,6 +70,13 @@ def _ticks_diff(ticks1, ticks2):
     if hasattr(time, "ticks_diff"):
         return time.ticks_diff(ticks1, ticks2)
     return ticks1 - ticks2
+
+
+def _sleep_ms(ms):
+    if hasattr(time, "sleep_ms"):
+        time.sleep_ms(ms)
+    else:
+        time.sleep(ms / 1000.0)
 
 
 def _html_escape(text):
@@ -178,6 +193,7 @@ class SetupPortalService:
         self._ap_ip = ""
         self._url = ""
         self._ap = None
+        self._before_client_ran = False
 
         self._token = self._cfg.get("token", "")
         if self._cfg.get("require_token") and not self._token:
@@ -243,8 +259,15 @@ class SetupPortalService:
             return
         self._log("accept", addr)
         try:
-            self._run_before_client()
-            self._handle_client(client)
+            method, target, _headers, body = self._read_request(client)
+            if not method:
+                self._log("empty request")
+                return
+            if self._request_needs_screen_memory(method, target):
+                self._run_before_client()
+            self._handle_request(client, method, target, body)
+        except _SendTimeout as e:
+            self._log("client send failed:", e)
         except Exception as e:
             self._log("client error:", e)
             try:
@@ -253,6 +276,7 @@ class SetupPortalService:
                 pass
         try:
             client.close()
+            self._log("client closed")
         except Exception:
             pass
         try:
@@ -263,6 +287,9 @@ class SetupPortalService:
             pass
 
     def _run_before_client(self):
+        if self._before_client_ran:
+            return
+        self._before_client_ran = True
         callback = self._before_client
         if callback is None:
             return
@@ -277,6 +304,15 @@ class SetupPortalService:
             gc.collect()
         except Exception:
             pass
+
+    @staticmethod
+    def _request_needs_screen_memory(method, target):
+        path, query = _split_target(target)
+        if query.get("nocleanup") == "1":
+            return False
+        if path in ("/health", "/diag", "/favicon.ico"):
+            return False
+        return True
 
     def _ensure_network(self):
         self._cfg = _load_setup_cfg()
@@ -337,6 +373,7 @@ class SetupPortalService:
                     ap.config(essid=ssid)
                 except Exception:
                     pass
+            _sleep_ms(AP_SETTLE_MS)
             try:
                 return ap.ifconfig()[0]
             except Exception:
@@ -388,18 +425,24 @@ class SetupPortalService:
         except Exception:
             pass
         data = b""
+        recv_count = 0
         while b"\r\n\r\n" not in data and len(data) < 4096:
             try:
                 chunk = client.recv(1024)
-            except Exception:
+            except Exception as e:
+                self._log("recv header error", type(e).__name__, e)
                 break
             if not chunk:
+                self._log("recv header eof bytes", len(data), "reads", recv_count)
                 break
+            recv_count += 1
+            self._log("recv header chunk", len(chunk), "total", len(data) + len(chunk))
             data += chunk
         head, sep, tail = data.partition(b"\r\n\r\n")
         if not sep:
             head, sep, tail = data.partition(b"\n\n")
         if not sep:
+            self._log("request incomplete bytes", len(data))
             return "", "", {}, ""
         try:
             head_text = head.decode("utf-8")
@@ -410,12 +453,24 @@ class SetupPortalService:
         parts = (lines[0] if lines else "").split(" ")
         method = parts[0] if len(parts) > 0 else ""
         target = parts[1] if len(parts) > 1 else "/"
-        self._log("request", method, target)
         headers = {}
         for line in lines[1:]:
             if ":" in line:
                 k, v = line.split(":", 1)
                 headers[k.strip().lower()] = v.strip()
+        self._log(
+            "request",
+            method,
+            target,
+            "head",
+            len(head),
+            "tail",
+            len(tail),
+            "ua",
+            headers.get("user-agent", "")[:40],
+            "conn",
+            headers.get("connection", ""),
+        )
         body = tail
         content_length = 0
         try:
@@ -425,11 +480,14 @@ class SetupPortalService:
         while len(body) < content_length and len(body) < 4096:
             try:
                 chunk = client.recv(min(512, content_length - len(body)))
-            except Exception:
+            except Exception as e:
+                self._log("recv body error", type(e).__name__, e)
                 break
             if not chunk:
+                self._log("recv body eof bytes", len(body), "expected", content_length)
                 break
             body += chunk
+            self._log("recv body chunk", len(chunk), "total", len(body), "expected", content_length)
         try:
             body_text = body.decode("utf-8")
         except Exception:
@@ -467,10 +525,12 @@ class SetupPortalService:
         lines.append("")
         lines.append("")
         head = "\r\n".join(lines).encode("utf-8")
-        self._log("response", status_code, "bytes", len(payload))
+        self._log("response", status_code, "head", len(head), "body", len(payload))
         self._send_all(client, head)
         self._send_all(client, payload)
         self._log("response sent", status_code)
+        self._log("response drain", RESPONSE_DRAIN_MS)
+        _sleep_ms(RESPONSE_DRAIN_MS)
 
     def _send_all(self, client, data):
         if not data:
@@ -481,27 +541,77 @@ class SetupPortalService:
         while total < size:
             sent = 0
             try:
-                sent = client.send(data[total : total + 512])
-            except Exception:
-                sent = 0
+                next_len = min(SEND_CHUNK_SIZE, size - total)
+                self._log("send attempt", next_len, "offset", total, "size", size)
+                sent = client.send(data[total : total + next_len])
+            except Exception as e:
+                self._log("send error", type(e).__name__, e, "total", total, "size", size)
+                raise _SendTimeout("send error total={} size={}".format(total, size))
             if not sent:
                 if _ticks_diff(deadline, _ticks_ms()) <= 0:
-                    raise OSError("send timeout")
-                time.sleep_ms(10)
+                    raise _SendTimeout("send timeout total={} size={}".format(total, size))
+                _sleep_ms(10)
                 continue
             total += sent
+            self._log("send chunk", sent, "total", total, "size", size)
+            _sleep_ms(SEND_YIELD_MS)
         if total < size:
             raise OSError("short send {}<{}".format(total, size))
 
-    def _handle_client(self, client):
-        method, target, _headers, body = self._read_request(client)
-        if not method:
-            self._log("empty request")
-            return
+    def _handle_request(self, client, method, target, body):
         path, query = _split_target(target)
 
         if path == "/health":
             self._send(client, 200, "application/json", '{"ok":true}')
+            return
+
+        if method == "GET" and path == "/diag":
+            size = 0
+            try:
+                size = int(query.get("bytes", "0") or "0")
+            except Exception:
+                size = 0
+            if size > 0:
+                if size > 4096:
+                    size = 4096
+                self._send(client, 200, "text/plain; charset=utf-8", "D" * size)
+                return
+            html_size = 0
+            try:
+                html_size = int(query.get("html", "0") or "0")
+            except Exception:
+                html_size = 0
+            if html_size > 0:
+                if html_size > 4096:
+                    html_size = 4096
+                prefix = "<!doctype html><html><body><pre>"
+                suffix = "</pre></body></html>"
+                fill_len = max(0, html_size - len(prefix) - len(suffix))
+                self._send(
+                    client,
+                    200,
+                    "text/html; charset=utf-8",
+                    prefix + ("H" * fill_len) + suffix,
+                )
+                return
+            if query.get("formtext") == "1":
+                self._send(
+                    client,
+                    200,
+                    "text/plain; charset=utf-8",
+                    render_minimal_form_html(_current_values()),
+                )
+                return
+            self._send(
+                client,
+                200,
+                "text/html; charset=utf-8",
+                "<!doctype html><html><body>UHS diag OK</body></html>",
+            )
+            return
+
+        if method == "GET" and path == "/favicon.ico":
+            self._send(client, 404, body="")
             return
 
         if method == "GET" and path == "/":

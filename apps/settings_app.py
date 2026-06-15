@@ -99,7 +99,6 @@ class SettingsApp(BaseApp):
                     wifi_device=self.hardware.wifi,
                     debug=debug_portal,
                     i18n=self.i18n,
-                    before_client=self._release_screen_for_portal_client,
                 )
                 gc.collect()
                 if self._debug:
