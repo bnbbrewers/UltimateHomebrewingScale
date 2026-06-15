@@ -239,17 +239,15 @@ def load_current_values(config_path=None):
         if key not in values:
             values[key] = spec.get("default")
 
-    if values.get("WIFI_SSID") or "":
-        _migrate_config_wifi_to_nvs(path, values)
-        return values
-
     # Source of truth for Wi-Fi credentials is NVS.
-    # If config.py still carries Wi-Fi credentials, the migration branch above
-    # keeps them authoritative until they are safely written to NVS.
     nvs_ssid, nvs_password = _read_wifi_from_nvs()
     if nvs_ssid:
         values["WIFI_SSID"] = nvs_ssid
         values["WIFI_PASSWORD"] = nvs_password
+        return values
+
+    if values.get("WIFI_SSID") or "":
+        _migrate_config_wifi_to_nvs(path, values)
 
     return values
 
