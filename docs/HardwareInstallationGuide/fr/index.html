@@ -340,6 +340,24 @@
         gap: 14px;
       }
 
+      .parts-group-title {
+        grid-column: 1 / -1;
+        margin-top: 12px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .parts-group-title h3 {
+        margin: 0;
+        font-size: 1.08rem;
+      }
+
+      .parts-group-title p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
       .tile,
       .part-card,
       .step,
@@ -627,8 +645,7 @@
           <p class="eyebrow">Assemblage matériel</p>
           <h1 id="page-title">Guide d'installation matérielle Ultimate Homebrewing Scale</h1>
           <p class="hero-copy">
-            Choisissez les pièces, préparez le boîtier et assemblez la balance de brassage connectée autour du
-            M5Stack Dial, de la plateforme de pesée VEVOR et du lecteur de poids I2C.
+            Liste des pièces et schémas de cablage
           </p>
           <div class="hero-actions">
             <a class="button-link" href="#shopping-list">Voir la liste d'achat</a>
@@ -641,7 +658,7 @@
             <div class="diagram-row">
               <div class="diagram-box">M5Stack Dial<span>Écran, Wi-Fi, contrôle</span></div>
               <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">Unit Weight I2C<span>Conversion du poids</span></div>
+              <div class="diagram-box">Unit Weight I2C<span>Lecture du poids</span></div>
               <div class="diagram-arrow">-&gt;</div>
               <div class="diagram-box">Plateforme VEVOR<span>Capteurs via RJ9</span></div>
             </div>
@@ -676,7 +693,6 @@
         <a href="#shopping-list">Pièces</a>
         <a href="#assembly">Assemblage</a>
         <a href="#keg-filler">Keg filler</a>
-        <a href="#checks">Vérifications</a>
         <a href="#software">Logiciel</a>
       </div>
     </nav>
@@ -686,7 +702,7 @@
         <div class="section-head">
           <h2>Avant de commencer</h2>
           <p>
-            L'objectif est d'obtenir une balance propre, robuste, facile à essuyer, sans câble exposé pendant une journée de brassage.
+            L'objectif est d'obtenir une balance propre, robuste, sans câble exposé, adaptée aux environnements de brassage.
           </p>
         </div>
 
@@ -705,7 +721,7 @@
           </article>
           <article class="tile">
             <h3>Logiciel</h3>
-            <p>Apres assemblage, utilisez le guide logiciel pour flasher le firmware et calibrer la balance.</p>
+            <p>Après assemblage, utilisez le guide logiciel pour flasher le firmware et calibrer la balance.</p>
           </article>
         </div>
 
@@ -718,10 +734,6 @@
       <section id="shopping-list" class="section">
         <div class="section-head">
           <h2>Liste d'achat</h2>
-          <p>
-            Les liens d'achat ci-dessous conservent les liens affiliés du README du projet. Chaque carte affiche
-            une image produit locale stockée dans <code>img/</code>.
-          </p>
         </div>
 
         <div class="parts-grid">
@@ -736,7 +748,7 @@
                 et donne au brasseur une interface physique utilisable même avec les mains humides.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
               </ul>
             </div>
           </article>
@@ -752,11 +764,47 @@
                 câblage court et protégé mécaniquement dans le boîtier.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
-                <li><a href="https://s.click.aliexpress.com/e/_c3VIvQvL">Lien alternatif Unit Weight I2C</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3VIvQvL">Lien alternatif Unit Weight I2C</a></li>
               </ul>
             </div>
           </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/vevor-scale.jpg" alt="VEVOR scale photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Balance postale VEVOR</h3>
+              <p>
+                Compacte, 25 kg max, son connecteur RJ9 facilite l'intégration.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/rj9-cable.png" alt="Câble RJ9 photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>RJ9 Cable</h3>
+              <p>
+                Le câble RJ9 évite de câbler directement les capteurs de charge de la balance. Il permet de connecter
+                simplement la plateforme de pesage au lecteur de poids Unit Weight I2C.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2u5O1C5">Câble RJ9</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <div class="parts-group-title">
+            <h3>Spunding valve optionnelle</h3>
+            <p>Ajoutez ces pièces uniquement si vous utilisez le remplissage de keg.</p>
+          </div>
 
           <article class="part-card">
             <figure class="product-photo">
@@ -769,39 +817,7 @@
                 le signal de contrôle du circuit de puissance de la vanne.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/vevor-scale.jpg" alt="VEVOR scale photo produit depuis AliExpress">
-            </figure>
-            <div>
-              <h3>VEVOR Scale</h3>
-              <p>
-                La plateforme de pesée postale VEVOR est robuste, abordable et adaptée aux récipients lourds de brassage.
-                Son connecteur RJ9 facilite l'intégration et permet de remplacer la plateforme.
-              </p>
-              <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/rj9-cable.png" alt="Câble RJ9 photo produit depuis AliExpress">
-            </figure>
-            <div>
-              <h3>RJ9 Cable</h3>
-              <p>
-                Le câble RJ9 rend la connexion de la plateforme démontable et évite de câbler directement les capteurs
-                de charge dans le boîtier.
-              </p>
-              <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c2u5O1C5">Câble RJ9</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
               </ul>
             </div>
           </article>
@@ -817,7 +833,7 @@
                 mécanique de pression pendant que la balance contrôle l'arrêt du remplissage au poids.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
               </ul>
             </div>
           </article>
@@ -833,7 +849,7 @@
                 de perte d'alimentation, le passage du gaz se ferme.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
               </ul>
             </div>
           </article>
@@ -845,14 +861,17 @@
             <div>
               <h3>1/4 Adapter</h3>
               <p>
-                L'adaptateur aide à intégrer la vanne solénoïde et la spunding valve dans le montage côté gaz utilisé
-                par la fonction de remplissage de keg.
+                Permet de relier la spunding valve au solénoïde.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/4 Adapter</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/4 Adapter</a></li>
               </ul>
             </div>
           </article>
+
+          <div class="parts-group-title">
+            <h3>Boîtier et câblage</h3>
+          </div>
 
           <article class="part-card">
             <figure class="product-photo">
@@ -861,11 +880,10 @@
             <div>
               <h3>Boîtier ABS étanche</h3>
               <p>
-                Le boîtier regroupe l'électronique, protège les connexions et ne laisse sortir que les câbles utiles :
-                plateforme de pesée, alimentation et sortie de vanne optionnelle.
+                Le boîtier regroupe l'électronique, protège les connexions et ne laisse sortir que les câbles utiles.
               </p>
               <ul>
-                  <li><a href="https://s.click.aliexpress.com/e/_c2w8dSkf">Boîtier ABS étanche (REF : F200-120-75)</a></li>
+                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2w8dSkf">Boîtier ABS étanche (REF : F200-120-75)</a></li>
               </ul>
             </div>
           </article>
@@ -877,11 +895,11 @@
             <div>
               <h3>Presse-étoupe PG7</h3>
               <p>
-                Les presse-étoupes assurent le maintien mécanique des câbles et aident à éloigner les projections
-                de l'électronique dans le boîtier.
+                Le presse-étoupe assure le maintien mécanique du câble RJ9 et aide à éloigner les projections de
+                l'électronique dans le boîtier.
               </p>
               <ul>
-                  <li><a href="https://s.click.aliexpress.com/e/_c4UINtHd">Presse-étoupe (REF : PG7 blanc)</a></li>
+                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c4UINtHd">Presse-étoupe (REF : PG7 blanc)</a></li>
               </ul>
             </div>
           </article>
@@ -897,7 +915,7 @@
                 maintenance ou le transport.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
               </ul>
             </div>
           </article>
@@ -913,7 +931,7 @@
                 par l'option de remplissage de keg.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c353g2MJ">Alimentation (REF : prise EU, 12 V 3 A)</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c353g2MJ">Alimentation (REF : prise EU, 12 V 3 A)</a></li>
               </ul>
             </div>
           </article>
@@ -923,9 +941,6 @@
       <section id="assembly" class="section">
         <div class="section-head">
           <h2>Assemblage matériel</h2>
-          <p>
-            Montez d'abord la partie pesée, puis ajoutez la commande de vanne seulement si vous prévoyez le remplissage de keg.
-          </p>
         </div>
 
         <div class="guide-grid">
@@ -938,9 +953,10 @@
                 les sorties nécessaires : alimentation 12 V, câble RJ9 de la balance et sortie de vanne si le keg filler est installé.
               </p>
               <ol>
-                <li>Marquez tous les trous avant d'installer l'électronique.</li>
-                <li>Installez un presse-étoupe PG7 pour chaque câble qui sort du boîtier.</li>
-                <li>Laissez une petite boucle de service dans le boîtier pour que les connecteurs ne soient pas sous tension mécanique.</li>
+                <li>Percez l'ouverture du M5Stack Dial à 45 mm à l'aide d'une scie cloche.</li>
+                <li>Percez un trou à 13 mm pour le presse-étoupe PG7 qui fera passer le câble RJ9 relié au plateau de pesée VEVOR.</li>
+                <li>Percez un trou à 8 mm pour le jack d'alimentation, et un autre pour le jack de la spunding valve si nécessaire.</li>
+                <li>Insérez les Units à l'intérieur du boîtier et fixez-les avec du scotch double face.</li>
               </ol>
             </div>
           </article>
@@ -948,10 +964,10 @@
           <article class="step">
             <div class="step-number" aria-hidden="true">2</div>
             <div class="step-body">
-              <h3>Installer la plateforme VEVOR</h3>
+              <h3>Cablage du plateau de la balance</h3>
               <p>
-                Placez la plateforme sur une surface plane et stable. Faites passer le câble RJ9 dans le boîtier via
-                un presse-étoupe, puis connectez-le au lecteur de poids I2C.
+                Faites passer le câble RJ9 dans le boîtier via un presse-étoupe, puis connectez-le au lecteur de poids
+                Unit Weight I2C.
               </p>
               <figure class="wiring-diagram">
                 <img src="../img/unit-weight-rj9-wiring.svg" alt="Schéma de câblage Unit Weight vers câble RJ9 : A+ vert, A- rouge, E- noir, E+ blanc">
@@ -993,36 +1009,45 @@
           <article class="step">
             <div class="step-number" aria-hidden="true">3</div>
             <div class="step-body">
-              <h3>Connecter le lecteur de poids I2C au Dial</h3>
+              <h3>Connecter le Unit Weight I2C au Port A du Dial</h3>
               <p>
-                Le lecteur de poids convertit le signal des capteurs de charge en mesures pour le M5Stack Dial. Connectez
-                l'alimentation, la masse et l'I2C selon les marquages de vos modules.
+                Reliez le port A rouge du M5Stack Dial au connecteur Grove du Unit Weight I2C avec le câble HY2.0-4P.
+                Ce port fournit l'alimentation 5 V et le bus I2C nécessaire au lecteur de poids.
               </p>
               <table class="field-table">
                 <thead>
                   <tr>
-                    <th>Connexion</th>
-                    <th>Rôle</th>
+                    <th>Fil Grove</th>
+                    <th>Port A du M5Stack Dial</th>
+                    <th>Unit Weight I2C</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>VCC</code> / power</td>
-                    <td>Alimente le module lecteur de poids avec la tension attendue par cette carte.</td>
-                  </tr>
-                  <tr>
+                    <td>Noir</td>
                     <td><code>GND</code></td>
-                    <td>Masse commune entre le Dial, le lecteur de poids et l'alimentation.</td>
+                    <td><code>GND</code></td>
                   </tr>
                   <tr>
-                    <td><code>SDA</code> and <code>SCL</code></td>
-                    <td>Bus I2C entre le Dial et le lecteur de poids.</td>
+                    <td>Rouge</td>
+                    <td><code>5V</code></td>
+                    <td><code>5V</code></td>
+                  </tr>
+                  <tr>
+                    <td>Jaune</td>
+                    <td><code>G13</code> / <code>SDA</code></td>
+                    <td><code>SDA</code></td>
+                  </tr>
+                  <tr>
+                    <td>Blanc</td>
+                    <td><code>G15</code> / <code>SCL</code></td>
+                    <td><code>SCL</code></td>
                   </tr>
                 </tbody>
               </table>
               <div class="callout warning">
-                <strong>Avant la mise sous tension :</strong> vérifiez les marquages exacts sur vos cartes. Ne vous fiez pas
-                seulement aux couleurs des fils ; confirmez la polarité et la continuité au multimètre.
+                <strong>Avant la mise sous tension :</strong> utilisez le Port A rouge, pas le Port B. Vérifiez que le
+                connecteur est bien enfoncé et que le Unit Weight I2C répond sur l'adresse I2C <code>0x26</code>.
               </div>
             </div>
           </article>
@@ -1060,101 +1085,58 @@
                 <img src="../img/unit-relay-solenoid-wiring.svg" alt="Schéma de câblage Unit Relay vers vanne solénoïde 12 V : positif 12 V sur COM, NO vers le positif de la vanne, négatif de la vanne vers le négatif 12 V, NC inutilisé">
                 <figcaption>Câblage du relais pour alimenter la vanne uniquement quand le remplissage est actif.</figcaption>
               </figure>
-              <table class="field-table">
-                <thead>
-                  <tr>
-                    <th>Borne ou connexion</th>
-                    <th>Rôle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>Port B</code> / Grove</td>
-                    <td>Commande le module Unit Relay depuis le M5Stack Dial. C'est le signal de contrôle, pas le circuit de puissance de la vanne.</td>
-                  </tr>
-                  <tr>
-                    <td><code>COM</code></td>
-                    <td>Reçoit le positif de l'alimentation 12 V.</td>
-                  </tr>
-                  <tr>
-                    <td><code>NO</code></td>
-                    <td>Envoie le 12 V vers le positif de la vanne quand le relais est activé.</td>
-                  </tr>
-                  <tr>
-                    <td><code>NC</code></td>
-                    <td>À laisser inutilisé pour ce montage, afin que la vanne reste non alimentée relais au repos.</td>
-                  </tr>
-                  <tr>
-                    <td>Négatif vanne</td>
-                    <td>Retour direct vers le négatif de l'alimentation 12 V.</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="callout info">
-                <strong>Principe de sécurité :</strong> la vanne normalement fermée doit être alimentée seulement
-                pendant le remplissage. Ne faites pas passer le courant 12 V de la vanne par le Dial ou par le câble Grove.
-              </div>
-              <div class="callout warning">
-                <strong>Pression :</strong> la spunding valve reste l'organe de régulation de pression. La vanne
-                solénoïde apporte le contrôle automatique ; elle ne remplace pas le réglage de pression.
-              </div>
             </div>
           </article>
 
           <article class="step">
             <div class="step-number" aria-hidden="true">6</div>
             <div class="step-body">
-              <h3>Fermer Et Proteger Le Montage</h3>
+              <h3>Connecter le Unit Relay au Port B du Dial</h3>
               <p>
-                Une fois les connexions vérifiées hors charge, fixez les modules, serrez les presse-étoupes et fermez
-                le boîtier. Aucun conducteur nu ne doit être accessible pendant l'utilisation.
+                Reliez le port B noir du M5Stack Dial au connecteur Grove du Unit Relay avec le câble HY2.0-4P.
+                Ce port fournit l'alimentation 5 V et le signal de commande du relais.
               </p>
-              <ol>
-                <li>Vérifiez que le bouton du Dial tourne librement.</li>
-                <li>Assurez-vous que le câble de la balance ne touche pas et ne contraint pas la plateforme de pesée.</li>
-                <li>Étiquetez les connecteurs externes si plusieurs sorties se ressemblent.</li>
-              </ol>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Fil Grove</th>
+                    <th>Port B du M5Stack Dial</th>
+                    <th>Unit Relay</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Noir</td>
+                    <td><code>GND</code></td>
+                    <td><code>GND</code></td>
+                  </tr>
+                  <tr>
+                    <td>Rouge</td>
+                    <td><code>5V</code></td>
+                    <td><code>5V</code></td>
+                  </tr>
+                  <tr>
+                    <td>Jaune</td>
+                    <td><code>G2</code></td>
+                    <td><code>DIN</code></td>
+                  </tr>
+                  <tr>
+                    <td>Blanc</td>
+                    <td><code>G1</code></td>
+                    <td><code>NC</code></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="callout warning">
+                <strong>Avant la mise sous tension :</strong> utilisez le Port B noir pour le relais. Le Port A rouge
+                reste réservé au Unit Weight I2C.
+              </div>
             </div>
           </article>
         </div>
       </section>
 
-      <section id="checks" class="section">
-        <div class="section-head">
-          <h2>Vérifications avant la configuration logicielle</h2>
-          <p>
-            Ces contrôles évitent de chercher un problème logiciel quand la cause vient en réalité du montage matériel.
-          </p>
-        </div>
-
-        <div class="checklist">
-          <div class="check">
-            <strong>Plateforme libre</strong>
-            <span>La plateforme ne touche pas le boîtier, les câbles ou l'établi lorsqu'une charge est posée dessus.</span>
-          </div>
-          <div class="check">
-            <strong>Maintien des câbles</strong>
-            <span>Le câble RJ9, l'entrée d'alimentation et la sortie de vanne ne peuvent pas être arrachés par une traction légère.</span>
-          </div>
-          <div class="check">
-            <strong>Polarité vérifiée</strong>
-            <span>Le positif et le négatif de l'entrée 12 V sont vérifiés avant de connecter l'électronique.</span>
-          </div>
-          <div class="check">
-            <strong>Vanne fermée au repos</strong>
-            <span>Pour le remplissage de keg, la vanne solénoïde doit être normalement fermée lorsque le système n'est pas alimenté.</span>
-          </div>
-        </div>
-      </section>
-
       <section id="software" class="section">
-        <div class="section-head">
-          <h2>Suite : Installation Logicielle</h2>
-          <p>
-            Quand l'assemblage matériel est terminé, flashez le firmware et lancez l'assistant de calibration de la balance.
-          </p>
-        </div>
-
         <div class="callout">
           <strong>Étape suivante :</strong> ouvrez le
           <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>, flashez le M5Stack Dial,
@@ -1166,7 +1148,7 @@
 
     <footer class="footer">
       <div class="footer-inner">
-        <a class="footer-project" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
+        <a class="footer-project" target="_blank" rel="noopener noreferrer" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
           Projet Git : https://github.com/bnbbrewers/UltimateHomebrewingScale
         </a>
       </div>
