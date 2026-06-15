@@ -340,6 +340,24 @@
         gap: 14px;
       }
 
+      .parts-group-title {
+        grid-column: 1 / -1;
+        margin-top: 12px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .parts-group-title h3 {
+        margin: 0;
+        font-size: 1.08rem;
+      }
+
+      .parts-group-title p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
       .tile,
       .part-card,
       .step,
@@ -521,6 +539,7 @@
         background: var(--paper-strong);
       }
 
+
       .check strong {
         display: block;
         margin-bottom: 4px;
@@ -610,6 +629,7 @@
           border-bottom: 0;
           padding-bottom: 2px;
         }
+
       }
     </style>
   </head>
@@ -625,8 +645,7 @@
           <p class="eyebrow">Hardware assembly</p>
           <h1 id="page-title">Ultimate Homebrewing Scale Hardware Installation Guide</h1>
           <p class="hero-copy">
-            Source the parts, prepare the enclosure, and assemble the connected brewing scale around the
-            M5Stack Dial, the VEVOR weighing platform, and the I2C weight reader.
+            Parts list and wiring diagrams
           </p>
           <div class="hero-actions">
             <a class="button-link" href="#shopping-list">Open the shopping list</a>
@@ -639,7 +658,7 @@
             <div class="diagram-row">
               <div class="diagram-box">M5Stack Dial<span>Display, Wi-Fi, control</span></div>
               <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">Unit Weight I2C<span>Weight conversion</span></div>
+              <div class="diagram-box">Unit Weight I2C<span>Weight reading</span></div>
               <div class="diagram-arrow">-&gt;</div>
               <div class="diagram-box">VEVOR Platform<span>Load cells via RJ9</span></div>
             </div>
@@ -674,7 +693,6 @@
         <a href="#shopping-list">Parts</a>
         <a href="#assembly">Assembly</a>
         <a href="#keg-filler">Keg filler</a>
-        <a href="#checks">Checks</a>
         <a href="#software">Software</a>
       </div>
     </nav>
@@ -684,7 +702,7 @@
         <div class="section-head">
           <h2>Before You Start</h2>
           <p>
-            The goal is a clean, robust scale that is easy to wipe down, with no exposed wiring during a brew day.
+            The goal is a clean, robust scale with no exposed wiring, suited to brewing environments.
           </p>
         </div>
 
@@ -716,10 +734,6 @@
       <section id="shopping-list" class="section">
         <div class="section-head">
           <h2>Shopping List</h2>
-          <p>
-            The purchase links below preserve the affiliate links from the project README. Each card shows the
-            first product image extracted from its affiliate link and downloaded locally into <code>img/</code>.
-          </p>
         </div>
 
         <div class="parts-grid">
@@ -734,7 +748,7 @@
                 low and gives the brewer a physical interface that remains usable with wet hands.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
               </ul>
             </div>
           </article>
@@ -750,11 +764,47 @@
                 wiring short and mechanically protected inside the enclosure.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
-                <li><a href="https://s.click.aliexpress.com/e/_c3VIvQvL">Unit Weight I2C alternative link</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3VIvQvL">Unit Weight I2C alternative link</a></li>
               </ul>
             </div>
           </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/vevor-scale.jpg" alt="VEVOR scale product photo from AliExpress">
+            </figure>
+            <div>
+              <h3>VEVOR Postal Scale</h3>
+              <p>
+                Compact, 25 kg max, with an RJ9 connector that makes integration easier.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/rj9-cable.png" alt="RJ9 cable product photo from AliExpress">
+            </figure>
+            <div>
+              <h3>RJ9 Cable</h3>
+              <p>
+                The RJ9 cable avoids hard-wiring the scale load cells. It provides a simple connection between
+                the weighing platform and the Unit Weight I2C weight reader.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2u5O1C5">RJ9 cable</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <div class="parts-group-title">
+            <h3>Optional Spunding Valve</h3>
+            <p>Add these parts only if you use keg filling.</p>
+          </div>
 
           <article class="part-card">
             <figure class="product-photo">
@@ -767,39 +817,7 @@
                 control signal separate from the valve power path.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/vevor-scale.jpg" alt="VEVOR scale product photo from AliExpress">
-            </figure>
-            <div>
-              <h3>VEVOR Scale</h3>
-              <p>
-                The VEVOR postal scale platform is robust, affordable, and suitable for heavy brewing vessels.
-                Its RJ9 connector makes integration easier and keeps the platform replaceable.
-              </p>
-              <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/rj9-cable.png" alt="RJ9 cable product photo from AliExpress">
-            </figure>
-            <div>
-              <h3>RJ9 Cable</h3>
-              <p>
-                The RJ9 cable keeps the scale platform connection removable and avoids hard-wiring the load-cell
-                cable directly into the enclosure.
-              </p>
-              <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c2u5O1C5">RJ9 cable</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
               </ul>
             </div>
           </article>
@@ -815,7 +833,7 @@
                 regulator while the scale controls the filling stop by weight.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
               </ul>
             </div>
           </article>
@@ -831,7 +849,7 @@
                 lost, the gas path closes.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
               </ul>
             </div>
           </article>
@@ -843,14 +861,17 @@
             <div>
               <h3>1/4 Adapter</h3>
               <p>
-                The adapter helps integrate the solenoid valve and spunding hardware into the gas-side
-                assembly used by the keg-filler function.
+                Connects the spunding valve to the solenoid valve.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/4 Adapter</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/4 Adapter</a></li>
               </ul>
             </div>
           </article>
+
+          <div class="parts-group-title">
+            <h3>Enclosure and Wiring</h3>
+          </div>
 
           <article class="part-card">
             <figure class="product-photo">
@@ -859,11 +880,10 @@
             <div>
               <h3>Waterproof ABS Enclosure</h3>
               <p>
-                The enclosure gathers the electronics, protects the connections, and leaves only the useful
-                external cables: scale platform, power input, and optional valve output.
+                The enclosure gathers the electronics, protects the connections, and leaves only the useful cables exposed.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c2w8dSkf">Waterproof ABS enclosure (REF: F200-120-75)</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2w8dSkf">Waterproof ABS enclosure (REF: F200-120-75)</a></li>
               </ul>
             </div>
           </article>
@@ -875,11 +895,11 @@
             <div>
               <h3>PG7 Cable Gland</h3>
               <p>
-                Cable glands provide strain relief and help keep splashes away from the electronics inside
-                the enclosure.
+                The cable gland provides strain relief for the RJ9 cable and helps keep splashes away from the
+                electronics inside the enclosure.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c4UINtHd">Cable gland (REF: PG7 White)</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c4UINtHd">Cable gland (REF: PG7 White)</a></li>
               </ul>
             </div>
           </article>
@@ -895,7 +915,7 @@
                 transport.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
               </ul>
             </div>
           </article>
@@ -911,7 +931,7 @@
                 used by the keg-filler option.
               </p>
               <ul>
-                <li><a href="https://s.click.aliexpress.com/e/_c353g2MJ">Power supply (REF: EU plug, 12V 3A)</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c353g2MJ">Power supply (REF: EU plug, 12V 3A)</a></li>
               </ul>
             </div>
           </article>
@@ -921,9 +941,6 @@
       <section id="assembly" class="section">
         <div class="section-head">
           <h2>Hardware Assembly</h2>
-          <p>
-            Build the scale path first, then add the valve-control path only if you plan to use keg filling.
-          </p>
         </div>
 
         <div class="guide-grid">
@@ -936,9 +953,10 @@
                 required exits: 12V power, RJ9 scale cable, and valve output if the keg filler is installed.
               </p>
               <ol>
-                <li>Mark all holes before installing the electronics.</li>
-                <li>Install PG7 cable glands for every cable that leaves the enclosure.</li>
-                <li>Leave a small service loop inside the enclosure so connectors are not under tension.</li>
+                <li>Drill the M5Stack Dial opening to 45 mm using a hole saw.</li>
+                <li>Drill one 13 mm hole for the PG7 cable gland that carries the RJ9 cable connected to the VEVOR weighing platform.</li>
+                <li>Drill one 8 mm hole for the power jack, and another one for the spunding valve jack if needed.</li>
+                <li>Insert the Units inside the enclosure and secure them with double-sided tape.</li>
               </ol>
             </div>
           </article>
@@ -946,10 +964,10 @@
           <article class="step">
             <div class="step-number" aria-hidden="true">2</div>
             <div class="step-body">
-              <h3>Install The VEVOR Platform</h3>
+              <h3>Scale Platform Wiring</h3>
               <p>
-                Place the platform on a flat and stable surface. Route the RJ9 cable into the enclosure through
-                a cable gland, then connect it to the I2C weight reader.
+                Route the RJ9 cable into the enclosure through a cable gland, then connect it to the Unit Weight I2C
+                weight reader.
               </p>
               <figure class="wiring-diagram">
                 <img src="../img/unit-weight-rj9-wiring.svg" alt="Unit Weight to RJ9 cable wiring diagram: A+ green, A- red, E- black, E+ white">
@@ -991,36 +1009,45 @@
           <article class="step">
             <div class="step-number" aria-hidden="true">3</div>
             <div class="step-body">
-              <h3>Connect The I2C Weight Reader To The Dial</h3>
+              <h3>Connect The Unit Weight I2C To The Dial Port A</h3>
               <p>
-                The weight reader converts the load-cell signal into readings for the M5Stack Dial. Connect
-                power, ground, and I2C according to the labels on your actual modules.
+                Connect the red Port A on the M5Stack Dial to the Unit Weight I2C Grove connector with the HY2.0-4P
+                cable. This port provides the 5 V supply and the I2C bus required by the weight reader.
               </p>
               <table class="field-table">
                 <thead>
                   <tr>
-                    <th>Connection</th>
-                    <th>Purpose</th>
+                    <th>Grove Wire</th>
+                    <th>M5Stack Dial Port A</th>
+                    <th>Unit Weight I2C</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>VCC</code> / power</td>
-                    <td>Powers the weight-reader module with the voltage expected by that board.</td>
-                  </tr>
-                  <tr>
+                    <td>Black</td>
                     <td><code>GND</code></td>
-                    <td>Common ground between the Dial, the weight reader, and the power supply.</td>
+                    <td><code>GND</code></td>
                   </tr>
                   <tr>
-                    <td><code>SDA</code> and <code>SCL</code></td>
-                    <td>I2C bus between the Dial and the weight reader.</td>
+                    <td>Red</td>
+                    <td><code>5V</code></td>
+                    <td><code>5V</code></td>
+                  </tr>
+                  <tr>
+                    <td>Yellow</td>
+                    <td><code>G13</code> / <code>SDA</code></td>
+                    <td><code>SDA</code></td>
+                  </tr>
+                  <tr>
+                    <td>White</td>
+                    <td><code>G15</code> / <code>SCL</code></td>
+                    <td><code>SCL</code></td>
                   </tr>
                 </tbody>
               </table>
               <div class="callout warning">
-                <strong>Before power-up:</strong> check the exact markings on your boards. Do not trust wire
-                color alone; confirm polarity and continuity with a multimeter.
+                <strong>Before power-up:</strong> use the red Port A, not Port B. Check that the connector is fully
+                seated and that the Unit Weight I2C responds at I2C address <code>0x26</code>.
               </div>
             </div>
           </article>
@@ -1054,67 +1081,62 @@
                 <li>Route the valve output through its own cable gland.</li>
                 <li>Install the valve on the gas path associated with the spunding valve, not on the beer line.</li>
               </ol>
-              <div class="callout warning">
-                <strong>Pressure:</strong> the spunding valve remains the pressure-regulation device. The
-                solenoid valve provides automatic control; it does not replace pressure adjustment.
-              </div>
+              <figure class="wiring-diagram">
+                <img src="../img/unit-relay-solenoid-wiring.svg" alt="Unit Relay to 12V solenoid valve wiring diagram: 12V positive to COM, NO to valve positive, valve negative to 12V negative, NC unused">
+                <figcaption>Relay wiring that powers the valve only while filling is active.</figcaption>
+              </figure>
             </div>
           </article>
 
           <article class="step">
             <div class="step-number" aria-hidden="true">6</div>
             <div class="step-body">
-              <h3>Close And Protect The Assembly</h3>
+              <h3>Connect The Unit Relay To The Dial Port B</h3>
               <p>
-                Once the connections have been checked without load, secure the modules, tighten the cable
-                glands, and close the enclosure. No bare conductor should be reachable during use.
+                Connect the black Port B on the M5Stack Dial to the Unit Relay Grove connector with the HY2.0-4P
+                cable. This port provides the 5 V supply and the relay control signal.
               </p>
-              <ol>
-                <li>Check that the Dial knob rotates freely.</li>
-                <li>Make sure the scale cable does not touch or constrain the weighing platform.</li>
-                <li>Label external connectors if multiple outputs look similar.</li>
-              </ol>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Grove Wire</th>
+                    <th>M5Stack Dial Port B</th>
+                    <th>Unit Relay</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Black</td>
+                    <td><code>GND</code></td>
+                    <td><code>GND</code></td>
+                  </tr>
+                  <tr>
+                    <td>Red</td>
+                    <td><code>5V</code></td>
+                    <td><code>5V</code></td>
+                  </tr>
+                  <tr>
+                    <td>Yellow</td>
+                    <td><code>G2</code></td>
+                    <td><code>DIN</code></td>
+                  </tr>
+                  <tr>
+                    <td>White</td>
+                    <td><code>G1</code></td>
+                    <td><code>NC</code></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="callout warning">
+                <strong>Before power-up:</strong> use the black Port B for the relay. The red Port A remains
+                reserved for the Unit Weight I2C.
+              </div>
             </div>
           </article>
         </div>
       </section>
 
-      <section id="checks" class="section">
-        <div class="section-head">
-          <h2>Checks Before Software Setup</h2>
-          <p>
-            These checks prevent you from debugging in software what is really a hardware assembly issue.
-          </p>
-        </div>
-
-        <div class="checklist">
-          <div class="check">
-            <strong>Free platform</strong>
-            <span>The platform does not touch the enclosure, cables, or workbench when a load is placed on it.</span>
-          </div>
-          <div class="check">
-            <strong>Strain relief</strong>
-            <span>The RJ9 cable, power input, and valve output cannot be pulled out by a light tug.</span>
-          </div>
-          <div class="check">
-            <strong>Polarity checked</strong>
-            <span>Positive and negative on the 12V input are verified before connecting electronics.</span>
-          </div>
-          <div class="check">
-            <strong>Valve closed at rest</strong>
-            <span>For keg filling, the solenoid valve must be normally closed when the system is unpowered.</span>
-          </div>
-        </div>
-      </section>
-
       <section id="software" class="section">
-        <div class="section-head">
-          <h2>Next: Software Installation</h2>
-          <p>
-            When the hardware assembly is complete, flash the firmware and run the scale calibration wizard.
-          </p>
-        </div>
-
         <div class="callout">
           <strong>Next step:</strong> open the
           <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a>, flash the M5Stack Dial,
@@ -1126,7 +1148,7 @@
 
     <footer class="footer">
       <div class="footer-inner">
-        <a class="footer-project" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
+        <a class="footer-project" target="_blank" rel="noopener noreferrer" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
           Projet Git : https://github.com/bnbbrewers/UltimateHomebrewingScale
         </a>
       </div>

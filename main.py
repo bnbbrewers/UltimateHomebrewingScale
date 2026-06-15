@@ -22,29 +22,6 @@ def _file_exists(path):
             return False
 
 
-def _copy_file(src, dst):
-    with open(src, "rb") as source:
-        with open(dst, "wb") as target:
-            while True:
-                chunk = source.read(1024)
-                if not chunk:
-                    break
-                target.write(chunk)
-
-
-def _ensure_config_file():
-    if _file_exists("config.py"):
-        return False
-    if not _file_exists("config.py.example"):
-        return False
-
-    _copy_file("config.py.example", "config.py")
-    print("[main] config.py created from config.py.example")
-    return True
-
-
-_CONFIG_CREATED = _ensure_config_file()
-
 try:
     import config
     DEBUG = getattr(config, "DEBUG", False)
@@ -82,40 +59,20 @@ def _update_requested():
         return False
 
 
+def _startup_config_ready():
+    if not _file_exists("config.py"):
+        return False
+    try:
+        from storage import config_registry
+
+        return config_registry.wifi_credentials_ready()
+    except Exception:
+        return False
+
+
 def request_stop():
     global _RUNNING
     _RUNNING = False
-
-
-def _maintenance_mode_requested(window_ms=2200, required_pressed_ms=500):
-    """
-    Enter maintenance mode when BtnA is held during early boot.
-    Uses a detection window + accumulated pressed time to be resilient to
-    bounce / brief missed reads on embedded hardware.
-    """
-    start = time.ticks_ms()
-    pressed_acc = 0
-    step_ms = 40
-
-    while time.ticks_diff(time.ticks_ms(), start) < window_ms:
-        M5.update()
-        try:
-            pressed = bool(M5.BtnA.isPressed())
-        except Exception:
-            pressed = False
-
-        if pressed:
-            pressed_acc += step_ms
-            if pressed_acc >= required_pressed_ms:
-                return True
-        else:
-            # Decay instead of full reset: tolerates brief glitches.
-            if pressed_acc > 0:
-                pressed_acc -= step_ms // 2
-                if pressed_acc < 0:
-                    pressed_acc = 0
-        time.sleep_ms(step_ms)
-    return False
 
 
 def main():
@@ -130,13 +87,6 @@ def main():
     gc.collect()
     mem_snapshot("boot.start", enabled=DEBUG)
 
-    if _maintenance_mode_requested():
-        print("[main] Maintenance mode: app startup skipped (BtnA held).")
-        return
-    mem_snapshot("boot.after_maintenance", enabled=DEBUG, collect=True)
-
- 
-
     i18n_instance = _load_i18n()
     mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
     hardware = HardwareManager.get_instance()
@@ -147,9 +97,10 @@ def main():
     screen_manager = ScreenManager(i18n=i18n_instance)
     mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
     initial_app_id = None
-    if _update_requested():
+    startup_ready = _startup_config_ready()
+    if startup_ready and _update_requested():
         initial_app_id = "updater_app"
-    elif _CONFIG_CREATED:
+    elif not startup_ready:
         initial_app_id = "settings_app"
     app_manager = AppManager(
         screen_manager=screen_manager,
