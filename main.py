@@ -22,29 +22,6 @@ def _file_exists(path):
             return False
 
 
-def _copy_file(src, dst):
-    with open(src, "rb") as source:
-        with open(dst, "wb") as target:
-            while True:
-                chunk = source.read(1024)
-                if not chunk:
-                    break
-                target.write(chunk)
-
-
-def _ensure_config_file():
-    if _file_exists("config.py"):
-        return False
-    if not _file_exists("config.py.example"):
-        return False
-
-    _copy_file("config.py.example", "config.py")
-    print("[main] config.py created from config.py.example")
-    return True
-
-
-_CONFIG_CREATED = _ensure_config_file()
-
 try:
     import config
     DEBUG = getattr(config, "DEBUG", False)
@@ -82,6 +59,17 @@ def _update_requested():
         return False
 
 
+def _startup_config_ready():
+    if not _file_exists("config.py"):
+        return False
+    try:
+        from storage import config_registry
+
+        return config_registry.wifi_credentials_ready()
+    except Exception:
+        return False
+
+
 def request_stop():
     global _RUNNING
     _RUNNING = False
@@ -109,9 +97,10 @@ def main():
     screen_manager = ScreenManager(i18n=i18n_instance)
     mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
     initial_app_id = None
-    if _update_requested():
+    startup_ready = _startup_config_ready()
+    if startup_ready and _update_requested():
         initial_app_id = "updater_app"
-    elif _CONFIG_CREATED:
+    elif not startup_ready:
         initial_app_id = "settings_app"
     app_manager = AppManager(
         screen_manager=screen_manager,
