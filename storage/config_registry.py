@@ -176,8 +176,48 @@ def read_config_text(config_path=None):
         return f.read()
 
 
+def _write_config_text(config_path, text):
+    tmp = config_path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    try:
+        os.remove(config_path)
+    except Exception:
+        pass
+    os.rename(tmp, config_path)
+
+
+def remove_keys_from_text(src_text, keys):
+    if not keys:
+        return src_text
+    remove = set(keys)
+    out = []
+    for line in src_text.splitlines():
+        m = _ASSIGN_RE.match(line)
+        if m and m.group(1) in remove:
+            continue
+        out.append(line)
+    return "\n".join(out) + "\n"
+
+
+def _migrate_config_wifi_to_nvs(path, values):
+    ssid = values.get("WIFI_SSID") or ""
+    if not ssid:
+        return False
+    password = values.get("WIFI_PASSWORD") or ""
+    nvs_ok, _nvs_error = _write_wifi_to_nvs(ssid, password)
+    if not nvs_ok:
+        return False
+    src = read_config_text(config_path=path)
+    out = remove_keys_from_text(src, _WIFI_KEYS)
+    if out != src:
+        _write_config_text(path, out)
+    return True
+
+
 def load_current_values(config_path=None):
-    text = read_config_text(config_path=config_path)
+    path = config_path or resolve_config_path()
+    text = read_config_text(config_path=path)
     values = {}
 
     for line in text.splitlines():
@@ -194,8 +234,13 @@ def load_current_values(config_path=None):
         if key not in values:
             values[key] = spec.get("default")
 
+    if values.get("WIFI_SSID") or "":
+        _migrate_config_wifi_to_nvs(path, values)
+        return values
+
     # Source of truth for Wi-Fi credentials is NVS.
-    # If NVS is empty, keep config fallback values for first-run migration.
+    # If config.py still carries Wi-Fi credentials, the migration branch above
+    # keeps them authoritative until they are safely written to NVS.
     nvs_ssid, nvs_password = _read_wifi_from_nvs()
     if nvs_ssid:
         values["WIFI_SSID"] = nvs_ssid
@@ -315,18 +360,10 @@ def save_updates(updates, config_path=None):
                 "WIFI_SSID": "nvs write failed: {}".format(nvs_error),
                 "WIFI_PASSWORD": "nvs write failed: {}".format(nvs_error),
             }
-        # Explicitly blank Wi-Fi values in config.py so secrets stay only in NVS.
-        file_updates["WIFI_SSID"] = ""
-        file_updates["WIFI_PASSWORD"] = ""
     src = read_config_text(config_path=path)
     out = apply_updates_to_text(src, file_updates)
+    if wifi_updates:
+        out = remove_keys_from_text(out, _WIFI_KEYS)
 
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        f.write(out)
-    try:
-        os.remove(path)
-    except Exception:
-        pass
-    os.rename(tmp, path)
+    _write_config_text(path, out)
     return True, {}
