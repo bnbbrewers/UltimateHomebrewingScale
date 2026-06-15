@@ -135,6 +135,11 @@ def _read_wifi_from_nvs():
         return "", ""
 
 
+def wifi_credentials_ready():
+    ssid, _password = _read_wifi_from_nvs()
+    return bool(ssid)
+
+
 def _write_wifi_to_nvs(ssid, password):
     try:
         import esp32
