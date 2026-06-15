@@ -87,37 +87,6 @@ def request_stop():
     _RUNNING = False
 
 
-def _maintenance_mode_requested(window_ms=2200, required_pressed_ms=500):
-    """
-    Enter maintenance mode when BtnA is held during early boot.
-    Uses a detection window + accumulated pressed time to be resilient to
-    bounce / brief missed reads on embedded hardware.
-    """
-    start = time.ticks_ms()
-    pressed_acc = 0
-    step_ms = 40
-
-    while time.ticks_diff(time.ticks_ms(), start) < window_ms:
-        M5.update()
-        try:
-            pressed = bool(M5.BtnA.isPressed())
-        except Exception:
-            pressed = False
-
-        if pressed:
-            pressed_acc += step_ms
-            if pressed_acc >= required_pressed_ms:
-                return True
-        else:
-            # Decay instead of full reset: tolerates brief glitches.
-            if pressed_acc > 0:
-                pressed_acc -= step_ms // 2
-                if pressed_acc < 0:
-                    pressed_acc = 0
-        time.sleep_ms(step_ms)
-    return False
-
-
 def main():
     global _RUNNING
     _RUNNING = True
@@ -129,13 +98,6 @@ def main():
     mem_snapshot("boot.after_speaker", enabled=DEBUG, collect=True)
     gc.collect()
     mem_snapshot("boot.start", enabled=DEBUG)
-
-    if _maintenance_mode_requested():
-        print("[main] Maintenance mode: app startup skipped (BtnA held).")
-        return
-    mem_snapshot("boot.after_maintenance", enabled=DEBUG, collect=True)
-
- 
 
     i18n_instance = _load_i18n()
     mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
