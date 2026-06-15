@@ -521,6 +521,7 @@
         background: var(--paper-strong);
       }
 
+
       .check strong {
         display: block;
         margin-bottom: 4px;
@@ -610,6 +611,7 @@
           border-bottom: 0;
           padding-bottom: 2px;
         }
+
       }
     </style>
   </head>
@@ -1054,6 +1056,44 @@
                 <li>Route the valve output through its own cable gland.</li>
                 <li>Install the valve on the gas path associated with the spunding valve, not on the beer line.</li>
               </ol>
+              <figure class="wiring-diagram">
+                <img src="../img/unit-relay-solenoid-wiring.svg" alt="Unit Relay to 12V solenoid valve wiring diagram: 12V positive to COM, NO to valve positive, valve negative to 12V negative, NC unused">
+                <figcaption>Relay wiring that powers the valve only while filling is active.</figcaption>
+              </figure>
+              <table class="field-table">
+                <thead>
+                  <tr>
+                    <th>Terminal or Connection</th>
+                    <th>Purpose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>Port B</code> / Grove</td>
+                    <td>Controls the Unit Relay from the M5Stack Dial. This is the control signal, not the valve power path.</td>
+                  </tr>
+                  <tr>
+                    <td><code>COM</code></td>
+                    <td>Receives 12V positive from the power supply.</td>
+                  </tr>
+                  <tr>
+                    <td><code>NO</code></td>
+                    <td>Sends 12V to the valve positive terminal when the relay is active.</td>
+                  </tr>
+                  <tr>
+                    <td><code>NC</code></td>
+                    <td>Leave unused for this build so the valve remains unpowered when the relay is idle.</td>
+                  </tr>
+                  <tr>
+                    <td>Valve negative</td>
+                    <td>Returns directly to the 12V power supply negative terminal.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="callout info">
+                <strong>Safety principle:</strong> the normally closed valve should be powered only while filling.
+                Do not route the valve's 12V current through the Dial or the Grove cable.
+              </div>
               <div class="callout warning">
                 <strong>Pressure:</strong> the spunding valve remains the pressure-regulation device. The
                 solenoid valve provides automatic control; it does not replace pressure adjustment.
