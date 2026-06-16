@@ -139,8 +139,10 @@ def _translate_error(i18n, error):
 
 
 def _option_label(i18n, key, choice):
-    if key == "LANGUAGE":
-        return i18n.t("portal.choices.language_{}".format(choice))
+    choice_key = "{}_{}".format(key.lower(), choice)
+    choices = getattr(i18n, "_translations", {}).get("portal", {}).get("choices", {})
+    if choice_key in choices:
+        return i18n.t("portal.choices.{}".format(choice_key))
     return choice
 
 

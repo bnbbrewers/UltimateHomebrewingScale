@@ -163,11 +163,13 @@ TRANSLATIONS = {
             'BREWFATHER_USER_ID': 'Identifiant Brewfather',
             'BREWFATHER_API_KEY': 'Cle API Brewfather',
             'BREWING_SOFTWARE': 'Logiciel de brassage',
-            'UPDATE_BRANCH': 'Branche de mise a jour',
+            'UPDATE_CHANNEL': 'Canal de mise a jour',
         },
         'choices': {
             'language_en': 'Anglais',
             'language_fr': 'Francais',
+            'update_channel_stable': 'Stable',
+            'update_channel_prerelease': 'Pre-release',
         },
         'validation': {
             'invalid_boolean': 'booleen invalide',
