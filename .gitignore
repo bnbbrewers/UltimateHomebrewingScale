@@ -1,2 +1,3 @@
 # Configuration files with credentials
 config.py
+.worktrees/
