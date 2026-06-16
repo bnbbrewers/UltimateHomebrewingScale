@@ -28,5 +28,5 @@ KEG_RELAY_IO = (1, 2)
 # Debug mode
 DEBUG = False
 
-# Git branch used by the hidden updater app
-UPDATE_BRANCH = "main"
+# Release channel used by the hidden updater app: "stable" or "prerelease"
+UPDATE_CHANNEL = "stable"
