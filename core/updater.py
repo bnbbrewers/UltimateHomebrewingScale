@@ -204,6 +204,79 @@ def should_download(repo_path):
     return True
 
 
+def _safe_repo_path(path):
+    text = str(path or "").replace("\\", "/").strip()
+    if not text or text in (".", ".."):
+        raise RuntimeError("unsafe path")
+    if len(text) >= 2 and text[1] == ":":
+        raise RuntimeError("unsafe path: %s" % text)
+    if text.startswith("/") or text.startswith("../") or "/../" in text or text.endswith("/.."):
+        raise RuntimeError("unsafe path: %s" % text)
+    for segment in text.split("/"):
+        if segment in (".", ".."):
+            raise RuntimeError("unsafe path: %s" % text)
+    if text == "config.py" or text.startswith("storage/") and text.endswith(".json"):
+        raise RuntimeError("unsafe path: %s" % text)
+    return text
+
+
+def _validate_manifest_url(url):
+    text = str(url or "").strip()
+    if text.startswith("http://") and len(text) > len("http://"):
+        return text
+    if text.startswith("https://") and len(text) > len("https://"):
+        return text
+    raise RuntimeError("Invalid manifest url")
+
+
+def _validate_manifest_size(size):
+    if size is None:
+        return None
+    if isinstance(size, bool):
+        raise RuntimeError("Invalid manifest size")
+    if isinstance(size, int):
+        if size < 0:
+            raise RuntimeError("Invalid manifest size")
+        return size
+    if isinstance(size, str):
+        text = size.strip()
+        if text.isdigit():
+            return int(text)
+    raise RuntimeError("Invalid manifest size")
+
+
+def validate_manifest(manifest):
+    if not isinstance(manifest, dict):
+        raise RuntimeError("Invalid manifest")
+    files = manifest.get("files", [])
+    deletes = manifest.get("delete", [])
+    if not isinstance(files, list):
+        raise RuntimeError("Invalid manifest files")
+    if not isinstance(deletes, list):
+        raise RuntimeError("Invalid manifest delete")
+    validated_files = []
+    for item in files:
+        if not isinstance(item, dict):
+            raise RuntimeError("Invalid manifest file")
+        path = _safe_repo_path(item.get("path", ""))
+        url = _validate_manifest_url(item.get("url", ""))
+        validated_files.append(
+            {
+                "path": path,
+                "url": url,
+                "size": _validate_manifest_size(item.get("size", None)),
+                "sha256": str(item.get("sha256", "") or ""),
+            }
+        )
+    validated_delete = [_safe_repo_path(path) for path in deletes]
+    return {
+        "version": str(manifest.get("version", "") or ""),
+        "channel": str(manifest.get("channel", "") or ""),
+        "files": validated_files,
+        "delete": validated_delete,
+    }
+
+
 def latest_release_url():
     return "%s/repos/%s/%s/releases/latest" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
 
@@ -387,6 +460,34 @@ def _download_to_file(url, dest_path, requests_module):
             pass
 
 
+def _replace_file(tmp_path, dest_path):
+    try:
+        os.remove(dest_path)
+    except OSError:
+        pass
+    os.rename(tmp_path, dest_path)
+
+
+def _download_to_temp(url, dest_path, requests_module, expected_size=None):
+    tmp_path = dest_path + ".tmp"
+    try:
+        os.remove(tmp_path)
+    except OSError:
+        pass
+    _download_to_file(url, tmp_path, requests_module)
+    if expected_size is not None:
+        try:
+            if os.stat(tmp_path)[6] != int(expected_size):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+                raise RuntimeError("size mismatch")
+        except TypeError:
+            pass
+    _replace_file(tmp_path, dest_path)
+
+
 def _ensure_wifi(wifi_device, timeout_s, progress_callback, i18n=None):
     if wifi_device is None:
         return
@@ -418,6 +519,43 @@ def _remove_obsolete(dest_root):
             os.remove(path)
         except OSError:
             pass
+
+
+def install_manifest(manifest, requests_module=None, progress_callback=None, dest_root="", i18n=None):
+    requests_module = requests_module or _requests
+    if requests_module is None:
+        raise RuntimeError("Missing requests module")
+    clean = validate_manifest(manifest)
+    files = clean["files"]
+    total = len(files)
+    ok = 0
+    failed = 0
+    for index, item in enumerate(files, 1):
+        percent = int((index * 100) / total) if total else 100
+        _emit(progress_callback, "download", _t(i18n, "updater.downloading", "Downloading"), item["path"], index, total, percent)
+        dest_path = _path_join(dest_root, item["path"]) if dest_root else item["path"]
+        parent = dest_path.rsplit("/", 1)[0] if "/" in dest_path else ""
+        if parent:
+            _ensure_dir(parent)
+        try:
+            _download_to_temp(item["url"], dest_path, requests_module, expected_size=item.get("size"))
+            ok += 1
+        except Exception:
+            failed += 1
+            try:
+                os.remove(dest_path + ".tmp")
+            except OSError:
+                pass
+        gc.collect()
+    if failed:
+        raise RuntimeError("Update finished with %d failures" % failed)
+    for repo_path in clean["delete"]:
+        path = _path_join(dest_root, repo_path) if dest_root else repo_path
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+    return {"ok": ok, "failed": failed, "total": total, "version": clean.get("version", "")}
 
 
 def update(
