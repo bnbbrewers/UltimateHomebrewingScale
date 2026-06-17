@@ -184,17 +184,19 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 - `HOP_WEIGHT_TOLERANCE`
 - `KEG_SPUNDING_VALVE_INERTIA_ML`
 - `DEBUG`
-- `UPDATE_BRANCH`
+- `UPDATE_CHANNEL`
 
 Saving settings reboots the device. The portal can also request an update, which
 sets a flag and reboots into the hidden updater app.
 
 ### Updater
 
-The hidden updater downloads application files from
-`bnbbrewers/UltimateHomebrewingScale` for the configured branch. It skips docs,
-firmware, Markdown files, examples, `.gitignore`, `LICENSE`, and most example
-files so the device receives only runtime files.
+The hidden updater downloads application files from the latest GitHub Release.
+`UPDATE_CHANNEL = "stable"` installs the latest stable release. Set
+`UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release.
+The device never updates directly from branches. It skips docs, firmware,
+Markdown files, examples, `.gitignore`, `LICENSE`, and most example files so the
+device receives only runtime files.
 
 ## Configuration
 
@@ -212,7 +214,7 @@ GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
 DEBUG = False
-UPDATE_BRANCH = "main"
+UPDATE_CHANNEL = "stable"
 ```
 
 The Wi-Fi manager first tries UIFlow NVS credentials (`uiflow:ssid0` /
