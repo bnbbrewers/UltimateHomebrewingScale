@@ -22,6 +22,8 @@ REPO_NAME = "UltimateHomebrewingScale"
 GITHUB_API_BASE = "https://api.github.com"
 RAW_BASE = "https://raw.githubusercontent.com"
 
+MANIFEST_ASSET_NAME = "uhs-update-manifest.json"
+
 OBSOLETE_PATHS = ("install.py",)
 REQUEST_TIMEOUT_S = 15
 
@@ -202,6 +204,14 @@ def should_download(repo_path):
     return True
 
 
+def latest_release_url():
+    return "%s/repos/%s/%s/releases/latest" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
+
+
+def releases_url():
+    return "%s/repos/%s/%s/releases" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
+
+
 def github_contents_url(branch, path):
     return "%s/repos/%s/%s/contents/%s?ref=%s" % (
         GITHUB_API_BASE,
@@ -214,6 +224,23 @@ def github_contents_url(branch, path):
 
 def raw_file_url(branch, repo_path):
     return "%s/%s/%s/%s/%s" % (RAW_BASE, REPO_OWNER, REPO_NAME, branch, repo_path)
+
+
+def _asset_download_url(release, asset_name=MANIFEST_ASSET_NAME):
+    assets = release.get("assets", []) if isinstance(release, dict) else []
+    for asset in assets:
+        if asset.get("name") == asset_name:
+            return asset.get("browser_download_url") or ""
+    return ""
+
+
+def _release_info(release, manifest_url):
+    return {
+        "tag": release.get("tag_name", ""),
+        "name": release.get("name", "") or release.get("tag_name", ""),
+        "manifest_url": manifest_url,
+        "prerelease": bool(release.get("prerelease", False)),
+    }
 
 
 def _github_api_get_json(url, requests_module, retries=4, i18n=None):
@@ -259,6 +286,31 @@ def _github_api_get_json(url, requests_module, retries=4, i18n=None):
         except Exception:
             time.sleep(0.2 + (attempt * 0.25))
     raise RuntimeError("GitHub API request failed: %s err=%r" % (url, last_err))
+
+
+def resolve_release(channel="stable", requests_module=None, i18n=None):
+    requests_module = requests_module or _requests
+    if requests_module is None:
+        raise RuntimeError("Missing requests module")
+
+    normalized = str(channel or "stable").strip().lower()
+    if normalized != "prerelease":
+        release = _github_api_get_json(latest_release_url(), requests_module, i18n=i18n)
+        manifest_url = _asset_download_url(release)
+        if manifest_url:
+            return _release_info(release, manifest_url)
+        raise RuntimeError("No matching release manifest")
+
+    releases = _github_api_get_json(releases_url(), requests_module, i18n=i18n)
+    for release in releases:
+        if release.get("draft"):
+            continue
+        if not release.get("prerelease"):
+            continue
+        manifest_url = _asset_download_url(release)
+        if manifest_url:
+            return _release_info(release, manifest_url)
+    raise RuntimeError("No matching release manifest")
 
 
 def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=None):
