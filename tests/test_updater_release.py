@@ -1,5 +1,8 @@
 import json
+import os
+import shutil
 import sys
+import tempfile
 import types
 import unittest
 
@@ -128,6 +131,173 @@ class UpdaterReleaseSelectionTests(unittest.TestCase):
             updater.resolve_release("prerelease", requests_module=requests)
 
         self.assertIn("No matching release", str(ctx.exception))
+
+
+class UpdaterManifestInstallTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_validate_manifest_rejects_unsafe_paths(self):
+        cases = [
+            {
+                "name": "relative parent file path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "../config.py", "url": "https://example/config.py"}],
+                },
+            },
+            {
+                "name": "absolute file path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "/flash/config.py", "url": "https://example/config.py"}],
+                },
+            },
+            {
+                "name": "relative parent delete path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [],
+                    "delete": ["../old.py"],
+                },
+            },
+            {
+                "name": "config file",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "config.py", "url": "https://example/config.py"}],
+                },
+            },
+            {
+                "name": "storage json file",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "storage/settings.json", "url": "https://example/settings.json"}],
+                },
+            },
+            {
+                "name": "exact parent path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "..", "url": "https://example/escape.py"}],
+                },
+            },
+            {
+                "name": "current directory path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": ".", "url": "https://example/dot.py"}],
+                },
+            },
+            {
+                "name": "parent segment path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "apps/../escape.py", "url": "https://example/escape.py"}],
+                },
+            },
+            {
+                "name": "windows absolute path",
+                "manifest": {
+                    "version": "v1.2.3",
+                    "files": [{"path": "C:\\escape.py", "url": "https://example/escape.py"}],
+                },
+            },
+        ]
+
+        for case in cases:
+            with self.subTest(case["name"]):
+                with self.assertRaises(RuntimeError) as ctx:
+                    updater.validate_manifest(case["manifest"])
+
+                self.assertIn("unsafe path", str(ctx.exception))
+
+    def test_validate_manifest_rejects_invalid_urls(self):
+        for url in ("not-url", "ftp://example/apps/demo.py"):
+            manifest = {
+                "version": "v1.2.3",
+                "files": [{"path": "apps/demo.py", "url": url}],
+            }
+
+            with self.subTest(url=url):
+                with self.assertRaises(RuntimeError) as ctx:
+                    updater.validate_manifest(manifest)
+
+                self.assertIn("Invalid manifest url", str(ctx.exception))
+
+    def test_validate_manifest_rejects_invalid_sizes(self):
+        for size in (-1, "1.5", "abc"):
+            manifest = {
+                "version": "v1.2.3",
+                "files": [{"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": size}],
+            }
+
+            with self.subTest(size=size):
+                with self.assertRaises(RuntimeError) as ctx:
+                    updater.validate_manifest(manifest)
+
+                self.assertIn("Invalid manifest size", str(ctx.exception))
+
+    def test_validate_manifest_normalizes_valid_size(self):
+        manifest = {
+            "version": "v1.2.3",
+            "files": [
+                {"path": "apps/demo.py", "url": "http://example/apps/demo.py", "size": "10"},
+                {"path": "apps/empty.py", "url": "https://example/apps/empty.py"},
+            ],
+        }
+
+        clean = updater.validate_manifest(manifest)
+
+        self.assertEqual(clean["files"][0]["size"], 10)
+        self.assertIsNone(clean["files"][1]["size"])
+
+    def test_install_manifest_writes_temp_then_replaces_destination(self):
+        manifest = {
+            "version": "v1.2.3",
+            "files": [
+                {"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": 10},
+            ],
+            "delete": ["old.py"],
+        }
+        requests = _Requests([_Response(content=b"print(1)\n#")])
+        old_path = os.path.join(self.tmp, "old.py")
+        with open(old_path, "w") as f:
+            f.write("old")
+
+        result = updater.install_manifest(manifest, requests_module=requests, dest_root=self.tmp)
+
+        installed = os.path.join(self.tmp, "apps", "demo.py")
+        self.assertEqual(result["ok"], 1)
+        self.assertEqual(result["failed"], 0)
+        with open(installed, "rb") as f:
+            self.assertEqual(f.read(), b"print(1)\n#")
+        self.assertFalse(os.path.exists(installed + ".tmp"))
+        self.assertFalse(os.path.exists(old_path))
+
+    def test_install_manifest_keeps_existing_file_when_download_size_mismatch(self):
+        manifest = {
+            "version": "v1.2.3",
+            "files": [
+                {"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": 99},
+            ],
+        }
+        dest_dir = os.path.join(self.tmp, "apps")
+        os.mkdir(dest_dir)
+        installed = os.path.join(dest_dir, "demo.py")
+        with open(installed, "wb") as f:
+            f.write(b"old")
+        requests = _Requests([_Response(content=b"new")])
+
+        with self.assertRaises(RuntimeError):
+            updater.install_manifest(manifest, requests_module=requests, dest_root=self.tmp)
+
+        with open(installed, "rb") as f:
+            self.assertEqual(f.read(), b"old")
+        self.assertFalse(os.path.exists(installed + ".tmp"))
 
 
 if __name__ == "__main__":
