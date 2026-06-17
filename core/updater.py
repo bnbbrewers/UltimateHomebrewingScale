@@ -1,9 +1,9 @@
 """
 Application updater for UltimateHomebrewingScale.
 
-Downloads the GitHub repository files for a branch while preserving the device
-directory structure. Progress is reported through a small callback dictionary so
-the UI layer can stay separate from network/file operations.
+Downloads a GitHub release manifest and installs its files while preserving the
+device directory structure. Progress is reported through a small callback
+dictionary so the UI layer can stay separate from network/file operations.
 """
 
 import gc
@@ -102,6 +102,22 @@ def _is_rate_limited(response):
         except Exception:
             pass
     return "rate limit" in _response_text(response).lower()
+
+
+def _response_header(response, name):
+    headers = getattr(response, "headers", None)
+    if not headers:
+        return ""
+    try:
+        value = headers.get(name, "")
+        if value:
+            return value
+    except Exception:
+        pass
+    try:
+        return headers.get(name.lower(), "")
+    except Exception:
+        return ""
 
 
 def _emit(callback, stage, message="", detail="", current=0, total=0, percent=0):
@@ -386,6 +402,41 @@ def resolve_release(channel="stable", requests_module=None, i18n=None):
     raise RuntimeError("No matching release manifest")
 
 
+def download_manifest(url, requests_module=None, i18n=None):
+    requests_module = requests_module or _requests
+    if requests_module is None:
+        raise RuntimeError("Missing requests module")
+    headers = {
+        "User-Agent": "UHS-M5Dial-Updater",
+        "Accept": "application/json",
+        "Connection": "close",
+    }
+    current_url = url
+    for _ in range(5):
+        r = None
+        try:
+            r = _request_get(requests_module, current_url, headers=headers)
+            status = getattr(r, "status_code", None)
+            if status is None:
+                status = getattr(r, "status", None)
+            if status == 200:
+                return r.json()
+            if status in (301, 302, 303, 307, 308):
+                location = _response_header(r, "Location")
+                if not location:
+                    raise RuntimeError("Manifest redirect missing Location")
+                current_url = location
+                continue
+            raise RuntimeError("HTTP %s: %s" % (status, current_url))
+        finally:
+            try:
+                if r is not None:
+                    r.close()
+            except Exception:
+                pass
+    raise RuntimeError("Manifest redirect limit exceeded")
+
+
 def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=None):
     requests_module = requests_module or _requests
     if requests_module is None:
@@ -530,6 +581,7 @@ def install_manifest(manifest, requests_module=None, progress_callback=None, des
     total = len(files)
     ok = 0
     failed = 0
+    last_error = ""
     for index, item in enumerate(files, 1):
         percent = int((index * 100) / total) if total else 100
         _emit(progress_callback, "download", _t(i18n, "updater.downloading", "Downloading"), item["path"], index, total, percent)
@@ -540,15 +592,37 @@ def install_manifest(manifest, requests_module=None, progress_callback=None, des
         try:
             _download_to_temp(item["url"], dest_path, requests_module, expected_size=item.get("size"))
             ok += 1
-        except Exception:
+        except Exception as e:
             failed += 1
+            last_error = "%s: %s" % (item["path"], e)
+            _emit(
+                progress_callback,
+                "error",
+                _t(i18n, "updater.incomplete", "Update incomplete"),
+                last_error,
+                index,
+                total,
+                percent,
+            )
             try:
                 os.remove(dest_path + ".tmp")
             except OSError:
                 pass
         gc.collect()
     if failed:
-        raise RuntimeError("Update finished with %d failures" % failed)
+        _emit(
+            progress_callback,
+            "incomplete",
+            _t(i18n, "updater.incomplete", "Update incomplete"),
+            last_error or _tf(i18n, "updater.errors_count", "{0} error(s)", failed),
+            ok,
+            total,
+            100,
+        )
+        message = "Update finished with %d failures" % failed
+        if last_error:
+            message = "%s: %s" % (message, last_error)
+        raise RuntimeError(message)
     for repo_path in clean["delete"]:
         path = _path_join(dest_root, repo_path) if dest_root else repo_path
         try:
@@ -559,7 +633,7 @@ def install_manifest(manifest, requests_module=None, progress_callback=None, des
 
 
 def update(
-    branch="main",
+    channel="stable",
     progress_callback=None,
     requests_module=None,
     wifi_device=None,
@@ -572,7 +646,9 @@ def update(
     if requests_module is None:
         raise RuntimeError("Missing requests module")
 
-    branch = str(branch or "main").strip() or "main"
+    channel = str(channel or "stable").strip().lower()
+    if channel != "prerelease":
+        channel = "stable"
     dest_root = str(dest_root or "").strip()
     if dest_root in (".", "/"):
         dest_root = ""
@@ -580,57 +656,24 @@ def update(
     if ensure_wifi:
         _ensure_wifi(wifi_device, wifi_timeout_s, progress_callback, i18n=i18n)
 
-    _emit(progress_callback, "scan", _t(i18n, "updater.search_files", "Searching files"), branch, 0, 0, 0)
-    files = list_repo_tree(
-        branch,
+    _emit(progress_callback, "release", _t(i18n, "updater.search_release", "Searching release"), channel, 0, 0, 0)
+    release = resolve_release(channel, requests_module=requests_module, i18n=i18n)
+    _emit(progress_callback, "manifest", _t(i18n, "updater.downloading_manifest", "Downloading manifest"), release.get("tag", ""), 0, 0, 0)
+    manifest = download_manifest(release["manifest_url"], requests_module=requests_module, i18n=i18n)
+    result = install_manifest(
+        manifest,
         requests_module=requests_module,
         progress_callback=progress_callback,
+        dest_root=dest_root,
         i18n=i18n,
     )
-    total = len(files)
-
-    ok = 0
-    failed = 0
-    for index, repo_path in enumerate(files, 1):
-        percent = int((index * 100) / total) if total else 100
-        _emit(
-            progress_callback,
-            "download",
-            _t(i18n, "updater.downloading", "Downloading"),
-            repo_path,
-            index,
-            total,
-            percent,
-        )
-        raw_url = raw_file_url(branch, repo_path)
-        dest_path = _path_join(dest_root, repo_path) if dest_root else repo_path
-        try:
-            _download_to_file(raw_url, dest_path, requests_module)
-            ok += 1
-        except Exception:
-            failed += 1
-        gc.collect()
-
-    _remove_obsolete(dest_root)
-    result = {"ok": ok, "failed": failed, "total": total}
-    if failed:
-        _emit(
-            progress_callback,
-            "error",
-            _t(i18n, "updater.incomplete", "Update incomplete"),
-            _tf(i18n, "updater.errors_count", "{0} error(s)", failed),
-            ok,
-            total,
-            100,
-        )
-        raise RuntimeError("Update finished with %d failures" % failed)
     _emit(
         progress_callback,
         "done",
         _t(i18n, "updater.install_done", "Installation complete"),
-        _tf(i18n, "updater.files_count", "{0} file(s)", ok),
-        ok,
-        total,
+        _tf(i18n, "updater.files_count", "{0} file(s)", result.get("ok", 0)),
+        result.get("ok", 0),
+        result.get("total", 0),
         100,
     )
     return result

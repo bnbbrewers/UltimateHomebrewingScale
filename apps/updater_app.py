@@ -49,7 +49,7 @@ class UpdaterApp(BaseApp):
             from core import updater
 
             updater.update(
-                branch=self._update_branch(),
+                channel=self._update_channel(),
                 progress_callback=self._on_progress,
                 wifi_device=self.hardware.wifi,
                 i18n=self.i18n,
@@ -84,13 +84,17 @@ class UpdaterApp(BaseApp):
         self._screen.set_progress(event.get("percent", 0))
         self._flush_lvgl()
 
-    def _update_branch(self):
+    def _update_channel(self):
         try:
             import config
 
-            return getattr(config, "UPDATE_BRANCH", "main")
+            value = getattr(config, "UPDATE_CHANNEL", "stable")
         except Exception:
-            return "main"
+            value = "stable"
+        value = str(value or "stable").strip().lower()
+        if value != "prerelease":
+            return "stable"
+        return "prerelease"
 
     def _text(self, key, fallback):
         if self.i18n:

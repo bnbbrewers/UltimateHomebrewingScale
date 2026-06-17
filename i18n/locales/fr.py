@@ -113,6 +113,8 @@ TRANSLATIONS = {
         'done_restart': 'installation terminee, OK pour redemarrer',
         'scan_repo': 'Analyse du depot',
         'wifi_connecting': 'Connexion Wi-Fi',
+        'search_release': 'Recherche de release',
+        'downloading_manifest': 'Telechargement manifest',
         'search_files': 'Recherche des fichiers',
         'downloading': 'Telechargement',
         'incomplete': 'Mise a jour incomplete',

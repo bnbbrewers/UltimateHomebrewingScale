@@ -17,11 +17,12 @@ from core import updater
 
 
 class _Response:
-    def __init__(self, status_code=200, data=None, content=b""):
+    def __init__(self, status_code=200, data=None, content=b"", headers=None):
         self.status_code = status_code
         self._data = data
         self.content = content
         self.text = json.dumps(data) if data is not None else ""
+        self.headers = headers or {}
         self.closed = False
 
     def json(self):
@@ -298,6 +299,112 @@ class UpdaterManifestInstallTests(unittest.TestCase):
         with open(installed, "rb") as f:
             self.assertEqual(f.read(), b"old")
         self.assertFalse(os.path.exists(installed + ".tmp"))
+
+
+class UpdaterFlowTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_update_resolves_release_downloads_manifest_and_installs_files(self):
+        release = {
+            "tag_name": "v1.2.3",
+            "draft": False,
+            "prerelease": False,
+            "assets": [{"name": updater.MANIFEST_ASSET_NAME, "browser_download_url": "https://example/manifest.json"}],
+        }
+        manifest = {
+            "version": "v1.2.3",
+            "files": [{"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": 8}],
+        }
+        requests = _Requests([
+            _Response(data=release),
+            _Response(data=manifest),
+            _Response(content=b"demo = 1"),
+        ])
+        events = []
+
+        result = updater.update(
+            channel="stable",
+            requests_module=requests,
+            ensure_wifi=False,
+            dest_root=self.tmp,
+            progress_callback=events.append,
+        )
+
+        self.assertEqual(result["version"], "v1.2.3")
+        self.assertEqual(result["ok"], 1)
+        self.assertEqual(requests.calls[0][0], updater.latest_release_url())
+        self.assertEqual(requests.calls[1][0], "https://example/manifest.json")
+        self.assertEqual(requests.responses, [])
+        with open(os.path.join(self.tmp, "apps", "demo.py"), "rb") as f:
+            self.assertEqual(f.read(), b"demo = 1")
+        self.assertEqual(events[-1]["stage"], "done")
+
+    def test_update_follows_manifest_asset_redirect(self):
+        release = {
+            "tag_name": "v1.2.3",
+            "draft": False,
+            "prerelease": False,
+            "assets": [{"name": updater.MANIFEST_ASSET_NAME, "browser_download_url": "https://example/asset"}],
+        }
+        manifest = {
+            "version": "v1.2.3",
+            "files": [{"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": 8}],
+        }
+        requests = _Requests([
+            _Response(data=release),
+            _Response(status_code=302, headers={"Location": "https://objects.example/manifest.json"}),
+            _Response(data=manifest),
+            _Response(content=b"demo = 1"),
+        ])
+
+        result = updater.update(
+            channel="stable",
+            requests_module=requests,
+            ensure_wifi=False,
+            dest_root=self.tmp,
+        )
+
+        self.assertEqual(result["version"], "v1.2.3")
+        self.assertEqual(result["ok"], 1)
+        self.assertEqual(requests.calls[1][0], "https://example/asset")
+        self.assertEqual(requests.calls[2][0], "https://objects.example/manifest.json")
+        self.assertEqual(requests.responses, [])
+
+    def test_update_emits_error_progress_with_failed_path_when_install_fails(self):
+        release = {
+            "tag_name": "v1.2.3",
+            "draft": False,
+            "prerelease": False,
+            "assets": [{"name": updater.MANIFEST_ASSET_NAME, "browser_download_url": "https://example/manifest.json"}],
+        }
+        manifest = {
+            "version": "v1.2.3",
+            "files": [{"path": "apps/demo.py", "url": "https://example/apps/demo.py", "size": 99}],
+        }
+        requests = _Requests([
+            _Response(data=release),
+            _Response(data=manifest),
+            _Response(content=b"short"),
+        ])
+        events = []
+
+        with self.assertRaises(RuntimeError) as ctx:
+            updater.update(
+                channel="stable",
+                requests_module=requests,
+                ensure_wifi=False,
+                dest_root=self.tmp,
+                progress_callback=events.append,
+            )
+
+        error_events = [event for event in events if event["stage"] in ("error", "incomplete")]
+        self.assertTrue(error_events)
+        self.assertIn("apps/demo.py", error_events[-1]["detail"])
+        self.assertIn("apps/demo.py", str(ctx.exception))
 
 
 if __name__ == "__main__":
