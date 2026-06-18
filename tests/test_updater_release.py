@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import shutil
 import sys
@@ -217,7 +218,7 @@ class UpdaterManifestInstallTests(unittest.TestCase):
                 self.assertIn("unsafe path", str(ctx.exception))
 
     def test_validate_manifest_rejects_invalid_urls(self):
-        for url in ("not-url", "ftp://example/apps/demo.py"):
+        for url in ("not-url", "ftp://example/apps/demo.py", "https:///apps/demo.py", "https://example/bad path.py"):
             manifest = {
                 "version": "v1.2.3",
                 "files": [{"path": "apps/demo.py", "url": url}],
@@ -243,10 +244,11 @@ class UpdaterManifestInstallTests(unittest.TestCase):
                 self.assertIn("Invalid manifest size", str(ctx.exception))
 
     def test_validate_manifest_normalizes_valid_size(self):
+        digest = hashlib.sha256(b"print(1)\n#").hexdigest().upper()
         manifest = {
             "version": "v1.2.3",
             "files": [
-                {"path": "apps/demo.py", "url": "http://example/apps/demo.py", "size": "10"},
+                {"path": "apps/demo.py", "url": "http://example/apps/demo.py", "size": "10", "sha256": digest},
                 {"path": "apps/empty.py", "url": "https://example/apps/empty.py"},
             ],
         }
@@ -254,7 +256,21 @@ class UpdaterManifestInstallTests(unittest.TestCase):
         clean = updater.validate_manifest(manifest)
 
         self.assertEqual(clean["files"][0]["size"], 10)
+        self.assertEqual(clean["files"][0]["sha256"], digest.lower())
         self.assertIsNone(clean["files"][1]["size"])
+
+    def test_validate_manifest_rejects_invalid_sha256(self):
+        for digest in ("abc", "z" * 64):
+            manifest = {
+                "version": "v1.2.3",
+                "files": [{"path": "apps/demo.py", "url": "https://example/apps/demo.py", "sha256": digest}],
+            }
+
+            with self.subTest(digest=digest):
+                with self.assertRaises(RuntimeError) as ctx:
+                    updater.validate_manifest(manifest)
+
+                self.assertIn("Invalid manifest sha256", str(ctx.exception))
 
     def test_install_manifest_writes_temp_then_replaces_destination(self):
         manifest = {
@@ -299,6 +315,83 @@ class UpdaterManifestInstallTests(unittest.TestCase):
         with open(installed, "rb") as f:
             self.assertEqual(f.read(), b"old")
         self.assertFalse(os.path.exists(installed + ".tmp"))
+
+    def test_install_manifest_follows_file_redirect_and_verifies_sha256(self):
+        content = b"demo = 1"
+        manifest = {
+            "version": "v1.2.3",
+            "files": [
+                {
+                    "path": "apps/demo.py",
+                    "url": "https://example/apps/demo.py",
+                    "size": len(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                },
+            ],
+        }
+        requests = _Requests([
+            _Response(status_code=302, headers={"Location": "https://objects.example/apps/demo.py"}),
+            _Response(content=content),
+        ])
+
+        result = updater.install_manifest(manifest, requests_module=requests, dest_root=self.tmp)
+
+        self.assertEqual(result["ok"], 1)
+        self.assertEqual(requests.calls[0][0], "https://example/apps/demo.py")
+        self.assertEqual(requests.calls[1][0], "https://objects.example/apps/demo.py")
+        with open(os.path.join(self.tmp, "apps", "demo.py"), "rb") as f:
+            self.assertEqual(f.read(), content)
+
+    def test_install_manifest_keeps_existing_file_when_sha256_mismatch(self):
+        manifest = {
+            "version": "v1.2.3",
+            "files": [
+                {
+                    "path": "apps/demo.py",
+                    "url": "https://example/apps/demo.py",
+                    "size": 3,
+                    "sha256": hashlib.sha256(b"expected").hexdigest(),
+                },
+            ],
+        }
+        dest_dir = os.path.join(self.tmp, "apps")
+        os.mkdir(dest_dir)
+        installed = os.path.join(dest_dir, "demo.py")
+        with open(installed, "wb") as f:
+            f.write(b"old")
+        requests = _Requests([_Response(content=b"new")])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            updater.install_manifest(manifest, requests_module=requests, dest_root=self.tmp)
+
+        self.assertIn("sha256 mismatch", str(ctx.exception))
+        with open(installed, "rb") as f:
+            self.assertEqual(f.read(), b"old")
+        self.assertFalse(os.path.exists(installed + ".tmp"))
+
+    def test_replace_file_restores_existing_file_when_final_rename_fails(self):
+        dest = os.path.join(self.tmp, "demo.py")
+        tmp = dest + ".tmp"
+        with open(dest, "wb") as f:
+            f.write(b"old")
+        with open(tmp, "wb") as f:
+            f.write(b"new")
+        real_rename = updater.os.rename
+
+        def failing_rename(src, dst):
+            if src == tmp and dst == dest:
+                raise OSError("rename failed")
+            return real_rename(src, dst)
+
+        updater.os.rename = failing_rename
+        try:
+            with self.assertRaises(OSError):
+                updater._replace_file(tmp, dest)
+        finally:
+            updater.os.rename = real_rename
+
+        with open(dest, "rb") as f:
+            self.assertEqual(f.read(), b"old")
 
 
 class UpdaterFlowTests(unittest.TestCase):

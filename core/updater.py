@@ -7,6 +7,7 @@ dictionary so the UI layer can stay separate from network/file operations.
 """
 
 import gc
+import hashlib
 import os
 import time
 
@@ -238,11 +239,33 @@ def _safe_repo_path(path):
 
 def _validate_manifest_url(url):
     text = str(url or "").strip()
+    if " " in text:
+        raise RuntimeError("Invalid manifest url")
     if text.startswith("http://") and len(text) > len("http://"):
-        return text
+        rest = text[len("http://") :]
+        if rest and not rest.startswith("/") and "/" in rest:
+            return text
+        if rest and not rest.startswith("/") and "/" not in rest:
+            return text
     if text.startswith("https://") and len(text) > len("https://"):
-        return text
+        rest = text[len("https://") :]
+        if rest and not rest.startswith("/") and "/" in rest:
+            return text
+        if rest and not rest.startswith("/") and "/" not in rest:
+            return text
     raise RuntimeError("Invalid manifest url")
+
+
+def _validate_manifest_sha256(digest):
+    text = str(digest or "").strip().lower()
+    if not text:
+        return ""
+    if len(text) != 64:
+        raise RuntimeError("Invalid manifest sha256")
+    for ch in text:
+        if ch not in "0123456789abcdef":
+            raise RuntimeError("Invalid manifest sha256")
+    return text
 
 
 def _validate_manifest_size(size):
@@ -281,7 +304,7 @@ def validate_manifest(manifest):
                 "path": path,
                 "url": url,
                 "size": _validate_manifest_size(item.get("size", None)),
-                "sha256": str(item.get("sha256", "") or ""),
+                "sha256": _validate_manifest_sha256(item.get("sha256", "")),
             }
         )
     validated_delete = [_safe_repo_path(path) for path in deletes]
@@ -474,58 +497,106 @@ def list_repo_tree(branch, requests_module=None, progress_callback=None, i18n=No
     return files
 
 
-def _download_to_file(url, dest_path, requests_module):
-    try:
-        r = _request_get(requests_module, url, stream=True)
-    except TypeError:
-        r = _request_get(requests_module, url)
-    try:
-        status = getattr(r, "status_code", None)
-        if status is None:
-            status = getattr(r, "status", None)
-        if status != 200:
-            raise RuntimeError("HTTP %s: %s" % (status, url))
-
-        parent = dest_path.rsplit("/", 1)[0] if "/" in dest_path else ""
-        if parent:
-            _ensure_dir(parent)
-
-        with open(dest_path, "wb") as f:
-            raw = getattr(r, "raw", None)
-            if raw is not None and hasattr(raw, "read"):
-                while True:
-                    chunk = raw.read(1024)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-            elif hasattr(r, "iter_content"):
-                for chunk in r.iter_content(1024):
-                    if chunk:
-                        f.write(chunk)
-            else:
-                f.write(getattr(r, "content", b""))
-    finally:
+def _download_to_file(url, dest_path, requests_module, expected_sha256=""):
+    current_url = url
+    for _ in range(5):
         try:
-            r.close()
-        except Exception:
-            pass
+            r = _request_get(requests_module, current_url, stream=True)
+        except TypeError:
+            r = _request_get(requests_module, current_url)
+        try:
+            status = getattr(r, "status_code", None)
+            if status is None:
+                status = getattr(r, "status", None)
+            if status in (301, 302, 303, 307, 308):
+                location = _response_header(r, "Location")
+                if not location:
+                    raise RuntimeError("Download redirect missing Location")
+                current_url = location
+                continue
+            if status != 200:
+                raise RuntimeError("HTTP %s: %s" % (status, current_url))
+
+            parent = dest_path.rsplit("/", 1)[0] if "/" in dest_path else ""
+            if parent:
+                _ensure_dir(parent)
+
+            digest = hashlib.sha256() if expected_sha256 else None
+            with open(dest_path, "wb") as f:
+                raw = getattr(r, "raw", None)
+                if raw is not None and hasattr(raw, "read"):
+                    while True:
+                        chunk = raw.read(1024)
+                        if not chunk:
+                            break
+                        if digest:
+                            digest.update(chunk)
+                        f.write(chunk)
+                elif hasattr(r, "iter_content"):
+                    for chunk in r.iter_content(1024):
+                        if chunk:
+                            if digest:
+                                digest.update(chunk)
+                            f.write(chunk)
+                else:
+                    content = getattr(r, "content", b"")
+                    if digest:
+                        digest.update(content)
+                    f.write(content)
+            if digest and digest.hexdigest().lower() != expected_sha256:
+                raise RuntimeError("sha256 mismatch")
+            return
+        finally:
+            try:
+                r.close()
+            except Exception:
+                pass
+    raise RuntimeError("Download redirect limit exceeded")
 
 
 def _replace_file(tmp_path, dest_path):
+    backup_path = dest_path + ".bak"
+    has_backup = False
     try:
-        os.remove(dest_path)
+        os.remove(backup_path)
     except OSError:
         pass
-    os.rename(tmp_path, dest_path)
+    try:
+        os.stat(dest_path)
+        os.rename(dest_path, backup_path)
+        has_backup = True
+    except OSError:
+        has_backup = False
+    try:
+        os.rename(tmp_path, dest_path)
+    except Exception:
+        if has_backup:
+            try:
+                os.rename(backup_path, dest_path)
+            except OSError:
+                pass
+        raise
+    if has_backup:
+        try:
+            os.remove(backup_path)
+        except OSError:
+            pass
 
 
-def _download_to_temp(url, dest_path, requests_module, expected_size=None):
+def _download_to_temp(url, dest_path, requests_module, expected_size=None, expected_sha256=""):
     tmp_path = dest_path + ".tmp"
     try:
         os.remove(tmp_path)
     except OSError:
         pass
-    _download_to_file(url, tmp_path, requests_module)
+    try:
+        _download_to_file(url, tmp_path, requests_module, expected_sha256=expected_sha256)
+    except Exception:
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
     if expected_size is not None:
         try:
             if os.stat(tmp_path)[6] != int(expected_size):
@@ -590,7 +661,13 @@ def install_manifest(manifest, requests_module=None, progress_callback=None, des
         if parent:
             _ensure_dir(parent)
         try:
-            _download_to_temp(item["url"], dest_path, requests_module, expected_size=item.get("size"))
+            _download_to_temp(
+                item["url"],
+                dest_path,
+                requests_module,
+                expected_size=item.get("size"),
+                expected_sha256=item.get("sha256", ""),
+            )
             ok += 1
         except Exception as e:
             failed += 1
