@@ -208,6 +208,7 @@ class SetupPortalService:
                 self._token = str(time.ticks_ms())
             except Exception:
                 self._token = "setup"
+        self._log("init before_client={}".format(self._before_client is not None))
 
     def _log(self, *args):
         if not self._debug:
@@ -219,8 +220,16 @@ class SetupPortalService:
 
     def start_or_resume(self):
         self._paused = False
+        self._log("start_or_resume begin")
         self._ensure_network()
+        self._log("network mode={} sta_ip={} ap_ip={} url={}".format(
+            self._mode,
+            self._sta_ip,
+            self._ap_ip,
+            self._url,
+        ))
         self._start_server_if_needed()
+        self._log("start_or_resume ready listener={}".format(self._listener is not None))
         return self.info()
 
     def info(self):
@@ -295,13 +304,17 @@ class SetupPortalService:
 
     def _run_before_client(self):
         if self._before_client_ran:
+            self._log("cleanup skip already_ran")
             return
         self._before_client_ran = True
         callback = self._before_client
         if callback is None:
+            self._log("cleanup skip no_callback")
             return
         try:
+            self._log("cleanup begin")
             callback()
+            self._log("cleanup done")
         except Exception as e:
             self._log("before client cleanup error:", e)
         try:

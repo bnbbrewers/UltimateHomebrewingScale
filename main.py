@@ -60,13 +60,53 @@ def _update_requested():
 
 
 def _startup_config_ready():
-    if not _file_exists("config.py"):
+    config_exists = _file_exists("config.py")
+    if DEBUG:
+        try:
+            print(
+                "[BOOTCFG] cwd_config_exists={} config_imported={} config_file={}".format(
+                    config_exists,
+                    config is not None,
+                    getattr(config, "__file__", "?") if config is not None else "",
+                )
+            )
+        except Exception:
+            pass
+    if not config_exists:
+        if DEBUG:
+            try:
+                print("[BOOTCFG] startup_ready=False reason=missing_relative_config")
+            except Exception:
+                pass
         return False
     try:
         from storage import config_registry
 
-        return config_registry.wifi_credentials_ready()
-    except Exception:
+        try:
+            report = config_registry.wifi_credentials_report()
+            if DEBUG:
+                print(
+                    "[WIFICFG] nvs_ssid={} config_path={} config_exists={} config_ssid={} error={}".format(
+                        report.get("nvs_ssid"),
+                        report.get("config_path"),
+                        report.get("config_exists"),
+                        report.get("config_ssid"),
+                        report.get("error", ""),
+                    )
+                )
+        except Exception as e:
+            if DEBUG:
+                print("[WIFICFG] report_error={}".format(e))
+        ready = config_registry.wifi_credentials_ready()
+        if DEBUG:
+            print("[BOOTCFG] startup_ready={} reason=wifi_credentials_ready".format(ready))
+        return ready
+    except Exception as e:
+        if DEBUG:
+            try:
+                print("[BOOTCFG] startup_ready=False reason=config_registry_error {}".format(e))
+            except Exception:
+                pass
         return False
 
 
@@ -102,6 +142,11 @@ def main():
         initial_app_id = "updater_app"
     elif not startup_ready:
         initial_app_id = "settings_app"
+    if DEBUG:
+        try:
+            print("[BOOTCFG] initial_app_id={}".format(initial_app_id))
+        except Exception:
+            pass
     app_manager = AppManager(
         screen_manager=screen_manager,
         hardware=hardware,
