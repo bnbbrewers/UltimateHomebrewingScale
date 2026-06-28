@@ -39,7 +39,10 @@ the latest files from GitHub. The updater:
 - overwrites existing application files
 - skips `*.md`, `.gitignore`, `firmware/`, `examples/` directories, and files
   `*.example` / names containing `example`
-- reads the branch from `UPDATE_BRANCH` in `config.py` (`main` by default)
+- downloads application files from the latest GitHub Release
+- uses `UPDATE_CHANNEL = "stable"` for the latest stable release; set
+  `UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release
+- never updates directly from branches
 - shows progress on screen and waits for OK before rebooting
 
 ## 5) Calibrate the scale
