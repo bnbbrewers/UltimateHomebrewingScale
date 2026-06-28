@@ -33,11 +33,11 @@ EDITABLE_KEYS = {
         "default": False,
         "label": "Debug mode",
     },
-    "UPDATE_BRANCH": {
-        "type": "str",
-        "max_len": 64,
-        "default": "main",
-        "label": "Update branch",
+    "UPDATE_CHANNEL": {
+        "type": "enum",
+        "choices": ["stable", "prerelease"],
+        "default": "stable",
+        "label": "Release channel",
     },
     "WIFI_SSID": {
         "type": "str",
@@ -82,5 +82,5 @@ EDITABLE_ORDER = [
     "HOP_WEIGHT_TOLERANCE",
     "KEG_SPUNDING_VALVE_INERTIA_ML",
     "DEBUG",
-    "UPDATE_BRANCH",
+    "UPDATE_CHANNEL",
 ]

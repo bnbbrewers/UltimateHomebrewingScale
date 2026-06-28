@@ -313,7 +313,7 @@ class WeightScreen:
 
         if self._mode == self.MODE_COUNTDOWN_G:
             remaining = self._target - weight
-            overloaded = remaining < 0
+            overloaded = remaining < -ZERO_WEIGHT_DISPLAY_THRESHOLD_G
             if overloaded:
                 self.set_weight_text("+" + self._format_weight(-remaining))
             else:

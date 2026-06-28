@@ -19,9 +19,10 @@ _STATE_RECIPE = 1
 _STATE_PREP_ACK = 2
 _STATE_SELECT_HOP = 3
 _STATE_SELECT_STEP = 4
-_STATE_WEIGHT = 5
-_STATE_HOP_DONE_ACK = 6
-_STATE_ALL_DONE_ACK = 7
+_STATE_PLACE_RECIPIENT_ACK = 5
+_STATE_WEIGHT = 6
+_STATE_HOP_DONE_ACK = 7
+_STATE_ALL_DONE_ACK = 8
 _COLOR_HOP = 0x388E3C
 
 
@@ -121,6 +122,8 @@ class HopAssistantApp(BaseApp):
             self._tick_select_hop()
         elif self._state == _STATE_SELECT_STEP:
             self._tick_select_step()
+        elif self._state == _STATE_PLACE_RECIPIENT_ACK:
+            return self._tick_ack(self._start_weighing)
         elif self._state == _STATE_WEIGHT:
             return self._tick_weight()
         elif self._state == _STATE_HOP_DONE_ACK:
@@ -255,7 +258,7 @@ class HopAssistantApp(BaseApp):
         if changed:
             self._select().set_selected_index(self._step_idx)
         if self.hardware.button.was_short_pressed():
-            self._start_weighing()
+            self._show_place_recipient_prompt()
 
     def _tick_weight(self):
         weight = self._read_and_update_weight(self._weight())
@@ -271,6 +274,18 @@ class HopAssistantApp(BaseApp):
         return None
 
     # ── weighing ───────────────────────────────────────────────────
+
+    def _show_place_recipient_prompt(self):
+        hop = self._hops_list[self._current_hop_idx]
+        step = hop["steps"][self._step_idx]
+        vessel_number = self._vessel_number_for_step(step[0])
+        self._show_msg(
+            self.t("hop.title"),
+            self.t("hop.place_recipient", vessel_number),
+            _COLOR_HOP,
+            show_ok=True,
+        )
+        self._state = _STATE_PLACE_RECIPIENT_ACK
 
     def _start_weighing(self):
         hop = self._hops_list[self._current_hop_idx]
