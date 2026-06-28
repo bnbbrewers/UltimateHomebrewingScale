@@ -84,6 +84,16 @@ def _html_escape(text):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+def _fmt_number(value, decimals=1):
+    try:
+        number = float(value)
+    except Exception:
+        return str(value)
+    if abs(number - round(number)) < 0.05:
+        return str(int(round(number)))
+    return ("{:." + str(decimals) + "f}").format(number)
+
+
 def _url_decode(text):
     s = (text or "").replace("+", " ")
     out = []
@@ -155,7 +165,88 @@ def _current_values():
     return values
 
 
-def render_minimal_form_html(values, saved=False, error=""):
+def _load_kegs():
+    try:
+        from storage import keg_registry
+
+        return keg_registry.load_kegs()
+    except Exception:
+        return []
+
+
+def _append_keg_html(p, kegs):
+    p.append("<hr><h4>Kegs ({})</h4>".format(len(kegs)))
+    if not kegs:
+        p.append("<p>No saved keg</p>")
+        return
+
+    for idx, keg in enumerate(kegs):
+        name = keg.get("name", "")
+        p.append("<fieldset><legend>{}</legend>".format(_html_escape(name)))
+        p.append(
+            "<p>Keg name<br><input type='text' name='keg_name_{0}' value='{1}' maxlength='32'></p>".format(
+                idx,
+                _html_escape(name),
+            )
+        )
+        p.append(
+            "<p>Empty weight<br><input type='number' name='keg_empty_weight_g_{0}' value='{1}' min='0.1' step='0.1'> g</p>".format(
+                idx,
+                _html_escape(_fmt_number(keg.get("empty_weight_g", 0), decimals=1)),
+            )
+        )
+        p.append(
+            "<p>Max volume<br><input type='number' name='keg_max_volume_l_{0}' value='{1}' min='0.1' step='0.1'> L</p>".format(
+                idx,
+                _html_escape(_fmt_number(keg.get("max_volume_l", 0), decimals=1)),
+            )
+        )
+        p.append(
+            "<p><button type='submit' formaction='/kegs/delete' name='idx' value='{0}'>Delete {1}</button></p>".format(
+                idx,
+                _html_escape(name),
+            )
+        )
+        p.append("</fieldset>")
+
+
+def _positive_form_float(value):
+    try:
+        number = float(value)
+    except Exception:
+        return None
+    if number <= 0:
+        return None
+    return number
+
+
+def _kegs_from_form(kegs, form):
+    updated = list(kegs)
+    changed = False
+    for idx in range(len(kegs)):
+        name_field = "keg_name_{}".format(idx)
+        weight_field = "keg_empty_weight_g_{}".format(idx)
+        volume_field = "keg_max_volume_l_{}".format(idx)
+        if name_field not in form and weight_field not in form and volume_field not in form:
+            continue
+
+        name = str(form.get(name_field, updated[idx].get("name", "")) or "").strip()
+        empty_weight_g = _positive_form_float(form.get(weight_field, updated[idx].get("empty_weight_g", 0)))
+        max_volume_l = _positive_form_float(form.get(volume_field, updated[idx].get("max_volume_l", 0)))
+        if not name or empty_weight_g is None or max_volume_l is None:
+            return None
+
+        keg = dict(updated[idx])
+        keg["name"] = name
+        keg["empty_weight_g"] = empty_weight_g
+        keg["max_volume_l"] = max_volume_l
+        if keg != updated[idx]:
+            changed = True
+        updated[idx] = keg
+    return updated if changed else kegs
+
+
+def render_minimal_form_html(values, saved=False, error="", kegs=None):
     p = []
     p.append("<!doctype html><html><head><meta charset='utf-8'>")
     p.append("<meta name='viewport' content='width=device-width,initial-scale=1'>")
@@ -180,6 +271,7 @@ def render_minimal_form_html(values, saved=False, error=""):
         else:
             p.append("<input type='{0}' name='{1}' value='{2}'>".format(typ, key, _html_escape(val)))
         p.append("</p>")
+    _append_keg_html(p, kegs or [])
     p.append("<p><button type='submit'>Save and reboot</button></p></form>")
     p.append("<form method='post' action='/update'><p><button type='submit'>UPDATE APP</button></p></form>")
     p.append("</body></html>")
@@ -642,7 +734,7 @@ class SetupPortalService:
                 client,
                 200,
                 "text/html; charset=utf-8",
-                render_minimal_form_html(_current_values()),
+                render_minimal_form_html(_current_values(), kegs=_load_kegs()),
             )
             return
 
@@ -657,6 +749,16 @@ class SetupPortalService:
                     updates[key] = key in form and str(form.get(key, "")).lower() in ("1", "true", "on", "yes")
                 elif key in form:
                     updates[key] = form.get(key)
+            kegs = _load_kegs()
+            updated_kegs = _kegs_from_form(kegs, form)
+            if updated_kegs is None:
+                self._send(
+                    client,
+                    400,
+                    "text/html; charset=utf-8",
+                    render_minimal_form_html(dict(_current_values(), **updates), error="Invalid fields", kegs=kegs),
+                )
+                return
             try:
                 from storage import config_registry
 
@@ -668,9 +770,19 @@ class SetupPortalService:
                     client,
                     400,
                     "text/html; charset=utf-8",
-                    render_minimal_form_html(dict(_current_values(), **updates), error=errors),
+                    render_minimal_form_html(dict(_current_values(), **updates), error=errors, kegs=updated_kegs),
                 )
                 return
+            if updated_kegs is not kegs:
+                try:
+                    from storage import keg_registry
+
+                    kegs_saved = keg_registry.save_kegs(keg_registry.KEG_FILE, updated_kegs)
+                except Exception:
+                    kegs_saved = False
+                if not kegs_saved:
+                    self._send(client, 500, "text/html; charset=utf-8", "Keg save error")
+                    return
             self._send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
             try:
                 import machine
@@ -679,6 +791,37 @@ class SetupPortalService:
                 machine.reset()
             except Exception:
                 pass
+            return
+
+        if method == "POST" and path == "/kegs/delete":
+            form = parse_form_urlencoded(body)
+            if not self._token_ok(query, form):
+                self._send(client, 403, body="Forbidden")
+                return
+            try:
+                from storage import keg_registry
+
+                kegs = keg_registry.load_kegs()
+                updated = keg_registry.delete_keg(kegs, form.get("idx"))
+                if updated is None:
+                    self._send(client, 400, "text/html; charset=utf-8", "Invalid fields")
+                    return
+                if not keg_registry.save_kegs(keg_registry.KEG_FILE, updated):
+                    self._send(client, 500, "text/html; charset=utf-8", "Keg save error")
+                    return
+            except Exception as e:
+                self._send(client, 500, "text/html; charset=utf-8", "Keg save error: {}".format(e))
+                return
+            location = "/?saved=1"
+            if self._cfg.get("require_token"):
+                location = "/?saved=1&k={}".format(self._token)
+            self._send(
+                client,
+                303,
+                "text/plain; charset=utf-8",
+                "",
+                headers={"Location": location},
+            )
             return
 
         if method == "POST" and path == "/update":
