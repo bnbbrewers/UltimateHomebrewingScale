@@ -89,6 +89,54 @@ def _response_text(response):
     return ""
 
 
+def _print_exception(e):
+    try:
+        import sys
+
+        if hasattr(sys, "print_exception"):
+            sys.print_exception(e)
+            return
+    except Exception:
+        pass
+    try:
+        import traceback
+
+        traceback.print_exception(type(e), e, getattr(e, "__traceback__", None))
+    except Exception:
+        try:
+            print(repr(e))
+        except Exception:
+            pass
+
+
+def _log_github_api_failure(url, attempt, retries, use_headers, err=None, response=None):
+    try:
+        status = None
+        if response is not None:
+            status = getattr(response, "status_code", None)
+            if status is None:
+                status = getattr(response, "status", None)
+        print(
+            "[updater] GitHub API request failed: attempt={}/{} headers={} status={} url={}".format(
+                attempt + 1,
+                retries,
+                "yes" if use_headers else "no",
+                status,
+                url,
+            )
+        )
+        if response is not None:
+            body = _response_text(response)
+            if body:
+                if len(body) > 300:
+                    body = body[:300] + "..."
+                print("[updater] GitHub API response body: {}".format(body))
+    except Exception:
+        pass
+    if err is not None:
+        _print_exception(err)
+
+
 def _is_rate_limited(response):
     status = getattr(response, "status_code", None)
     if status is None:
@@ -363,36 +411,36 @@ def _github_api_get_json(url, requests_module, retries=4, i18n=None):
     }
     last_err = None
     for attempt in range(retries):
-        for use_headers in (True, False):
-            r = None
+        r = None
+        try:
+            _gc_hard(cycles=2, pause_ms=20)
+            r = _request_get(requests_module, url, headers=headers)
+            status = getattr(r, "status_code", None)
+            if status is None:
+                status = getattr(r, "status", None)
+            if _is_rate_limited(r):
+                err = RuntimeError(_t(i18n, "updater.github_rate_limited", "GitHub API limit reached, retry later"))
+                _log_github_api_failure(url, attempt, retries, True, err=err, response=r)
+                raise err
+            if status != 200:
+                err = RuntimeError("HTTP %s: %s" % (status, url))
+                _log_github_api_failure(url, attempt, retries, True, err=err, response=r)
+                raise err
+            return r.json()
+        except TypeError as e:
+            last_err = e
+            _log_github_api_failure(url, attempt, retries, True, err=e)
+            break
+        except OSError as e:
+            last_err = e
+            _log_github_api_failure(url, attempt, retries, True, err=e)
+            _gc_hard(cycles=3, pause_ms=80)
+        finally:
             try:
-                _gc_hard(cycles=2, pause_ms=20)
-                if use_headers:
-                    r = _request_get(requests_module, url, headers=headers)
-                else:
-                    r = _request_get(requests_module, url)
-                status = getattr(r, "status_code", None)
-                if status is None:
-                    status = getattr(r, "status", None)
-                if _is_rate_limited(r):
-                    raise RuntimeError(_t(i18n, "updater.github_rate_limited", "GitHub API limit reached, retry later"))
-                if status != 200:
-                    raise RuntimeError("HTTP %s: %s" % (status, url))
-                return r.json()
-            except TypeError as e:
-                last_err = e
-                if use_headers:
-                    continue
-                break
-            except OSError as e:
-                last_err = e
-                _gc_hard(cycles=3, pause_ms=80)
-            finally:
-                try:
-                    if r is not None:
-                        r.close()
-                except Exception:
-                    pass
+                if r is not None:
+                    r.close()
+            except Exception:
+                pass
         try:
             time.sleep_ms(200 + (attempt * 250))
         except Exception:
