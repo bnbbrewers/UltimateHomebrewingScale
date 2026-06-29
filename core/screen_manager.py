@@ -1,11 +1,10 @@
 """
-Screen manager that instantiates all screens once at boot.
+Screen manager that lazy-loads screens to keep heap pressure low.
 """
 
 import gc
 
 from ui import screen_ids
-from ui.launcher_screen import LauncherScreen
 
 try:
     import config
@@ -33,20 +32,24 @@ def _mem_snapshot(tag, enabled=True, collect=False):
 
 
 class ScreenManager:
-    def __init__(self, i18n=None):
+    def __init__(self, i18n=None, initial_screen_id=None):
         _collect_runtime()
         _mem_snapshot("screen.init.start", enabled=_DEBUG, collect=True)
         self._i18n = i18n
-        launcher = LauncherScreen(i18n=i18n)
-        _collect_runtime()
-        _mem_snapshot("screen.after_launcher", enabled=_DEBUG, collect=True)
-        self._screens = {
-            screen_ids.LAUNCHER: launcher,
-        }
+        self._screens = {}
+        if initial_screen_id in (None, screen_ids.LAUNCHER):
+            self._screens[screen_ids.LAUNCHER] = self._new_launcher_screen()
+            _collect_runtime()
+            _mem_snapshot("screen.after_launcher", enabled=_DEBUG, collect=True)
         self._active_id = None
         self._cleanup_screen = None
         _collect_runtime()
         _mem_snapshot("screen.init.done", enabled=_DEBUG, collect=True)
+
+    def _new_launcher_screen(self):
+        from ui.launcher_screen import LauncherScreen
+
+        return LauncherScreen(i18n=self._i18n)
 
     def _create_lazy_screen(self, screen_id):
         if screen_id in self._screens:
@@ -54,7 +57,7 @@ class ScreenManager:
         if screen_id == screen_ids.LAUNCHER:
             _collect_runtime()
             _mem_snapshot("screen.lazy.launcher.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = LauncherScreen(i18n=self._i18n)
+            self._screens[screen_id] = self._new_launcher_screen()
             _collect_runtime()
             _mem_snapshot("screen.lazy.launcher", enabled=_DEBUG, collect=True)
             return
