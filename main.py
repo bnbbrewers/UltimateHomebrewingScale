@@ -134,12 +134,12 @@ def main():
     apis = ApiFactory().as_dict()
     mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
 
-    screen_manager = ScreenManager(i18n=i18n_instance)
-    mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
     initial_app_id = None
+    initial_screen_id = None
     startup_ready = _startup_config_ready()
     if startup_ready and _update_requested():
         initial_app_id = "updater_app"
+        initial_screen_id = "updater"
     elif not startup_ready:
         initial_app_id = "settings_app"
     if DEBUG:
@@ -147,6 +147,8 @@ def main():
             print("[BOOTCFG] initial_app_id={}".format(initial_app_id))
         except Exception:
             pass
+    screen_manager = ScreenManager(i18n=i18n_instance, initial_screen_id=initial_screen_id)
+    mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
     app_manager = AppManager(
         screen_manager=screen_manager,
         hardware=hardware,
