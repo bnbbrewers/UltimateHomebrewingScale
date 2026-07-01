@@ -140,6 +140,37 @@ def wifi_credentials_ready():
     return bool(ssid)
 
 
+def wifi_credentials_report():
+    report = {
+        "nvs_ssid": False,
+        "config_path": "",
+        "config_exists": False,
+        "config_ssid": False,
+        "error": "",
+    }
+    try:
+        nvs_ssid, _nvs_password = _read_wifi_from_nvs()
+        report["nvs_ssid"] = bool(nvs_ssid)
+    except Exception as e:
+        report["error"] = "nvs: {}".format(e)
+
+    path = resolve_config_path()
+    report["config_path"] = path
+    try:
+        text = read_config_text(config_path=path)
+        report["config_exists"] = True
+        for line in text.splitlines():
+            m = _ASSIGN_RE.match(line)
+            if m and m.group(1) == "WIFI_SSID":
+                report["config_ssid"] = bool(_parse_literal(m.group(2)))
+                break
+    except Exception as e:
+        if report["error"]:
+            report["error"] += "; "
+        report["error"] += "config: {}".format(e)
+    return report
+
+
 def _write_wifi_to_nvs(ssid, password):
     try:
         import esp32

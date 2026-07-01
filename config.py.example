@@ -30,3 +30,6 @@ DEBUG = False
 
 # Release channel used by the hidden updater app: "stable" or "prerelease"
 UPDATE_CHANNEL = "stable"
+
+# Hidden debug flag: try the updater on every boot.
+UPDATE_ON_BOOT = False
