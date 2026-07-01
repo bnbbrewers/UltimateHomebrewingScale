@@ -115,7 +115,7 @@ class AppManager:
             _mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
             return True
         if app_id == "updater_app":
-            from apps.updater_app import UpdaterApp
+            from updater.update_app import UpdaterApp
 
             self._apps[app_id] = UpdaterApp(
                 screen_manager,

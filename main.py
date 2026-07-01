@@ -52,6 +52,11 @@ def _load_i18n():
 
 def _update_requested():
     try:
+        if bool(getattr(config, "UPDATE_ON_BOOT", False)):
+            return True
+    except Exception:
+        pass
+    try:
         from storage import config_registry
 
         return config_registry.is_update_requested()
@@ -139,7 +144,7 @@ def main():
     startup_ready = _startup_config_ready()
     if startup_ready and _update_requested():
         initial_app_id = "updater_app"
-        initial_screen_id = "updater"
+        initial_screen_id = "simple_message"
     elif not startup_ready:
         initial_app_id = "settings_app"
     if DEBUG:

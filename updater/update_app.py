@@ -6,11 +6,31 @@ This app is intentionally not present in the launcher. It can be selected as an
 initial app by firmware/startup code when an update has been requested.
 """
 
-from .base_app import BaseApp
+from apps.base_app import BaseApp
 from ui import screen_ids
+
+try:
+    import config as _config
+
+    _DEBUG = bool(getattr(_config, "DEBUG", False))
+except Exception:
+    _DEBUG = False
+
+try:
+    from memory_debug import snapshot as _debug_snapshot
+except Exception:
+    _debug_snapshot = None
 
 
 UPDATE_COLOR = 0x1565C0
+
+
+def _mem_snapshot(tag):
+    if _DEBUG and _debug_snapshot:
+        try:
+            _debug_snapshot(tag, enabled=True, collect=False)
+        except Exception:
+            pass
 
 
 class UpdaterApp(BaseApp):
@@ -26,11 +46,13 @@ class UpdaterApp(BaseApp):
         super().on_enter()
         self._waiting_restart = False
         self._failed = False
-        self._screen = self.screen_manager.get(screen_ids.UPDATER)
-        self.screen_manager.show(screen_ids.UPDATER)
+        self._screen = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)
+        self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
         self._screen.configure(
             title=self._text("updater.title", "Updater"),
+            message=self._text("updater.ready", "Preparation..."),
             title_bg_color=UPDATE_COLOR,
+            show_ok_button=False,
         )
         self._flush_lvgl()
         self._run_update()
@@ -46,20 +68,40 @@ class UpdaterApp(BaseApp):
 
     def _run_update(self):
         try:
-            from core import updater
+            self._screen.set_message(self._text("updater.wifi_connecting", "Connecting Wi-Fi"))
+            self._flush_lvgl()
+            wifi = self.hardware.wifi
+            if wifi is not None and hasattr(wifi, "ensure_connected"):
+                if not wifi.ensure_connected(timeout_s=25):
+                    raise RuntimeError("WiFi connect timeout")
 
-            updater.update(
+            _mem_snapshot("updater_app.before_import_runner")
+            from updater.workflow import update
+            _mem_snapshot("updater_app.after_import_runner")
+
+            update(
                 channel=self._update_channel(),
                 progress_callback=self._on_progress,
                 wifi_device=self.hardware.wifi,
+                ensure_wifi=False,
                 i18n=self.i18n,
             )
             self._waiting_restart = True
-            self._screen.show_done(self._text("updater.done_restart", "updater.done_restart"))
+            self._screen.configure(
+                title=self._text("updater.title", "Updater"),
+                message=self._text("updater.done_restart", "updater.done_restart"),
+                title_bg_color=UPDATE_COLOR,
+                show_ok_button=True,
+            )
             self._flush_lvgl()
         except Exception as e:
             self._failed = True
-            self._screen.show_error(str(e))
+            self._screen.configure(
+                title=self._text("updater.error", "Erreur"),
+                message=str(e),
+                title_bg_color=0xD32F2F,
+                show_ok_button=True,
+            )
             self._flush_lvgl()
             try:
                 import sys
@@ -80,8 +122,11 @@ class UpdaterApp(BaseApp):
         total = event.get("total", 0)
         if current and total:
             message = "{} {}/{}".format(message, current, total)
-        self._screen.set_status(message, detail)
-        self._screen.set_progress(event.get("percent", 0))
+        if event.get("stage") == "release":
+            message = self._text("updater.searching_version", "Searching for a new version...")
+        if detail:
+            message = "{}\n{}".format(message, detail)
+        self._screen.set_message(message)
         self._flush_lvgl()
 
     def _update_channel(self):
