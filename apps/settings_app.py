@@ -99,6 +99,7 @@ class SettingsApp(BaseApp):
                     wifi_device=self.hardware.wifi,
                     debug=debug_portal,
                     i18n=self.i18n,
+                    before_client=self._release_screen_for_portal_client,
                 )
                 gc.collect()
                 if self._debug:
@@ -157,6 +158,11 @@ class SettingsApp(BaseApp):
             pass
 
     def _release_screen_for_portal_client(self):
+        if self._debug:
+            try:
+                print("[settings] portal client cleanup begin")
+            except Exception:
+                pass
         self._screen = None
         cleanup = getattr(self.screen_manager, "memory_cleanup", None)
         if cleanup:
@@ -165,11 +171,21 @@ class SettingsApp(BaseApp):
                     loading_message=self.t("settings.portal_in_progress"),
                     loading_color=0x7E57C2,
                 )
+                if self._debug:
+                    try:
+                        print("[settings] portal client cleanup done via memory_cleanup")
+                    except Exception:
+                        pass
                 return
             except Exception:
                 pass
         try:
             self.screen_manager.release(screen_ids.SETTINGS)
+            if self._debug:
+                try:
+                    print("[settings] portal client cleanup done via release")
+                except Exception:
+                    pass
         except Exception:
             pass
 

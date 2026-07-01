@@ -30,16 +30,17 @@ standalone `install.py` bootstrap script is no longer part of the project.
 
 ## 4) Update the project from GitHub
 
-Use the hidden updater app (`apps/updater_app.py`) when the device needs to pull
+Use the hidden updater app (`updater/update_app.py`) when the device needs to pull
 the latest files from GitHub. The updater:
 
 - connects to Wi‑Fi using the same mechanism as `devices/wifi.py`:
   1. UIFlow NVS (`uiflow:ssid0/pswd0`)
   2. fallback `config.py` (`WIFI_SSID` / `WIFI_PASSWORD`)
-- overwrites existing application files
-- skips `*.md`, `.gitignore`, `firmware/`, `examples/` directories, and files
-  `*.example` / names containing `example`
-- downloads application files from the latest GitHub Release
+- downloads a compact TAR diff from the latest GitHub Release
+- extracts changed application files locally after closing the HTTPS response
+- applies file deletions listed by the update manifest
+- requires the device app version to match the manifest `base_version`; otherwise
+  install the full firmware image
 - uses `UPDATE_CHANNEL = "stable"` for the latest stable release; set
   `UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release
 - never updates directly from branches
