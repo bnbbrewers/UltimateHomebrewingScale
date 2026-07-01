@@ -82,6 +82,7 @@ jobs:
             find dist/fs-user -type f -iname "*.md" >&2
             exit 1
           fi
+          echo "$TAG_NAME" > dist/fs-user/uhs-version.txt
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -141,27 +142,78 @@ jobs:
           import hashlib
           import json
           import os
+          import subprocess
+          import tarfile
           from pathlib import Path
 
           firmware = Path("UHS-firmwareM5Dial.bin")
           sha256 = Path("UHS-firmwareM5Dial.sha256").read_text(encoding="utf-8").split()[0]
           included_count = sum(1 for _ in Path("../fs-user").rglob("*") if _.is_file())
           code_archive = f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
+          update_archive = f"uhs-update-diff-{os.environ['TAG_NAME']}.tar"
           web_download_base = "https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest"
-          raw_base = "https://raw.githubusercontent.com/bnbbrewers/UltimateHomebrewingScale"
-          update_files = []
-          for path in sorted(p for p in Path("../fs-user").rglob("*") if p.is_file()):
-              rel_path = path.relative_to("../fs-user").as_posix()
-              file_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
-              raw_url = f"{raw_base}/{os.environ['TAG_NAME']}/{rel_path}"
-              update_files.append(
-                  {
-                      "path": rel_path,
-                      "url": raw_url,
-                      "size": path.stat().st_size,
-                      "sha256": file_sha256,
-                  }
-              )
+
+          def runtime_path(path):
+              p = path.replace("\\", "/")
+              lp = p.lower()
+              name = p.rsplit("/", 1)[-1]
+              if not p or p == "config.py":
+                  return False
+              if lp == "license":
+                  return False
+              if lp == ".gitignore":
+                  return False
+              if lp.endswith(".md"):
+                  return False
+              if lp.startswith(("docs/", "firmware/", ".github/")):
+                  return False
+              if "/examples/" in lp or lp.startswith("examples/") or lp.endswith("/examples"):
+                  return False
+              if name.endswith(".example") and lp != "config.py.example":
+                  return False
+              if "example" in name and lp != "config.py.example":
+                  return False
+              if lp.startswith("assets/icons/origin/") or "/icons/origin/" in lp:
+                  return False
+              return True
+
+          try:
+              base_version = subprocess.check_output(
+                  ["git", "describe", "--tags", "--match", "v*", "--abbrev=0", f"{os.environ['TAG_NAME']}^"],
+                  text=True,
+              ).strip()
+          except subprocess.CalledProcessError as exc:
+              raise SystemExit("No previous tag found; publish full firmware instead of app update") from exc
+
+          diff = subprocess.check_output(
+              ["git", "diff", "--name-status", base_version, os.environ["TAG_NAME"]],
+              text=True,
+          ).splitlines()
+          changed = set()
+          deleted = []
+          for line in diff:
+              parts = line.split("\t")
+              if not parts:
+                  continue
+              status = parts[0]
+              path = parts[-1]
+              if not runtime_path(path):
+                  continue
+              if status.startswith("D"):
+                  deleted.append(path)
+              elif (Path("../fs-user") / path).is_file():
+                  changed.add(path)
+
+          changed.add("uhs-version.txt")
+          archive_path = Path(update_archive)
+          with tarfile.open(archive_path, "w") as archive:
+              for rel_path in sorted(changed):
+                  archive.add(Path("../fs-user") / rel_path, arcname=rel_path)
+          archive_sha256 = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+          archive_url = (
+              "https://github.com/bnbbrewers/UltimateHomebrewingScale/"
+              f"releases/download/{os.environ['TAG_NAME']}/{update_archive}"
+          )
           build_manifest = {
               "name": "Ultimate Homebrewing Scale M5Dial firmware",
               "tag": os.environ["TAG_NAME"],
@@ -170,6 +222,7 @@ jobs:
               "source_branch": "main",
               "firmware": "UHS-firmwareM5Dial.bin",
               "code": code_archive,
+              "update_archive": update_archive,
               "updater_manifest": "uhs-update-manifest.json",
               "web_install_manifest": "UHS-web-install-manifest.json",
               "web_install_url": f"{web_download_base}/UHS-web-install-manifest.json",
@@ -180,9 +233,16 @@ jobs:
           }
           update_manifest = {
               "version": os.environ["TAG_NAME"],
+              "base_version": base_version,
               "channel": "stable",
-              "files": update_files,
-              "delete": ["install.py"],
+              "strategy": "tar-diff",
+              "archive": {
+                  "name": update_archive,
+                  "url": archive_url,
+                  "size": archive_path.stat().st_size,
+                  "sha256": archive_sha256,
+              },
+              "delete": sorted(set(deleted + ["install.py"])),
           }
           web_install_manifest = {
               "name": "Ultimate Homebrewing Scale",
@@ -226,6 +286,7 @@ jobs:
             dist/out/UHS-build-manifest.json
             dist/out/UHS-web-install-manifest.json
             dist/out/uhs-update-manifest.json
+            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
 
       - name: Prepare GitHub Pages files
@@ -266,4 +327,5 @@ jobs:
             dist/out/UHS-build-manifest.json
             dist/out/UHS-web-install-manifest.json
             dist/out/uhs-update-manifest.json
+            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip

@@ -1,7 +1,7 @@
 """
 Updater screen.
 
-Owns LVGL/m5ui widgets only. Update orchestration lives in apps.updater_app.
+Owns LVGL/m5ui widgets only. Update orchestration lives in updater.update_app.
 """
 
 import lvgl as lv

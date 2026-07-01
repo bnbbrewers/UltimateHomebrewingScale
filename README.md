@@ -191,7 +191,7 @@ sets a flag and reboots into the hidden updater app.
 
 ### Updater
 
-The hidden updater downloads application files from the latest GitHub Release.
+The hidden updater downloads a compact TAR diff from the latest GitHub Release.
 `UPDATE_CHANNEL = "stable"` installs the latest stable release. Set
 `UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release.
 The device never updates directly from branches. It skips docs, firmware,
