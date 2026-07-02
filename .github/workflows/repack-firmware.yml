@@ -4,6 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+      - 'pre-v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Tag to repack
+        required: true
+      prerelease:
+        description: Build as prerelease channel
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -23,6 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
 
       - name: Verify tag commit belongs to main
         shell: bash
@@ -41,7 +55,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+            IS_PRERELEASE="${{ github.event.release.prerelease }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="${{ inputs.tag_name }}"
+            IS_PRERELEASE="${{ inputs.prerelease }}"
+          else
+            TAG_NAME="${GITHUB_REF_NAME}"
+            IS_PRERELEASE="false"
+            if [[ "$TAG_NAME" == pre-v* || "$TAG_NAME" == *-alpha* || "$TAG_NAME" == *-beta* || "$TAG_NAME" == *-rc* ]]; then
+              IS_PRERELEASE="true"
+            fi
+          fi
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            echo "RELEASE_CHANNEL=prerelease" >> "$GITHUB_ENV"
+            echo "PUBLISH_STABLE_LATEST=false" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_CHANNEL=stable" >> "$GITHUB_ENV"
+            echo "PUBLISH_STABLE_LATEST=true" >> "$GITHUB_ENV"
+          fi
+          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
           echo "HEAD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
@@ -234,7 +268,7 @@ jobs:
           update_manifest = {
               "version": os.environ["TAG_NAME"],
               "base_version": base_version,
-              "channel": "stable",
+              "channel": os.environ["RELEASE_CHANNEL"],
               "strategy": "tar-diff",
               "archive": {
                   "name": update_archive,
@@ -290,6 +324,7 @@ jobs:
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
 
       - name: Prepare GitHub Pages files
+        if: env.PUBLISH_STABLE_LATEST == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -302,14 +337,17 @@ jobs:
           cp dist/out/UHS-build-manifest.json dist/pages/SoftwareInstallationGuide/latest/
 
       - name: Configure GitHub Pages
+        if: env.PUBLISH_STABLE_LATEST == 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages artifact
+        if: env.PUBLISH_STABLE_LATEST == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/pages
 
       - name: Deploy GitHub Pages
+        if: env.PUBLISH_STABLE_LATEST == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -319,7 +357,8 @@ jobs:
           name: UHS firmware ${{ env.TAG_NAME }}
           tag_name: ${{ env.TAG_NAME }}
           target_commitish: ${{ env.HEAD_SHA }}
-          make_latest: true
+          make_latest: ${{ env.PUBLISH_STABLE_LATEST }}
+          prerelease: ${{ env.RELEASE_CHANNEL == 'prerelease' }}
           generate_release_notes: true
           files: |
             dist/out/UHS-firmwareM5Dial.bin
