@@ -27,9 +27,10 @@ jobs:
   repack:
     name: Repack firmware from main tag
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      tag_name: ${{ steps.release_names.outputs.tag_name }}
+      release_channel: ${{ steps.release_names.outputs.release_channel }}
+      publish_stable_latest: ${{ steps.release_names.outputs.publish_stable_latest }}
 
     steps:
       - name: Checkout tagged commit
@@ -52,6 +53,7 @@ jobs:
           version: v5.4.2
 
       - name: Prepare release names
+        id: release_names
         shell: bash
         run: |
           set -euo pipefail
@@ -71,11 +73,18 @@ jobs:
           if [ "$IS_PRERELEASE" = "true" ]; then
             echo "RELEASE_CHANNEL=prerelease" >> "$GITHUB_ENV"
             echo "PUBLISH_STABLE_LATEST=false" >> "$GITHUB_ENV"
+            RELEASE_CHANNEL="prerelease"
+            PUBLISH_STABLE_LATEST="false"
           else
             echo "RELEASE_CHANNEL=stable" >> "$GITHUB_ENV"
             echo "PUBLISH_STABLE_LATEST=true" >> "$GITHUB_ENV"
+            RELEASE_CHANNEL="stable"
+            PUBLISH_STABLE_LATEST="true"
           fi
           echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "release_channel=${RELEASE_CHANNEL}" >> "$GITHUB_OUTPUT"
+          echo "publish_stable_latest=${PUBLISH_STABLE_LATEST}" >> "$GITHUB_OUTPUT"
           echo "HEAD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
@@ -323,34 +332,6 @@ jobs:
             dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
 
-      - name: Prepare GitHub Pages files
-        if: env.PUBLISH_STABLE_LATEST == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p dist/pages
-          cp -R docs/. dist/pages/
-          mkdir -p dist/pages/SoftwareInstallationGuide/latest
-          cp dist/out/UHS-firmwareM5Dial.bin dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-web-install-manifest.json dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-firmwareM5Dial.sha256 dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-build-manifest.json dist/pages/SoftwareInstallationGuide/latest/
-
-      - name: Configure GitHub Pages
-        if: env.PUBLISH_STABLE_LATEST == 'true'
-        uses: actions/configure-pages@v5
-
-      - name: Upload GitHub Pages artifact
-        if: env.PUBLISH_STABLE_LATEST == 'true'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/pages
-
-      - name: Deploy GitHub Pages
-        if: env.PUBLISH_STABLE_LATEST == 'true'
-        id: deployment
-        uses: actions/deploy-pages@v4
-
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -368,3 +349,49 @@ jobs:
             dist/out/uhs-update-manifest.json
             dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
+
+  deploy_pages:
+    name: Deploy stable firmware to GitHub Pages
+    needs: repack
+    if: needs.repack.outputs.publish_stable_latest == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
+
+      - name: Download repacked firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: UHS-firmware-${{ needs.repack.outputs.tag_name }}
+          path: dist/out
+
+      - name: Prepare GitHub Pages files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/pages
+          cp -R docs/. dist/pages/
+          mkdir -p dist/pages/SoftwareInstallationGuide/latest
+          cp dist/out/UHS-firmwareM5Dial.bin dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-web-install-manifest.json dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-firmwareM5Dial.sha256 dist/pages/SoftwareInstallationGuide/latest/
+          cp dist/out/UHS-build-manifest.json dist/pages/SoftwareInstallationGuide/latest/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
