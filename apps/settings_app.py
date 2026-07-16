@@ -17,6 +17,7 @@ class SettingsApp(BaseApp):
         self._portal = None
         self._debug = False
         self._tick_error_logged = False
+        self._portal_status_shown = False
         try:
             import config
 
@@ -74,6 +75,7 @@ class SettingsApp(BaseApp):
     def on_enter(self):
         super().on_enter()
         self._tick_error_logged = False
+        self._portal_status_shown = False
         self._ensure_config_file()
         try:
             import gc
@@ -99,7 +101,6 @@ class SettingsApp(BaseApp):
                     wifi_device=self.hardware.wifi,
                     debug=debug_portal,
                     i18n=self.i18n,
-                    before_client=self._release_screen_for_portal_client,
                 )
                 gc.collect()
                 if self._debug:
@@ -195,6 +196,12 @@ class SettingsApp(BaseApp):
         try:
             if self._portal:
                 self._portal.tick()
+                consume_events = getattr(self._portal, "consume_events", None)
+                if consume_events:
+                    for event in consume_events():
+                        if event == "INITIAL_PAGE_SERVED" and not self._portal_status_shown:
+                            self._portal_status_shown = True
+                            self._release_screen_for_portal_client()
         except Exception as e:
             if not self._tick_error_logged:
                 self._tick_error_logged = True

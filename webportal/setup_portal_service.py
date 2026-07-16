@@ -1,7 +1,7 @@
-"""Minimal setup portal service loaded by Settings.
+"""Setup portal service loaded by Settings.
 
-The full form renderer/router stays in setup_portal.py and is imported only
-when a browser actually connects. Entering Settings only needs networking.
+Entering Settings starts networking; form rendering and request handling run
+only after a browser connects.
 """
 
 import time
@@ -35,6 +35,9 @@ _EDITABLE_FIELDS = (
 
 class _SendTimeout(Exception):
     pass
+
+
+INITIAL_PAGE_SERVED = "INITIAL_PAGE_SERVED"
 
 
 def _load_setup_cfg():
@@ -279,11 +282,10 @@ def render_minimal_form_html(values, saved=False, error="", kegs=None):
 
 
 class SetupPortalService:
-    def __init__(self, wifi_device=None, debug=False, i18n=None, before_client=None):
+    def __init__(self, wifi_device=None, debug=False, i18n=None):
         self._wifi = wifi_device
         self._debug = bool(debug)
         self._i18n = i18n
-        self._before_client = before_client
         self._cfg = _load_setup_cfg()
         self._listener = None
         self._mode = "none"
@@ -292,7 +294,8 @@ class SetupPortalService:
         self._ap_ip = ""
         self._url = ""
         self._ap = None
-        self._before_client_ran = False
+        self._events = []
+        self._initial_page_served = False
 
         self._token = self._cfg.get("token", "")
         if self._cfg.get("require_token") and not self._token:
@@ -300,7 +303,6 @@ class SetupPortalService:
                 self._token = str(time.ticks_ms())
             except Exception:
                 self._token = "setup"
-        self._log("init before_client={}".format(self._before_client is not None))
 
     def _log(self, *args):
         if not self._debug:
@@ -358,6 +360,11 @@ class SetupPortalService:
     def suspend(self):
         self._paused = True
 
+    def consume_events(self):
+        events = tuple(self._events)
+        self._events = []
+        return events
+
     def tick(self):
         if self._paused or not self._listener:
             return
@@ -366,14 +373,15 @@ class SetupPortalService:
         except Exception:
             return
         self._log("accept", addr)
+        initial_page_completed = False
         try:
             method, target, _headers, body = self._read_request(client)
             if not method:
                 self._log("empty request")
                 return
-            if self._request_needs_screen_memory(method, target):
-                self._run_before_client()
             self._handle_request(client, method, target, body)
+            path, _query = _split_target(target)
+            initial_page_completed = method == "GET" and path == "/"
         except _SendTimeout as e:
             self._log("client send failed:", e)
         except Exception as e:
@@ -387,44 +395,16 @@ class SetupPortalService:
             self._log("client closed")
         except Exception:
             pass
+        if initial_page_completed and not self._initial_page_served:
+            self._initial_page_served = True
+            self._events.append(INITIAL_PAGE_SERVED)
+            self._log("event", INITIAL_PAGE_SERVED)
         try:
             import gc
 
             gc.collect()
         except Exception:
             pass
-
-    def _run_before_client(self):
-        if self._before_client_ran:
-            self._log("cleanup skip already_ran")
-            return
-        self._before_client_ran = True
-        callback = self._before_client
-        if callback is None:
-            self._log("cleanup skip no_callback")
-            return
-        try:
-            self._log("cleanup begin")
-            callback()
-            self._log("cleanup done")
-        except Exception as e:
-            self._log("before client cleanup error:", e)
-        try:
-            import gc
-
-            gc.collect()
-            gc.collect()
-        except Exception:
-            pass
-
-    @staticmethod
-    def _request_needs_screen_memory(method, target):
-        path, query = _split_target(target)
-        if query.get("nocleanup") == "1":
-            return False
-        if path in ("/health", "/diag", "/favicon.ico"):
-            return False
-        return True
 
     def _ensure_network(self):
         self._cfg = _load_setup_cfg()
