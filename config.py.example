@@ -19,7 +19,7 @@ GRAIN_WEIGHT_TOLERANCE = 20
 # Hop weighing tolerance in grams
 HOP_WEIGHT_TOLERANCE = 5
 
-# Spunding valve inertia compensation for keg filling, in milliliters
+# Spunding valve inertia compensation for keg filling
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
 
 # M5Dial Port B pins for the Unit Relay
