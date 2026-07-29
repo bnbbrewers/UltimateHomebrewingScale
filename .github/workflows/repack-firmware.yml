@@ -4,6 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+      - 'pre-v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Tag to repack
+        required: true
+      prerelease:
+        description: Build as prerelease channel
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -14,15 +27,17 @@ jobs:
   repack:
     name: Repack firmware from main tag
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      tag_name: ${{ steps.release_names.outputs.tag_name }}
+      release_channel: ${{ steps.release_names.outputs.release_channel }}
+      publish_stable_latest: ${{ steps.release_names.outputs.publish_stable_latest }}
 
     steps:
       - name: Checkout tagged commit
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
 
       - name: Verify tag commit belongs to main
         shell: bash
@@ -38,10 +53,38 @@ jobs:
           version: v5.4.2
 
       - name: Prepare release names
+        id: release_names
         shell: bash
         run: |
           set -euo pipefail
-          echo "TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+            IS_PRERELEASE="${{ github.event.release.prerelease }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="${{ inputs.tag_name }}"
+            IS_PRERELEASE="${{ inputs.prerelease }}"
+          else
+            TAG_NAME="${GITHUB_REF_NAME}"
+            IS_PRERELEASE="false"
+            if [[ "$TAG_NAME" == pre-v* || "$TAG_NAME" == *-alpha* || "$TAG_NAME" == *-beta* || "$TAG_NAME" == *-rc* ]]; then
+              IS_PRERELEASE="true"
+            fi
+          fi
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            echo "RELEASE_CHANNEL=prerelease" >> "$GITHUB_ENV"
+            echo "PUBLISH_STABLE_LATEST=false" >> "$GITHUB_ENV"
+            RELEASE_CHANNEL="prerelease"
+            PUBLISH_STABLE_LATEST="false"
+          else
+            echo "RELEASE_CHANNEL=stable" >> "$GITHUB_ENV"
+            echo "PUBLISH_STABLE_LATEST=true" >> "$GITHUB_ENV"
+            RELEASE_CHANNEL="stable"
+            PUBLISH_STABLE_LATEST="true"
+          fi
+          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "release_channel=${RELEASE_CHANNEL}" >> "$GITHUB_OUTPUT"
+          echo "publish_stable_latest=${PUBLISH_STABLE_LATEST}" >> "$GITHUB_OUTPUT"
           echo "HEAD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
@@ -234,7 +277,7 @@ jobs:
           update_manifest = {
               "version": os.environ["TAG_NAME"],
               "base_version": base_version,
-              "channel": "stable",
+              "channel": os.environ["RELEASE_CHANNEL"],
               "strategy": "tar-diff",
               "archive": {
                   "name": update_archive,
@@ -289,6 +332,46 @@ jobs:
             dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
 
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: UHS firmware ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          target_commitish: ${{ env.HEAD_SHA }}
+          make_latest: ${{ env.PUBLISH_STABLE_LATEST }}
+          prerelease: ${{ env.RELEASE_CHANNEL == 'prerelease' }}
+          generate_release_notes: true
+          files: |
+            dist/out/UHS-firmwareM5Dial.bin
+            dist/out/UHS-firmwareM5Dial.sha256
+            dist/out/UHS-build-manifest.json
+            dist/out/UHS-web-install-manifest.json
+            dist/out/uhs-update-manifest.json
+            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
+            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
+
+  deploy_pages:
+    name: Deploy stable firmware to GitHub Pages
+    needs: repack
+    if: needs.repack.outputs.publish_stable_latest == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
+
+      - name: Download repacked firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: UHS-firmware-${{ needs.repack.outputs.tag_name }}
+          path: dist/out
+
       - name: Prepare GitHub Pages files
         shell: bash
         run: |
@@ -312,20 +395,3 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: UHS firmware ${{ env.TAG_NAME }}
-          tag_name: ${{ env.TAG_NAME }}
-          target_commitish: ${{ env.HEAD_SHA }}
-          make_latest: true
-          generate_release_notes: true
-          files: |
-            dist/out/UHS-firmwareM5Dial.bin
-            dist/out/UHS-firmwareM5Dial.sha256
-            dist/out/UHS-build-manifest.json
-            dist/out/UHS-web-install-manifest.json
-            dist/out/uhs-update-manifest.json
-            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
-            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip

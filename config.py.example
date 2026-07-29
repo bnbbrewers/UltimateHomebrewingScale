@@ -1,4 +1,4 @@
-# Configuration for Brewfather API
+# Configuration for Ultimate Homebrewing Scale
 # Rename this file to config.py and fill in your credentials
 # Get credentials from: https://web.brewfather.app/tabs/settings
 
@@ -31,5 +31,5 @@ DEBUG = False
 # Release channel used by the hidden updater app: "stable" or "prerelease"
 UPDATE_CHANNEL = "stable"
 
-# Hidden debug flag: try the updater on every boot.
+# Hidden debug flag: try the updater on boot.
 UPDATE_ON_BOOT = False
