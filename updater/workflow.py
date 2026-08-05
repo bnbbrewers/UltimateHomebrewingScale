@@ -197,10 +197,14 @@ def _download_archive(url, req, size, sha):
                         total += len(chunk)
                         del chunk
                 else:
-                    content = getattr(r, "content", b"")
-                    f.write(content)
-                    total = len(content)
-                    del content
+                    iter_content = getattr(r, "iter_content", None)
+                    if not iter_content:
+                        raise RuntimeError("archive response does not support streaming")
+                    for chunk in iter_content(1024):
+                        if chunk:
+                            f.write(chunk)
+                            total += len(chunk)
+                        del chunk
             if total != int(size):
                 raise RuntimeError("archive size mismatch")
             try:
@@ -213,6 +217,9 @@ def _download_archive(url, req, size, sha):
                 raise RuntimeError("archive sha256 mismatch")
             os.rename(ARCHIVE_TMP, ARCHIVE_PATH)
             return ARCHIVE_PATH
+        except Exception:
+            _remove_file(ARCHIVE_TMP)
+            raise
         finally:
             try:
                 r.close()
@@ -257,10 +264,6 @@ def update(
     ensure_wifi=True,
     i18n=None,
 ):
-    requests_module = requests_module or http_client.default_requests_module()
-    if requests_module is None:
-        raise RuntimeError("Missing requests2 module")
-
     channel = str(channel or "stable").strip().lower()
     if channel != "prerelease":
         channel = "stable"
@@ -270,6 +273,11 @@ def update(
 
     if ensure_wifi:
         _ensure_wifi(wifi_device, wifi_timeout_s, progress_callback, i18n=i18n)
+
+    # Keep the large HTTP/TLS import out of the Wi-Fi connection peak.
+    requests_module = requests_module or http_client.default_requests_module()
+    if requests_module is None:
+        raise RuntimeError("Missing requests2 module")
 
     from . import github_release
 

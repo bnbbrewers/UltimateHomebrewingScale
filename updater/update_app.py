@@ -86,6 +86,9 @@ class UpdaterApp(BaseApp):
                 ensure_wifi=False,
                 i18n=self.i18n,
             )
+            # Keep the request set when the update fails so a later reboot can
+            # retry. This legacy UI path mirrors updater.boot behaviour.
+            self._clear_update_request()
             self._waiting_restart = True
             self._screen.configure(
                 title=self._text("updater.title", "Updater"),
@@ -112,8 +115,6 @@ class UpdaterApp(BaseApp):
                     print("[updater] error:", e)
                 except Exception:
                     pass
-        finally:
-            self._clear_update_request()
 
     def _on_progress(self, event):
         message = event.get("message", "")
