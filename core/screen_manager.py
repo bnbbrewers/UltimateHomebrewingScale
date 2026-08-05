@@ -259,6 +259,7 @@ class ScreenManager:
             pass
 
     def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
+        _mem_snapshot("screen.memory_cleanup.before", enabled=_DEBUG, collect=False)
         keep = tuple(keep_ids or ())
         self.release_all(
             keep_ids=keep,
@@ -272,7 +273,7 @@ class ScreenManager:
         except Exception:
             pass
         _collect_runtime(cycles=2)
-        _mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
+        _mem_snapshot("screen.memory_cleanup.after", enabled=_DEBUG, collect=False)
 
     def active_screen_id(self):
         return self._active_id
