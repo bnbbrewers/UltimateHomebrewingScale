@@ -5,10 +5,6 @@ Ultimate Homebrewing Scale - persistent memory-safe runtime.
 import gc
 import os
 import time
-import M5
-from M5 import *
-import m5ui
-import lvgl as lv
 
 
 def _file_exists(path):
@@ -35,8 +31,6 @@ else:
     def mem_snapshot(*args, **kwargs):
         return None
 
-from core import ScreenManager, HardwareManager, AppManager, ApiFactory
-
 _RUNNING = True
 
 
@@ -52,16 +46,25 @@ def _load_i18n():
 
 def _update_requested():
     try:
-        if bool(getattr(config, "UPDATE_ON_BOOT", False)):
-            return True
-    except Exception:
-        pass
-    try:
-        from storage import config_registry
+        from updater.boot import is_update_requested
 
-        return config_registry.is_update_requested()
+        return is_update_requested()
     except Exception:
         return False
+
+
+def _run_boot_update_if_requested():
+    if not _update_requested():
+        return False
+    from updater.boot import run_update_boot
+
+    if run_update_boot():
+        return True
+
+    # Keep the device in the lightweight updater path. The flag remains set so
+    # the next power cycle can retry without loading the normal application.
+    while True:
+        time.sleep(60)
 
 
 def _startup_config_ready():
@@ -123,6 +126,18 @@ def request_stop():
 def main():
     global _RUNNING
     _RUNNING = True
+
+    # This branch must run before importing the normal runtime and hardware
+    # managers. The updater needs only Wi-Fi and filesystem access.
+    if _run_boot_update_if_requested():
+        return
+
+    import M5
+    from M5 import Speaker
+    import m5ui
+    import lvgl as lv
+    from core import ScreenManager, HardwareManager, AppManager, ApiFactory
+
     M5.begin()
     mem_snapshot("boot.after_m5_begin", enabled=DEBUG, collect=True)
     m5ui.init()
@@ -142,10 +157,7 @@ def main():
     initial_app_id = None
     initial_screen_id = None
     startup_ready = _startup_config_ready()
-    if startup_ready and _update_requested():
-        initial_app_id = "updater_app"
-        initial_screen_id = "simple_message"
-    elif not startup_ready:
+    if not startup_ready:
         initial_app_id = "settings_app"
     if DEBUG:
         try:

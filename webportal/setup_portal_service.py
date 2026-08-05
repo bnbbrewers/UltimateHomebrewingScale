@@ -1,7 +1,8 @@
 """Setup portal service loaded by Settings.
 
-Entering Settings starts networking; form rendering and request handling run
-only after a browser connects.
+The route dispatcher and HTML module are initialized before the QR screen is
+created.  This avoids imports competing with the screen's remaining heap on
+the M5Dial; actual HTML strings are still built only for a request.
 """
 
 import time
@@ -9,9 +10,10 @@ import time
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 AP_SETTLE_MS = 300
+CLIENT_TIMEOUT_MS = 5000
 RESPONSE_DRAIN_MS = 200
-SEND_CHUNK_SIZE = 256
-SEND_YIELD_MS = 5
+WRITE_CHUNK_SIZE = 256
+MAX_WRITE_STEPS = 16
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
@@ -31,10 +33,6 @@ _EDITABLE_FIELDS = (
     ("DEBUG", "Debug mode", "checkbox", ()),
     ("UPDATE_CHANNEL", "Release channel", "select", ("stable", "prerelease")),
 )
-
-
-class _SendTimeout(Exception):
-    pass
 
 
 INITIAL_PAGE_SERVED = "INITIAL_PAGE_SERVED"
@@ -57,6 +55,13 @@ def build_portal_url(sta_ip=None, ap_ip=None, port=PORTAL_HTTP_PORT, token=""):
     return url
 
 
+def _sleep_ms(ms):
+    if hasattr(time, "sleep_ms"):
+        time.sleep_ms(ms)
+    else:
+        time.sleep(ms / 1000.0)
+
+
 def _ticks_ms():
     if hasattr(time, "ticks_ms"):
         return time.ticks_ms()
@@ -75,26 +80,23 @@ def _ticks_diff(ticks1, ticks2):
     return ticks1 - ticks2
 
 
-def _sleep_ms(ms):
-    if hasattr(time, "sleep_ms"):
-        time.sleep_ms(ms)
-    else:
-        time.sleep(ms / 1000.0)
-
-
-def _html_escape(text):
-    s = str(text)
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-
-
-def _fmt_number(value, decimals=1):
+def _is_transient_socket_error(exc):
     try:
-        number = float(value)
+        return int(getattr(exc, "errno", exc.args[0])) in (11, 35, 110, 116)
     except Exception:
-        return str(value)
-    if abs(number - round(number)) < 0.05:
-        return str(int(round(number)))
-    return ("{:." + str(decimals) + "f}").format(number)
+        return False
+
+
+def _set_client_nonblocking(client):
+    try:
+        client.setblocking(False)
+        return True
+    except Exception:
+        try:
+            client.settimeout(0)
+            return True
+        except Exception:
+            return False
 
 
 def _url_decode(text):
@@ -139,153 +141,71 @@ def _split_target(target):
     return path, parse_form_urlencoded(query)
 
 
+def _portal_content():
+    return __import__("webportal.portal_html", None, None, ("*",))
+
+
+def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None):
+    return _portal_content().render_form_html(
+        values,
+        kegs=kegs or [],
+        include_kegs=kegs is not None,
+        error=error,
+        i18n=i18n,
+    )
+
+
+def render_kegs_html(kegs, i18n=None):
+    return _portal_content().render_form_html({}, kegs=kegs or [], include_kegs=True, i18n=i18n)
+
+
 def _current_values():
     try:
         from storage import config_registry
-
         return config_registry.load_current_values()
     except Exception:
-        pass
-
-    values = {}
-    try:
-        import config
-    except Exception:
-        config = None
-    for key, _label, typ, choices in _EDITABLE_FIELDS:
-        if typ == "checkbox":
-            default = False
-        elif typ == "select" and choices:
-            default = choices[0]
-        elif typ == "number":
-            default = 0
-        else:
-            default = ""
+        values = {}
         try:
-            values[key] = getattr(config, key, default) if config else default
+            import config
         except Exception:
-            values[key] = default
-    return values
+            config = None
+        for key, _label, typ, choices in _EDITABLE_FIELDS:
+            if typ == "checkbox":
+                default = False
+            elif typ == "select" and choices:
+                default = choices[0]
+            elif typ == "number":
+                default = 0
+            else:
+                default = ""
+            values[key] = getattr(config, key, default) if config else default
+        return values
 
 
 def _load_kegs():
     try:
         from storage import keg_registry
-
         return keg_registry.load_kegs()
     except Exception:
         return []
 
 
-def _append_keg_html(p, kegs):
-    p.append("<hr><h4>Kegs ({})</h4>".format(len(kegs)))
-    if not kegs:
-        p.append("<p>No saved keg</p>")
-        return
-
-    for idx, keg in enumerate(kegs):
-        name = keg.get("name", "")
-        p.append("<fieldset><legend>{}</legend>".format(_html_escape(name)))
-        p.append(
-            "<p>Keg name<br><input type='text' name='keg_name_{0}' value='{1}' maxlength='32'></p>".format(
-                idx,
-                _html_escape(name),
-            )
-        )
-        p.append(
-            "<p>Empty weight<br><input type='number' name='keg_empty_weight_g_{0}' value='{1}' min='0.1' step='0.1'> g</p>".format(
-                idx,
-                _html_escape(_fmt_number(keg.get("empty_weight_g", 0), decimals=1)),
-            )
-        )
-        p.append(
-            "<p>Max volume<br><input type='number' name='keg_max_volume_l_{0}' value='{1}' min='0.1' step='0.1'> L</p>".format(
-                idx,
-                _html_escape(_fmt_number(keg.get("max_volume_l", 0), decimals=1)),
-            )
-        )
-        p.append(
-            "<p><button type='submit' formaction='/kegs/delete' name='idx' value='{0}'>Delete {1}</button></p>".format(
-                idx,
-                _html_escape(name),
-            )
-        )
-        p.append("</fieldset>")
-
-
-def _positive_form_float(value):
-    try:
-        number = float(value)
-    except Exception:
-        return None
-    if number <= 0:
-        return None
-    return number
-
-
 def _kegs_from_form(kegs, form):
-    updated = list(kegs)
-    changed = False
-    for idx in range(len(kegs)):
-        name_field = "keg_name_{}".format(idx)
-        weight_field = "keg_empty_weight_g_{}".format(idx)
-        volume_field = "keg_max_volume_l_{}".format(idx)
-        if name_field not in form and weight_field not in form and volume_field not in form:
-            continue
-
-        name = str(form.get(name_field, updated[idx].get("name", "")) or "").strip()
-        empty_weight_g = _positive_form_float(form.get(weight_field, updated[idx].get("empty_weight_g", 0)))
-        max_volume_l = _positive_form_float(form.get(volume_field, updated[idx].get("max_volume_l", 0)))
-        if not name or empty_weight_g is None or max_volume_l is None:
-            return None
-
-        keg = dict(updated[idx])
-        keg["name"] = name
-        keg["empty_weight_g"] = empty_weight_g
-        keg["max_volume_l"] = max_volume_l
-        if keg != updated[idx]:
-            changed = True
-        updated[idx] = keg
-    return updated if changed else kegs
-
-
-def render_minimal_form_html(values, saved=False, error="", kegs=None):
-    p = []
-    p.append("<!doctype html><html><head><meta charset='utf-8'>")
-    p.append("<meta name='viewport' content='width=device-width,initial-scale=1'>")
-    p.append("<title>UHS setup</title></head><body><h3>UHS setup</h3>")
-    if saved:
-        p.append("<p><b>Saved. Rebooting...</b></p>")
-    if error:
-        p.append("<p><b>{}</b></p>".format(_html_escape(error)))
-    p.append("<form method='post' action='/save'>")
-    for key, label, typ, choices in _EDITABLE_FIELDS:
-        val = values.get(key, "")
-        p.append("<p>{}<br>".format(_html_escape(label)))
-        if typ == "select":
-            p.append("<select name='{}'>".format(key))
-            for choice in choices:
-                sel = " selected" if str(val) == str(choice) else ""
-                p.append("<option value='{0}'{1}>{0}</option>".format(_html_escape(choice), sel))
-            p.append("</select>")
-        elif typ == "checkbox":
-            checked = " checked" if bool(val) else ""
-            p.append("<input type='checkbox' name='{}' value='on'{}>".format(key, checked))
-        else:
-            p.append("<input type='{0}' name='{1}' value='{2}'>".format(typ, key, _html_escape(val)))
-        p.append("</p>")
-    _append_keg_html(p, kegs or [])
-    p.append("<p><button type='submit'>Save and reboot</button></p></form>")
-    p.append("<form method='post' action='/update'><p><button type='submit'>UPDATE APP</button></p></form>")
-    p.append("</body></html>")
-    return "".join(p)
+    return _portal_content().kegs_from_form(kegs, form)
 
 
 class SetupPortalService:
-    def __init__(self, wifi_device=None, debug=False, i18n=None):
+    def __init__(self, wifi_device=None, debug=False, i18n=None, before_client=None):
+        # Load the small route dispatcher while Settings is being created.
+        # Delaying this import until the first browser request is too late on
+        # M5Dial: the QR screen has then consumed the remaining C heap.
+        from webportal.portal_routes import handle_request
+        _portal_content()
+
         self._wifi = wifi_device
         self._debug = bool(debug)
         self._i18n = i18n
+        self._before_client = before_client
         self._cfg = _load_setup_cfg()
         self._listener = None
         self._mode = "none"
@@ -296,6 +216,20 @@ class SetupPortalService:
         self._ap = None
         self._events = []
         self._initial_page_served = False
+        self._before_client_ran = False
+        self._client = None
+        self._client_state = "idle"
+        self._request_data = b""
+        self._request_header_end = -1
+        self._request_content_length = 0
+        self._request_method = ""
+        self._request_target = ""
+        self._request_body = ""
+        self._response_data = b""
+        self._response_offset = 0
+        self._response_is_initial_page = False
+        self._client_deadline = 0
+        self._handle_request = handle_request
 
         self._token = self._cfg.get("token", "")
         if self._cfg.get("require_token") and not self._token:
@@ -338,6 +272,7 @@ class SetupPortalService:
 
     def stop(self):
         self._paused = True
+        self._close_client()
         listener = self._listener
         self._listener = None
         if listener:
@@ -368,43 +303,203 @@ class SetupPortalService:
     def tick(self):
         if self._paused or not self._listener:
             return
-        try:
-            client, addr = self._listener.accept()
-        except Exception:
-            return
-        self._log("accept", addr)
-        initial_page_completed = False
-        try:
-            method, target, _headers, body = self._read_request(client)
-            if not method:
-                self._log("empty request")
+        if self._client is None:
+            try:
+                client, addr = self._listener.accept()
+            except Exception:
                 return
-            self._handle_request(client, method, target, body)
-            path, _query = _split_target(target)
-            initial_page_completed = method == "GET" and path == "/"
-        except _SendTimeout as e:
-            self._log("client send failed:", e)
+            self._client = client
+            self._client_state = "read"
+            self._request_data = b""
+            self._request_header_end = -1
+            self._request_content_length = 0
+            self._response_data = b""
+            self._response_offset = 0
+            self._response_is_initial_page = False
+            self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_TIMEOUT_MS)
+            if not _set_client_nonblocking(client):
+                self._log("client nonblocking setup failed")
+                self._close_client()
+                return
+            self._log("client nonblocking")
+            self._log("accept", addr)
+
+        try:
+            if self._client_state == "read":
+                self._progress_read()
+            if self._client_state == "write":
+                self._progress_write()
+            if self._client_state == "drain":
+                if _ticks_diff(self._client_deadline, _ticks_ms()) <= 0:
+                    self._log("response drain complete")
+                    self._close_client()
         except Exception as e:
             self._log("client error:", e)
+            self._close_client()
+
+    def _close_client(self):
+        client = self._client
+        self._client = None
+        self._client_state = "idle"
+        self._response_data = b""
+        self._response_offset = 0
+        if client:
             try:
-                self._send(client, 500, "text/plain; charset=utf-8", "Internal error")
+                client.close()
+                self._log("client closed")
             except Exception:
                 pass
+
+    def _progress_read(self):
+        client = self._client
         try:
-            client.close()
-            self._log("client closed")
+            chunk = client.recv(1024)
+        except Exception as e:
+            if _is_transient_socket_error(e):
+                if _ticks_diff(self._client_deadline, _ticks_ms()) > 0:
+                    return
+            self._log("recv header error", type(e).__name__, e)
+            self._close_client()
+            return
+        if not chunk:
+            self._log("request eof bytes", len(self._request_data))
+            self._close_client()
+            return
+
+        self._request_data += chunk
+        self._log("recv request chunk", len(chunk), "total", len(self._request_data))
+        if self._request_header_end < 0:
+            marker = self._request_data.find(b"\r\n\r\n")
+            marker_len = 4
+            if marker < 0:
+                marker = self._request_data.find(b"\n\n")
+                marker_len = 2
+            if marker < 0:
+                if len(self._request_data) >= 4096:
+                    self._log("request too large")
+                    self._close_client()
+                return
+            self._request_header_end = marker + marker_len
+            head = self._request_data[:marker]
+            self._parse_request_head(head)
+
+        body = self._request_data[self._request_header_end :]
+        if len(body) < self._request_content_length:
+            return
+        self._request_body = body[: self._request_content_length].decode("utf-8", "replace")
+        method = self._request_method
+        target = self._request_target
+        if not method:
+            self._log("empty request")
+            self._close_client()
+            return
+        self._log("request ready", method, target, "body", len(self._request_body))
+        if self._request_needs_screen_memory(method, target):
+            self._run_before_client()
+        self._response_is_initial_page = method == "GET" and _split_target(target)[0] == "/"
+        self._handle_request(self, self._client, method, target, self._request_body)
+        self._client_state = "write"
+        self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_TIMEOUT_MS)
+
+    def _parse_request_head(self, head):
+        try:
+            head_text = head.decode("utf-8")
         except Exception:
-            pass
-        if initial_page_completed and not self._initial_page_served:
-            self._initial_page_served = True
-            self._events.append(INITIAL_PAGE_SERVED)
-            self._log("event", INITIAL_PAGE_SERVED)
+            head_text = head.decode("latin-1")
+        lines = [ln for ln in head_text.replace("\r\n", "\n").split("\n") if ln]
+        parts = (lines[0] if lines else "").split(" ")
+        self._request_method = parts[0] if len(parts) > 0 else ""
+        self._request_target = parts[1] if len(parts) > 1 else "/"
+        headers = {}
+        for line in lines[1:]:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                headers[key.strip().lower()] = value.strip()
+        try:
+            self._request_content_length = int(headers.get("content-length", "0") or "0")
+        except Exception:
+            self._request_content_length = 0
+        self._log(
+            "request",
+            self._request_method,
+            self._request_target,
+            "head",
+            len(head),
+            "ua",
+            headers.get("user-agent", "")[:40],
+            "conn",
+            headers.get("connection", ""),
+        )
+
+    def _progress_write(self):
+        client = self._client
+        if not self._response_data:
+            self._close_client()
+            return
+        steps = 0
+        while self._response_offset < len(self._response_data) and steps < MAX_WRITE_STEPS:
+            end = min(self._response_offset + WRITE_CHUNK_SIZE, len(self._response_data))
+            try:
+                sent = client.write(self._response_data[self._response_offset : end])
+            except Exception as e:
+                if _is_transient_socket_error(e) and _ticks_diff(self._client_deadline, _ticks_ms()) > 0:
+                    self._log("write pending", type(e).__name__, e, "offset", self._response_offset)
+                    return
+                self._log("write error", type(e).__name__, e, "offset", self._response_offset)
+                self._close_client()
+                return
+            if sent is None or sent <= 0:
+                if _ticks_diff(self._client_deadline, _ticks_ms()) <= 0:
+                    self._log("write timeout", "offset", self._response_offset)
+                    self._close_client()
+                return
+            self._response_offset += sent
+            steps += 1
+            self._log("write chunk", sent, "offset", self._response_offset, "size", len(self._response_data))
+        if self._response_offset >= len(self._response_data):
+            self._log("response sent")
+            if self._response_is_initial_page and not self._initial_page_served:
+                self._initial_page_served = True
+                self._events.append(INITIAL_PAGE_SERVED)
+                self._log("event", INITIAL_PAGE_SERVED)
+            # M5UI's socket write can return after copying data to the TCP
+            # buffer.  Keep the nonblocking client alive briefly so the stack
+            # can emit the FIN after the response bytes have drained.
+            self._client_state = "drain"
+            self._client_deadline = _ticks_add(_ticks_ms(), RESPONSE_DRAIN_MS)
+            self._log("response drain", RESPONSE_DRAIN_MS)
+
+    def _run_before_client(self):
+        if self._before_client_ran:
+            self._log("cleanup skip already_ran")
+            return
+        self._before_client_ran = True
+        callback = self._before_client
+        if callback is None:
+            self._log("cleanup skip no_callback")
+            return
+        try:
+            self._log("cleanup begin")
+            callback()
+            self._log("cleanup done")
+        except Exception as e:
+            self._log("before client cleanup error:", e)
         try:
             import gc
 
             gc.collect()
+            gc.collect()
         except Exception:
             pass
+
+    @staticmethod
+    def _request_needs_screen_memory(method, target):
+        path, query = _split_target(target)
+        if query.get("nocleanup") == "1":
+            return False
+        if path in ("/health", "/diag", "/favicon.ico"):
+            return False
+        return True
 
     def _ensure_network(self):
         self._cfg = _load_setup_cfg()
@@ -488,14 +583,21 @@ class SetupPortalService:
                     gc.collect()
                 except Exception:
                     pass
+                self._log("listen socket create")
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._log("listen socket created")
                 try:
                     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    self._log("listen reuseaddr ok")
                 except Exception:
-                    pass
+                    self._log("listen reuseaddr unsupported")
+                self._log("listen bind begin", PORTAL_HTTP_HOST, PORTAL_HTTP_PORT)
                 s.bind((PORTAL_HTTP_HOST, PORTAL_HTTP_PORT))
+                self._log("listen bind ok")
                 s.listen(1)
+                self._log("listen backlog ok")
                 s.settimeout(0)
+                self._log("listen nonblocking ok")
                 self._listener = s
                 self._log("listen ok attempt", attempt)
                 return
@@ -511,90 +613,7 @@ class SetupPortalService:
         if last is not None:
             raise last
 
-    def _read_request(self, client):
-        try:
-            client.settimeout(3)
-        except Exception:
-            pass
-        data = b""
-        recv_count = 0
-        while b"\r\n\r\n" not in data and len(data) < 4096:
-            try:
-                chunk = client.recv(1024)
-            except Exception as e:
-                self._log("recv header error", type(e).__name__, e)
-                break
-            if not chunk:
-                self._log("recv header eof bytes", len(data), "reads", recv_count)
-                break
-            recv_count += 1
-            self._log("recv header chunk", len(chunk), "total", len(data) + len(chunk))
-            data += chunk
-        head, sep, tail = data.partition(b"\r\n\r\n")
-        if not sep:
-            head, sep, tail = data.partition(b"\n\n")
-        if not sep:
-            self._log("request incomplete bytes", len(data))
-            return "", "", {}, ""
-        try:
-            head_text = head.decode("utf-8")
-        except Exception:
-            head_text = head.decode("latin-1")
-
-        lines = [ln for ln in head_text.replace("\r\n", "\n").split("\n") if ln]
-        parts = (lines[0] if lines else "").split(" ")
-        method = parts[0] if len(parts) > 0 else ""
-        target = parts[1] if len(parts) > 1 else "/"
-        headers = {}
-        for line in lines[1:]:
-            if ":" in line:
-                k, v = line.split(":", 1)
-                headers[k.strip().lower()] = v.strip()
-        self._log(
-            "request",
-            method,
-            target,
-            "head",
-            len(head),
-            "tail",
-            len(tail),
-            "ua",
-            headers.get("user-agent", "")[:40],
-            "conn",
-            headers.get("connection", ""),
-        )
-        body = tail
-        content_length = 0
-        try:
-            content_length = int(headers.get("content-length", "0") or "0")
-        except Exception:
-            content_length = 0
-        while len(body) < content_length and len(body) < 4096:
-            try:
-                chunk = client.recv(min(512, content_length - len(body)))
-            except Exception as e:
-                self._log("recv body error", type(e).__name__, e)
-                break
-            if not chunk:
-                self._log("recv body eof bytes", len(body), "expected", content_length)
-                break
-            body += chunk
-            self._log("recv body chunk", len(chunk), "total", len(body), "expected", content_length)
-        try:
-            body_text = body.decode("utf-8")
-        except Exception:
-            body_text = body.decode("latin-1")
-        return method, target, headers, body_text
-
     def _send(self, client, status_code=200, content_type="text/plain; charset=utf-8", body="", headers=None):
-        try:
-            client.setblocking(True)
-        except Exception:
-            pass
-        try:
-            client.settimeout(3)
-        except Exception:
-            pass
         status_txt = {
             200: "OK",
             303: "See Other",
@@ -618,217 +637,8 @@ class SetupPortalService:
         lines.append("")
         head = "\r\n".join(lines).encode("utf-8")
         self._log("response", status_code, "head", len(head), "body", len(payload))
-        self._send_all(client, head)
-        self._send_all(client, payload)
-        self._log("response sent", status_code)
-        self._log("response drain", RESPONSE_DRAIN_MS)
-        _sleep_ms(RESPONSE_DRAIN_MS)
-
-    def _send_all(self, client, data):
-        if not data:
-            return
-        total = 0
-        deadline = _ticks_add(_ticks_ms(), 3000)
-        size = len(data)
-        while total < size:
-            sent = 0
-            try:
-                next_len = min(SEND_CHUNK_SIZE, size - total)
-                self._log("send attempt", next_len, "offset", total, "size", size)
-                sent = client.send(data[total : total + next_len])
-            except Exception as e:
-                self._log("send error", type(e).__name__, e, "total", total, "size", size)
-                raise _SendTimeout("send error total={} size={}".format(total, size))
-            if not sent:
-                if _ticks_diff(deadline, _ticks_ms()) <= 0:
-                    raise _SendTimeout("send timeout total={} size={}".format(total, size))
-                _sleep_ms(10)
-                continue
-            total += sent
-            self._log("send chunk", sent, "total", total, "size", size)
-            _sleep_ms(SEND_YIELD_MS)
-        if total < size:
-            raise OSError("short send {}<{}".format(total, size))
-
-    def _handle_request(self, client, method, target, body):
-        path, query = _split_target(target)
-
-        if path == "/health":
-            self._send(client, 200, "application/json", '{"ok":true}')
-            return
-
-        if method == "GET" and path == "/diag":
-            size = 0
-            try:
-                size = int(query.get("bytes", "0") or "0")
-            except Exception:
-                size = 0
-            if size > 0:
-                if size > 4096:
-                    size = 4096
-                self._send(client, 200, "text/plain; charset=utf-8", "D" * size)
-                return
-            html_size = 0
-            try:
-                html_size = int(query.get("html", "0") or "0")
-            except Exception:
-                html_size = 0
-            if html_size > 0:
-                if html_size > 4096:
-                    html_size = 4096
-                prefix = "<!doctype html><html><body><pre>"
-                suffix = "</pre></body></html>"
-                fill_len = max(0, html_size - len(prefix) - len(suffix))
-                self._send(
-                    client,
-                    200,
-                    "text/html; charset=utf-8",
-                    prefix + ("H" * fill_len) + suffix,
-                )
-                return
-            if query.get("formtext") == "1":
-                self._send(
-                    client,
-                    200,
-                    "text/plain; charset=utf-8",
-                    render_minimal_form_html(_current_values()),
-                )
-                return
-            self._send(
-                client,
-                200,
-                "text/html; charset=utf-8",
-                "<!doctype html><html><body>UHS diag OK</body></html>",
-            )
-            return
-
-        if method == "GET" and path == "/favicon.ico":
-            self._send(client, 404, body="")
-            return
-
-        if method == "GET" and path == "/":
-            if not self._token_ok(query, {}):
-                self._send(client, 403, body="Forbidden")
-                return
-            self._send(
-                client,
-                200,
-                "text/html; charset=utf-8",
-                render_minimal_form_html(_current_values(), kegs=_load_kegs()),
-            )
-            return
-
-        if method == "POST" and path == "/save":
-            form = parse_form_urlencoded(body)
-            if not self._token_ok(query, form):
-                self._send(client, 403, body="Forbidden")
-                return
-            updates = {}
-            for key, _label, typ, _choices in _EDITABLE_FIELDS:
-                if typ == "checkbox":
-                    updates[key] = key in form and str(form.get(key, "")).lower() in ("1", "true", "on", "yes")
-                elif key in form:
-                    updates[key] = form.get(key)
-            kegs = _load_kegs()
-            updated_kegs = _kegs_from_form(kegs, form)
-            if updated_kegs is None:
-                self._send(
-                    client,
-                    400,
-                    "text/html; charset=utf-8",
-                    render_minimal_form_html(dict(_current_values(), **updates), error="Invalid fields", kegs=kegs),
-                )
-                return
-            try:
-                from storage import config_registry
-
-                ok, errors = config_registry.save_updates(updates)
-            except Exception as e:
-                ok, errors = False, str(e)
-            if not ok:
-                self._send(
-                    client,
-                    400,
-                    "text/html; charset=utf-8",
-                    render_minimal_form_html(dict(_current_values(), **updates), error=errors, kegs=updated_kegs),
-                )
-                return
-            if updated_kegs is not kegs:
-                try:
-                    from storage import keg_registry
-
-                    kegs_saved = keg_registry.save_kegs(keg_registry.KEG_FILE, updated_kegs)
-                except Exception:
-                    kegs_saved = False
-                if not kegs_saved:
-                    self._send(client, 500, "text/html; charset=utf-8", "Keg save error")
-                    return
-            self._send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
-            try:
-                import machine
-
-                time.sleep_ms(200)
-                machine.reset()
-            except Exception:
-                pass
-            return
-
-        if method == "POST" and path == "/kegs/delete":
-            form = parse_form_urlencoded(body)
-            if not self._token_ok(query, form):
-                self._send(client, 403, body="Forbidden")
-                return
-            try:
-                from storage import keg_registry
-
-                kegs = keg_registry.load_kegs()
-                updated = keg_registry.delete_keg(kegs, form.get("idx"))
-                if updated is None:
-                    self._send(client, 400, "text/html; charset=utf-8", "Invalid fields")
-                    return
-                if not keg_registry.save_kegs(keg_registry.KEG_FILE, updated):
-                    self._send(client, 500, "text/html; charset=utf-8", "Keg save error")
-                    return
-            except Exception as e:
-                self._send(client, 500, "text/html; charset=utf-8", "Keg save error: {}".format(e))
-                return
-            location = "/?saved=1"
-            if self._cfg.get("require_token"):
-                location = "/?saved=1&k={}".format(self._token)
-            self._send(
-                client,
-                303,
-                "text/plain; charset=utf-8",
-                "",
-                headers={"Location": location},
-            )
-            return
-
-        if method == "POST" and path == "/update":
-            form = parse_form_urlencoded(body)
-            if not self._token_ok(query, form):
-                self._send(client, 403, body="Forbidden")
-                return
-            try:
-                from storage import config_registry
-
-                ok, error = config_registry.set_update_requested(True)
-            except Exception as e:
-                ok, error = False, str(e)
-            if not ok:
-                self._send(client, 500, "text/html; charset=utf-8", "Update request failed: {}".format(error))
-                return
-            self._send(client, 200, "text/html; charset=utf-8", "Update requested. Rebooting...")
-            try:
-                import machine
-
-                time.sleep_ms(200)
-                machine.reset()
-            except Exception:
-                pass
-            return
-
-        self._send(client, 404, body="Not found")
+        self._response_data = head + payload
+        self._response_offset = 0
 
     def _token_ok(self, query, form):
         if not self._cfg.get("require_token"):
