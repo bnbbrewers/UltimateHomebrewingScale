@@ -6,14 +6,14 @@ when a browser actually connects. Entering Settings only needs networking.
 
 import time
 
+from .request_limits import MAX_REQUEST_BODY_BYTES, MAX_REQUEST_HEADER_BYTES
+
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 AP_SETTLE_MS = 300
 RESPONSE_DRAIN_MS = 200
 SEND_CHUNK_SIZE = 256
 SEND_YIELD_MS = 5
-MAX_REQUEST_HEADER_BYTES = 4096
-MAX_REQUEST_BODY_BYTES = 4096
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
