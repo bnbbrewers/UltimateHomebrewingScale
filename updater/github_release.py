@@ -19,8 +19,20 @@ def latest_release_url():
     return "%s/repos/%s/%s/releases/latest" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
 
 
-def releases_url():
-    return "%s/repos/%s/%s/releases" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
+def releases_url(page=None, per_page=None):
+    url = "%s/repos/%s/%s/releases" % (GITHUB_API_BASE, REPO_OWNER, REPO_NAME)
+    if page is None:
+        return url
+    return "%s?per_page=%d&page=%d" % (url, int(per_page or 10), int(page))
+
+
+def release_by_tag_url(tag):
+    return "%s/repos/%s/%s/releases/tags/%s" % (
+        GITHUB_API_BASE,
+        REPO_OWNER,
+        REPO_NAME,
+        str(tag or "").strip(),
+    )
 
 
 def asset_download_url(release, asset_name=MANIFEST_ASSET_NAME):
@@ -38,6 +50,62 @@ def release_info(release, manifest_url):
         "manifest_url": manifest_url,
         "prerelease": bool(release.get("prerelease", False)),
     }
+
+
+def select_next_release(releases, local_version, manifest_loader):
+    """Select the immediate delta after local_version.
+
+    Releases must be ordered newest first. Only manifests along the chain
+    from the latest release back to the local version are loaded.
+    """
+    local = str(local_version or "").strip()
+    if not local:
+        raise RuntimeError("Local application version is unknown")
+    if not releases:
+        raise RuntimeError("No matching releases")
+
+    latest = releases[0]
+    latest_tag = str(latest.get("tag", "") or "")
+    if local == latest_tag:
+        return None
+
+    by_tag = {}
+    for release in releases:
+        tag = str(release.get("tag", "") or "")
+        if tag:
+            by_tag[tag] = release
+
+    current = latest_tag
+    visited = set()
+    while current != local:
+        if current in visited:
+            raise RuntimeError("Update chain contains a cycle at %s" % current)
+        visited.add(current)
+
+        release = by_tag.get(current)
+        if release is None:
+            raise RuntimeError(
+                "No update path from %s to %s" % (local, latest_tag)
+            )
+        manifest = manifest_loader(release.get("manifest_url", ""))
+        if not isinstance(manifest, dict):
+            raise RuntimeError("Invalid update manifest for %s" % current)
+        version = str(manifest.get("version", "") or "")
+        if version and version != current:
+            raise RuntimeError("Manifest version mismatch for %s" % current)
+        base = str(manifest.get("base_version", "") or "")
+        if not base:
+            raise RuntimeError("Missing base version for %s" % current)
+        if base == local:
+            return {
+                "release": release,
+                "manifest": manifest,
+                "latest_version": latest_tag,
+                "more_updates": current != latest_tag,
+            }
+        current = base
+
+    raise RuntimeError("No update step found from %s" % local)
 
 
 def print_exception(e):
@@ -185,6 +253,140 @@ def resolve_release(channel="stable", requests_module=None, i18n=None):
             http_client.gc_hard(cycles=1, pause_ms=10)
             return info
     raise RuntimeError("No matching release manifest")
+
+
+def release_candidates(channel="stable", requests_module=None, local_version="", i18n=None):
+    """Return compact eligible release records, newest first.
+
+    Pages are deliberately small because GitHub release objects contain large
+    asset metadata. We stop once the local tag is encountered.
+    """
+    requests_module = requests_module or http_client.default_requests_module()
+    if requests_module is None:
+        raise RuntimeError("Missing requests2 module")
+
+    normalized = str(channel or "stable").strip().lower()
+    if normalized != "prerelease":
+        normalized = "stable"
+    local = str(local_version or "").strip()
+    page = 1
+    page_size = 10
+    candidates = []
+    while page <= 20:
+        releases = github_api_get_json(
+            releases_url(page=page, per_page=page_size),
+            requests_module,
+            i18n=i18n,
+        )
+        if not isinstance(releases, list):
+            raise RuntimeError("Invalid GitHub releases response")
+        page_count = len(releases)
+        found_local = False
+        for release in releases:
+            if release.get("draft"):
+                continue
+            if normalized == "prerelease":
+                if not release.get("prerelease"):
+                    continue
+            elif release.get("prerelease"):
+                continue
+            manifest_url = asset_download_url(release)
+            if not manifest_url:
+                continue
+            info = release_info(release, manifest_url)
+            candidates.append(info)
+            if info.get("tag") == local:
+                found_local = True
+        del releases
+        http_client.gc_hard(cycles=1, pause_ms=10)
+        if found_local or page_count < page_size:
+            break
+        page += 1
+    return candidates
+
+
+def resolve_update_step(channel, local_version, requests_module=None, i18n=None):
+    """Resolve the one delta that can be applied to local_version."""
+    requests_module = requests_module or http_client.default_requests_module()
+    if requests_module is None:
+        raise RuntimeError("Missing requests2 module")
+    normalized = str(channel or "stable").strip().lower()
+    if normalized != "prerelease":
+        latest_payload = github_api_get_json(
+            latest_release_url(), requests_module, i18n=i18n
+        )
+        latest_manifest_url = asset_download_url(latest_payload)
+        if not latest_manifest_url:
+            raise RuntimeError("No matching release manifest")
+        current = release_info(latest_payload, latest_manifest_url)
+        del latest_payload
+    else:
+        current = None
+        page = 1
+        while page <= 20 and current is None:
+            payload = github_api_get_json(
+                releases_url(page=page, per_page=1),
+                requests_module,
+                i18n=i18n,
+            )
+            if not isinstance(payload, list):
+                raise RuntimeError("Invalid GitHub releases response")
+            for release in payload:
+                if release.get("draft") or not release.get("prerelease"):
+                    continue
+                manifest_url = asset_download_url(release)
+                if manifest_url:
+                    current = release_info(release, manifest_url)
+                    break
+            page += 1
+            del payload
+            http_client.gc_hard(cycles=1, pause_ms=10)
+        if current is None:
+            raise RuntimeError("No matching prerelease manifest")
+
+    local = str(local_version or "").strip()
+    latest_version = current.get("tag", "")
+    if local == latest_version:
+        return None
+
+    visited = set()
+    while True:
+        tag = current.get("tag", "")
+        if tag in visited:
+            raise RuntimeError("Update chain contains a cycle at %s" % tag)
+        visited.add(tag)
+
+        manifest = download_manifest(
+            current["manifest_url"],
+            requests_module=requests_module,
+            i18n=i18n,
+        )
+        if not isinstance(manifest, dict):
+            raise RuntimeError("Invalid update manifest for %s" % tag)
+        manifest_version = str(manifest.get("version", "") or "")
+        if manifest_version and manifest_version != tag:
+            raise RuntimeError("Manifest version mismatch for %s" % tag)
+        base = str(manifest.get("base_version", "") or "")
+        if not base:
+            raise RuntimeError("Missing base version for %s" % tag)
+        if base == local:
+            return {
+                "release": current,
+                "manifest": manifest,
+                "latest_version": latest_version,
+                "more_updates": tag != latest_version,
+            }
+
+        previous_payload = github_api_get_json(
+            release_by_tag_url(base), requests_module, i18n=i18n
+        )
+        previous_manifest_url = asset_download_url(previous_payload)
+        if not previous_manifest_url:
+            raise RuntimeError("No matching release manifest for %s" % base)
+        current = release_info(previous_payload, previous_manifest_url)
+        del previous_payload
+        del manifest
+        http_client.gc_hard(cycles=1, pause_ms=10)
 
 
 def download_manifest(url, requests_module=None, i18n=None):

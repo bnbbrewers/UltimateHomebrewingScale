@@ -21,6 +21,13 @@ def _tf(i18n, key, fallback, *args):
     return fallback.format(*args)
 
 
+def version_transition(local_version, target_version):
+    return "{} -> {}".format(
+        str(local_version or "unknown"),
+        str(target_version or "unknown"),
+    )
+
+
 def _emit(callback, stage, message="", detail="", current=0, total=0, percent=0):
     if callback:
         callback(
@@ -167,7 +174,7 @@ def _remove_file(path):
         pass
 
 
-def _download_archive(url, req, size, sha):
+def _download_archive(url, req, size, sha, progress_callback=None):
     current = url
     _remove_file(ARCHIVE_TMP)
     _remove_file(ARCHIVE_PATH)
@@ -186,6 +193,26 @@ def _download_archive(url, req, size, sha):
             if status != 200:
                 raise RuntimeError("HTTP %s: %s" % (status, current))
             total = 0
+            last_percent = [-1]
+
+            def report_progress():
+                if not progress_callback:
+                    return
+                percent = int((total * 100) / int(size)) if int(size) else 0
+                if percent == last_percent[0] and total != int(size):
+                    return
+                last_percent[0] = percent
+                _emit(
+                    progress_callback,
+                    "archive",
+                    "Downloading update archive",
+                    "",
+                    total,
+                    int(size),
+                    min(100, percent),
+                )
+
+            report_progress()
             with open(ARCHIVE_TMP, "wb") as f:
                 raw = getattr(r, "raw", None)
                 if raw is not None and hasattr(raw, "read"):
@@ -195,6 +222,7 @@ def _download_archive(url, req, size, sha):
                             break
                         f.write(chunk)
                         total += len(chunk)
+                        report_progress()
                         del chunk
                 else:
                     iter_content = getattr(r, "iter_content", None)
@@ -204,6 +232,7 @@ def _download_archive(url, req, size, sha):
                         if chunk:
                             f.write(chunk)
                             total += len(chunk)
+                            report_progress()
                         del chunk
             if total != int(size):
                 raise RuntimeError("archive size mismatch")
@@ -239,7 +268,21 @@ def _file_sha256(path):
                 break
             digest.update(chunk)
             del chunk
-    return digest.hexdigest().lower()
+    hexdigest = getattr(digest, "hexdigest", None)
+    if hexdigest:
+        return hexdigest().lower()
+
+    # Some UIFlow/MicroPython builds expose digest() but not hexdigest().
+    raw_digest = digest.digest()
+    try:
+        import ubinascii as binascii
+    except ImportError:
+        import binascii
+    encoded = binascii.hexlify(raw_digest)
+    try:
+        return encoded.decode().lower()
+    except AttributeError:
+        return str(encoded).lower()
 
 
 def _apply_deletes(paths, dest_root):
@@ -281,11 +324,47 @@ def update(
 
     from . import github_release
 
-    _emit(progress_callback, "release", _t(i18n, "updater.search_release", "Searching release"), channel, 0, 0, 0)
-    selected = github_release.resolve_release(channel, requests_module=requests_module, i18n=i18n)
-    http_client.snapshot("updater.workflow.after_resolve_release")
+    local = _read_local_version(dest_root)
+    _emit(
+        progress_callback,
+        "release",
+        _t(i18n, "updater.search_release", "Searching release"),
+        "local={} channel={}".format(local or "unknown", channel),
+        0,
+        0,
+        0,
+    )
+    step = github_release.resolve_update_step(
+        channel,
+        local,
+        requests_module=requests_module,
+        i18n=i18n,
+    )
+    http_client.snapshot("updater.workflow.after_resolve_update_step")
     http_client.gc_hard(cycles=1, pause_ms=10)
-    http_client.snapshot("updater.workflow.after_resolve_release_gc")
+    http_client.snapshot("updater.workflow.after_resolve_update_step_gc")
+    if step is None:
+        result = {
+            "ok": 0,
+            "failed": 0,
+            "total": 0,
+            "version": local,
+            "latest_version": local,
+            "more_updates": False,
+            "up_to_date": True,
+        }
+        _emit(
+            progress_callback,
+            "done",
+            _t(i18n, "updater.install_done", "Installation complete"),
+            local or "Already up to date",
+            1,
+            1,
+            100,
+        )
+        return result
+
+    selected = step["release"]
     _emit(
         progress_callback,
         "manifest",
@@ -295,23 +374,32 @@ def update(
         0,
         0,
     )
-    http_client.snapshot("updater.workflow.before_download_manifest")
-    manifest = github_release.download_manifest(selected["manifest_url"], requests_module=requests_module, i18n=i18n)
-    http_client.snapshot("updater.workflow.after_download_manifest")
+    manifest = step["manifest"]
     del selected
     http_client.gc_hard(cycles=1, pause_ms=10)
-    http_client.snapshot("updater.workflow.after_manifest_gc")
 
     archive = _manifest_archive(manifest)
     del manifest
     http_client.gc_hard(cycles=1, pause_ms=10)
-    base = archive["base_version"]
-    local = _read_local_version(dest_root)
-    if base and local != base:
-        raise RuntimeError("Firmware update required: local={} base={}".format(local or "unknown", base))
+
+    _emit(
+        progress_callback,
+        "version",
+        "Updating",
+        version_transition(local, archive["version"]),
+        0,
+        0,
+        0,
+    )
 
     _emit(progress_callback, "archive", _t(i18n, "updater.downloading_archive", "Downloading update archive"), archive["version"], 0, 0, 0)
-    tar_path = _download_archive(archive["url"], requests_module, archive["size"], archive["sha256"])
+    tar_path = _download_archive(
+        archive["url"],
+        requests_module,
+        archive["size"],
+        archive["sha256"],
+        progress_callback=progress_callback,
+    )
     http_client.snapshot("updater.workflow.after_archive_download")
     http_client.gc_hard(cycles=2, pause_ms=20)
     http_client.snapshot("updater.workflow.after_archive_download_gc")
@@ -323,7 +411,15 @@ def update(
     _apply_deletes(archive["delete"], dest_root)
     _write_local_version(dest_root, archive["version"])
     _remove_file(tar_path)
-    result = {"ok": ok, "failed": 0, "total": ok, "version": archive["version"]}
+    result = {
+        "ok": ok,
+        "failed": 0,
+        "total": ok,
+        "version": archive["version"],
+        "latest_version": step.get("latest_version", archive["version"]),
+        "more_updates": bool(step.get("more_updates", False)),
+        "up_to_date": False,
+    }
     del archive
     gc.collect()
     _emit(

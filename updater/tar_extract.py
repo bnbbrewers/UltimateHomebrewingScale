@@ -97,16 +97,61 @@ def _replace(tmp, dest):
             pass
 
 
-def extract(tar_path, dest_root="", progress_callback=None, i18n=None):
+def _count_files(tar_path):
+    """Count regular file entries with a small, flash-only first pass."""
     count = 0
     with open(tar_path, "rb") as f:
         while True:
             block = f.read(512)
             if not block or block == b"\0" * 512:
                 break
-            path = _name(block)
             size = _octal(block, 124, 12)
             typeflag = block[156:157]
+            if typeflag in (b"0", b""):
+                count += 1
+            _skip(f, size)
+            padding = (512 - (size % 512)) % 512
+            if padding:
+                _skip(f, padding)
+            del block
+    return count
+
+
+def extract(tar_path, dest_root="", progress_callback=None, i18n=None):
+    count = 0
+    total_files = _count_files(tar_path)
+    if progress_callback:
+        progress_callback(
+            {
+                "stage": "extract",
+                "message": i18n.t("updater.installing") if i18n else "Installing",
+                "detail": "",
+                "current": 0,
+                "total": total_files,
+                "percent": 0,
+            }
+        )
+    with open(tar_path, "rb") as f:
+        while True:
+            block = f.read(512)
+            if not block or block == b"\0" * 512:
+                break
+            size = _octal(block, 124, 12)
+            typeflag = block[156:157]
+
+            # Python's tarfile PAX format adds extended metadata records such
+            # as ././@PaxHeader before the actual file entry. They are not
+            # application files and must be skipped before path validation.
+            if typeflag in (b"x", b"g"):
+                _skip(f, size)
+                padding = (512 - (size % 512)) % 512
+                if padding:
+                    _skip(f, padding)
+                del block
+                gc.collect()
+                continue
+
+            path = _name(block)
             dest = _join(dest_root, path) if dest_root else path
             if typeflag == b"5":
                 _mkdirs(dest)
@@ -137,8 +182,10 @@ def extract(tar_path, dest_root="", progress_callback=None, i18n=None):
                             "message": i18n.t("updater.installing") if i18n else "Installing",
                             "detail": path,
                             "current": count,
-                            "total": 0,
-                            "percent": 0,
+                            "total": total_files,
+                            "percent": int((count * 100) / total_files)
+                            if total_files
+                            else 100,
                         }
                     )
             else:
