@@ -115,6 +115,11 @@ def _progress(event):
         pass
 
 
+def updater_title(version_detail=""):
+    detail = str(version_detail or "").strip()
+    return "Updater\n{}".format(detail) if detail else "Updater"
+
+
 class _DialProgress:
     """Optional progress renderer loaded only in the updater boot path."""
 
@@ -152,6 +157,8 @@ class _DialProgress:
         try:
             message = event.get("message", "")
             detail = event.get("detail", "")
+            if event.get("stage") == "version" and detail:
+                self._screen.set_title(updater_title(detail))
             self._screen.set_status(message, detail)
             total = event.get("total", 0)
             if total:
