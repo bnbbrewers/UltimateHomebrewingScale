@@ -32,6 +32,19 @@ Keep the current `AppManager`, `ScreenManager`, `HardwareManager`, and `ApiFacto
 - Centralize memory snapshots and make their `collect` parameter truthful.
 - Record Python free memory, C free memory, and C largest contiguous block around boot, screens, Wi-Fi, API, portal, and updater boundaries.
 
+## Shared HTTP transport
+
+All network consumers use one shared HTTP transport. The transport owns Wi-Fi readiness, retries, request option compatibility, response status checks, streaming preference, response closing, temporary-file cleanup, and GC boundaries.
+
+The body policy is explicit per use case rather than duplicated per caller:
+
+- JSON/API responses are streamed to a temporary file and parsed only after the response is closed.
+- Update archives are streamed directly to a file and require streaming for large payloads.
+- `response.content` or `response.text` is accepted only for bounded small responses or when the declared size is below a safe limit.
+- An unsupported large non-streaming response fails clearly instead of allocating an unbounded body.
+
+This keeps Brewfather, GitHub metadata, manifests, and archive downloads on the same lifecycle while preserving their different memory limits.
+
 ## Compatibility and error handling
 
 - Keep existing public app and device interfaces where practical.
@@ -45,4 +58,3 @@ Keep the current `AppManager`, `ScreenManager`, `HardwareManager`, and `ApiFacto
 - Run host-side syntax checks and the available local test suite.
 - Verify the branch remains clean and document any tests unavailable from the repository because tests are kept outside Git.
 - On hardware, repeat app transitions and measure `py_free`, `c_free`, and `c_largest` to detect memory ratcheting.
-
