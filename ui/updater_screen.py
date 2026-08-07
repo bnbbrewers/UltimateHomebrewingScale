@@ -101,7 +101,7 @@ class UpdaterScreen:
         return self.page
 
     def configure(self, title=None, title_bg_color=None):
-        UIHelper.set_title(self._title_label, title or self._t("updater.title"))
+        self.set_title(title or self._t("updater.title"))
         if title_bg_color is not None:
             UIHelper.set_title_color(self._title_bar, title_bg_color)
         self._progress.set_bg_color(
@@ -112,6 +112,9 @@ class UpdaterScreen:
         self.set_progress(0)
         self.set_status(self._t("updater.ready"), "")
         self.set_ok_visible(False)
+
+    def set_title(self, title):
+        UIHelper.set_title(self._title_label, title or self._t("updater.title"))
 
     def set_status(self, message, detail=""):
         self._status_label.set_text(self._fit(message, 28))
