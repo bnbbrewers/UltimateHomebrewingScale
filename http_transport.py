@@ -202,7 +202,7 @@ def load_json_file(path):
         return json.loads(source.read())
 
 
-def read_response_json(response, tmp_path, max_content_bytes=None):
+def read_response_json(response, tmp_path, max_content_bytes=65536):
     remove_file(tmp_path)
     try:
         spool_response_to_file(
