@@ -107,7 +107,7 @@ def get(requests_module, url, headers=None, stream=False,
     return response
 
 
-def read_response_json(response, tmp_path, max_content_bytes=None):
+def read_response_json(response, tmp_path, max_content_bytes=65536):
     remove_file(tmp_path)
     try:
         mode = spool_response_to_file(
