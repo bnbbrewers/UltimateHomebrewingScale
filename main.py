@@ -136,7 +136,7 @@ def main():
     mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
     hardware = HardwareManager.get_instance()
     mem_snapshot("boot.after_hardware", enabled=DEBUG, collect=True)
-    apis = ApiFactory().as_dict()
+    apis = ApiFactory(wifi_device=hardware.wifi).as_dict()
     mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
 
     initial_app_id = None

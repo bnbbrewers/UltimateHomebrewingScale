@@ -8,6 +8,7 @@ import binascii
 import json
 import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
+import http_transport
 
 try:
     import config as _config
@@ -29,7 +30,8 @@ class BrewfatherAPI(ApiBase):
     _BASE_PATH = "/v2"
     _TMP_JSON_PATH = "brewfather_api.tmp"
 
-    def __init__(self):
+    def __init__(self, wifi_device=None):
+        super().__init__(wifi_device=wifi_device)
         try:
             import config
             user_id = getattr(config, 'BREWFATHER_USER_ID', '')
@@ -142,7 +144,7 @@ class BrewfatherAPI(ApiBase):
         gc.collect()
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         resp = None
-        self._remove_file(self._TMP_JSON_PATH)
+        http_transport.remove_file(self._TMP_JSON_PATH)
         try:
             resp = self._get(url, headers=self._headers, stream=True)
             status = getattr(resp, "status_code", None)
@@ -162,21 +164,20 @@ class BrewfatherAPI(ApiBase):
                     bool(getattr(resp, "iter_content", None)),
                     "not_checked",
                 ))
-            spool_mode = self._spool_response_to_file(resp, self._TMP_JSON_PATH)
+            spool_mode = http_transport.spool_response_to_file(
+                resp, self._TMP_JSON_PATH, max_content_bytes=65536
+            )
             if _DEBUG:
                 print("[API] body_spooled mode={}".format(spool_mode))
             mem_snapshot("api.body.spooled", enabled=_DEBUG, collect=False)
             if resp is not None:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
+                http_transport.close_response(resp)
                 resp = None
             gc.collect()
             mem_snapshot("api.body.closed", enabled=_DEBUG, collect=False)
             # Parse only after closing the response. This avoids holding
             # requests2/TLS buffers and the decoded JSON tree at the same time.
-            data = self._load_json_file(self._TMP_JSON_PATH)
+            data = http_transport.load_json_file(self._TMP_JSON_PATH)
             if _DEBUG:
                 try:
                     if isinstance(data, list):
@@ -192,11 +193,8 @@ class BrewfatherAPI(ApiBase):
             return status, data
         finally:
             if resp is not None:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
-            self._remove_file(self._TMP_JSON_PATH)
+                http_transport.close_response(resp)
+            http_transport.remove_file(self._TMP_JSON_PATH)
 
     # ── public API ─────────────────────────────────────────────────
 

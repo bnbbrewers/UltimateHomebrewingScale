@@ -6,6 +6,8 @@ For UIFlow2.0 / MicroPython on M5Stack
 import gc
 import time
 
+import http_transport
+
 try:
     import config as _config
     _DEBUG = getattr(_config, 'DEBUG', False)
@@ -61,6 +63,9 @@ class Hop:
 class ApiBase:
     """Abstract base class for brewing software API implementations."""
 
+    def __init__(self, wifi_device=None):
+        self._wifi_device = wifi_device
+
     def _get(self, url, headers, retries=2, stream=False):
         """
         HTTP GET helper shared by all implementations.
@@ -70,19 +75,26 @@ class ApiBase:
         (ESP_ERR_HTTP_CONNECT) if the network stack isn't fully ready yet;
         a 1 s pause between retries is enough for DNS/routing to stabilise.
         """
-        from core.hardware_manager import HardwareManager
-        if not HardwareManager.get_instance().wifi.ensure_connected():
+        wifi_device = self._wifi_device
+        if wifi_device is None:
+            # Compatibility for direct connector construction by older apps.
+            from core.hardware_manager import HardwareManager
+            wifi_device = HardwareManager.get_instance().wifi
+        if not wifi_device.ensure_connected():
             raise OSError("WiFi not connected")
 
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
-                import requests2 as requests
-                try:
-                    resp = requests.get(url, headers=headers, stream=stream)
-                except TypeError:
-                    resp = requests.get(url, headers=headers)
-                return resp
+                requests_module = http_transport.default_requests_module()
+                if requests_module is None:
+                    raise RuntimeError("Missing requests2 module")
+                return http_transport.get(
+                    requests_module,
+                    url,
+                    headers=headers,
+                    stream=stream,
+                )
             except Exception as e:
                 last_exc = e
                 if _DEBUG:

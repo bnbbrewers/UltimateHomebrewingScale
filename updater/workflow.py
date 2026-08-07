@@ -185,28 +185,12 @@ def _download_archive(url, req, size, sha):
                 continue
             if status != 200:
                 raise RuntimeError("HTTP %s: %s" % (status, current))
-            total = 0
-            with open(ARCHIVE_TMP, "wb") as f:
-                raw = getattr(r, "raw", None)
-                if raw is not None and hasattr(raw, "read"):
-                    while True:
-                        chunk = raw.read(1024)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        total += len(chunk)
-                        del chunk
-                else:
-                    content = getattr(r, "content", b"")
-                    f.write(content)
-                    total = len(content)
-                    del content
-            if total != int(size):
+            http_client.spool_response_to_file(
+                r, ARCHIVE_TMP, require_stream=True
+            )
+            if os.stat(ARCHIVE_TMP)[6] != int(size):
                 raise RuntimeError("archive size mismatch")
-            try:
-                r.close()
-            except Exception:
-                pass
+            http_client.close_response(r)
             r = None
             http_client.gc_hard(cycles=1, pause_ms=10)
             if _file_sha256(ARCHIVE_TMP) != sha:

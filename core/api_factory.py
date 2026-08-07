@@ -32,7 +32,8 @@ def _mem_snapshot(tag, enabled=True, collect=False):
 
 
 class ApiFactory:
-    def __init__(self):
+    def __init__(self, wifi_device=None):
+        self._wifi_device = wifi_device
         _collect_runtime()
         _mem_snapshot("api_factory.init.start", enabled=_DEBUG, collect=True)
         self._connectors = {}
@@ -49,7 +50,7 @@ class ApiFactory:
         _mem_snapshot("api_factory.brewfather.before_import", enabled=_DEBUG, collect=True)
         from api.brewfather_api import BrewfatherAPI
 
-        connector = BrewfatherAPI()
+        connector = BrewfatherAPI(wifi_device=self._wifi_device)
         _collect_runtime()
         _mem_snapshot("api_factory.brewfather.created", enabled=_DEBUG, collect=True)
         return connector
