@@ -115,6 +115,65 @@ def _progress(event):
         pass
 
 
+class _DialProgress:
+    """Optional progress renderer loaded only in the updater boot path."""
+
+    def __init__(self):
+        self._screen = None
+        self._m5 = None
+        self._lv = None
+        try:
+            import M5
+            import lvgl as lv
+            import m5ui
+            from ui.updater_screen import UpdaterScreen
+
+            M5.begin()
+            m5ui.init()
+            self._screen = UpdaterScreen()
+            self._screen.root().screen_load()
+            self._screen.configure(
+                title="Updater",
+                title_bg_color=0x1565C0,
+            )
+            self._m5 = M5
+            self._lv = lv
+        except Exception as error:
+            self._screen = None
+            try:
+                print("[updater] progress UI unavailable: {}".format(error))
+            except Exception:
+                pass
+
+    def callback(self, event):
+        _progress(event)
+        if self._screen is None:
+            return
+        try:
+            message = event.get("message", "")
+            detail = event.get("detail", "")
+            self._screen.set_status(message, detail)
+            total = event.get("total", 0)
+            if total:
+                self._screen.set_progress(event.get("percent", 0))
+            elif event.get("stage") in ("wifi", "release", "manifest", "extract"):
+                self._screen.set_progress(0)
+            self._m5.update()
+            self._lv.task_handler()
+        except Exception:
+            pass
+
+    def show_error(self, error):
+        if self._screen is None:
+            return
+        try:
+            self._screen.show_error(str(error))
+            self._m5.update()
+            self._lv.task_handler()
+        except Exception:
+            pass
+
+
 def _reset():
     try:
         import machine
@@ -150,20 +209,26 @@ def run_update_boot(
         wifi = MinimalWifi()
     if channel is None:
         channel = _channel()
+    display = None
     if progress_callback is None:
-        progress_callback = _progress
+        display = _DialProgress()
+        progress_callback = display.callback
 
     try:
-        update_fn(
+        result = update_fn(
             channel=channel,
             progress_callback=progress_callback,
             wifi_device=wifi,
             ensure_wifi=True,
         )
-        set_update_requested(False, nvs=nvs)
+        more_updates = isinstance(result, dict) and result.get("more_updates", False)
+        if not more_updates:
+            set_update_requested(False, nvs=nvs)
         reset_fn()
         return True
     except Exception as error:
+        if display is not None:
+            display.show_error(error)
         try:
             print("[updater] failed: {}".format(error))
         except Exception:
