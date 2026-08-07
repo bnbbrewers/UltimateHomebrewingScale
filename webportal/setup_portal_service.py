@@ -11,6 +11,7 @@ PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 AP_SETTLE_MS = 300
 CLIENT_TIMEOUT_MS = 5000
+CLIENT_IDLE_TIMEOUT_MS = 1000
 RESPONSE_DRAIN_MS = 200
 WRITE_CHUNK_SIZE = 256
 MAX_WRITE_STEPS = 16
@@ -81,10 +82,22 @@ def _ticks_diff(ticks1, ticks2):
 
 
 def _is_transient_socket_error(exc):
+    errno = getattr(exc, "errno", None)
     try:
-        return int(getattr(exc, "errno", exc.args[0])) in (11, 35, 110, 116)
+        if errno is not None:
+            return abs(int(errno)) in (11, 35, 110, 116)
     except Exception:
-        return False
+        pass
+    try:
+        if exc.args:
+            value = exc.args[0]
+            if isinstance(value, str) and value.upper() in ("EAGAIN", "EWOULDBLOCK", "ETIMEDOUT"):
+                return True
+            return abs(int(value)) in (11, 35, 110, 116)
+    except Exception:
+        pass
+    text = str(exc).upper()
+    return "EAGAIN" in text or "EWOULDBLOCK" in text or "TIMEDOUT" in text
 
 
 def _set_client_nonblocking(client):
@@ -225,6 +238,7 @@ class SetupPortalService:
         self._request_method = ""
         self._request_target = ""
         self._request_body = ""
+        self._client_idle_logged = False
         self._response_data = b""
         self._response_offset = 0
         self._response_is_initial_page = False
@@ -316,7 +330,11 @@ class SetupPortalService:
             self._response_data = b""
             self._response_offset = 0
             self._response_is_initial_page = False
-            self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_TIMEOUT_MS)
+            # Browsers may open a speculative connection without sending a
+            # request. Do not let that idle connection block the single-client
+            # embedded server for the full request timeout.
+            self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_IDLE_TIMEOUT_MS)
+            self._client_idle_logged = False
             if not _set_client_nonblocking(client):
                 self._log("client nonblocking setup failed")
                 self._close_client()
@@ -357,6 +375,9 @@ class SetupPortalService:
         except Exception as e:
             if _is_transient_socket_error(e):
                 if _ticks_diff(self._client_deadline, _ticks_ms()) > 0:
+                    if not self._client_idle_logged:
+                        self._log("recv pending", type(e).__name__, e)
+                        self._client_idle_logged = True
                     return
             self._log("recv header error", type(e).__name__, e)
             self._close_client()
@@ -367,6 +388,7 @@ class SetupPortalService:
             return
 
         self._request_data += chunk
+        self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_TIMEOUT_MS)
         self._log("recv request chunk", len(chunk), "total", len(self._request_data))
         if self._request_header_end < 0:
             marker = self._request_data.find(b"\r\n\r\n")
