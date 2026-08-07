@@ -5,8 +5,6 @@ For UIFlow2.0 / MicroPython on M5Stack
 
 import gc
 import binascii
-import json
-import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
 import http_transport
 
@@ -49,92 +47,6 @@ class BrewfatherAPI(ApiBase):
         }
 
     # ── stateless HTTP helpers ─────────────────────────────────────
-
-    @staticmethod
-    def _remove_file(path):
-        try:
-            os.remove(path)
-        except Exception:
-            pass
-
-    def _spool_response_to_file(self, resp, path):
-        # On the M5Dial, parsing JSON while the HTTPS response is still open
-        # can exhaust ESP-IDF's largest contiguous heap block. Spool the body
-        # in small chunks so TLS/socket buffers can be released before parsing.
-        mem_snapshot("api.spool.start", enabled=_DEBUG, collect=False)
-        mode = "content"
-        with open(path, "wb") as f:
-            raw = getattr(resp, "raw", None)
-            if raw is not None and hasattr(raw, "read"):
-                mode = "raw"
-                total = 0
-                chunks = 0
-                mem_snapshot("api.spool.raw.start", enabled=_DEBUG, collect=False)
-                while True:
-                    try:
-                        chunk = raw.read(512)
-                    except Exception as e:
-                        if _DEBUG:
-                            print("[API] raw.read error chunks={} bytes={}: {}".format(
-                                chunks, total, e))
-                        mem_snapshot("api.spool.raw.error", enabled=_DEBUG, collect=False)
-                        raise
-                    if chunks == 0:
-                        mem_snapshot("api.spool.raw.after_first_read", enabled=_DEBUG, collect=False)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    total += len(chunk)
-                    chunks += 1
-                    del chunk
-                if _DEBUG:
-                    print("[API] raw.done chunks={} bytes={}".format(chunks, total))
-                mem_snapshot("api.spool.raw.done", enabled=_DEBUG, collect=False)
-                return mode
-
-            iter_content = getattr(resp, "iter_content", None)
-            if iter_content:
-                mode = "iter"
-                total = 0
-                chunks = 0
-                mem_snapshot("api.spool.iter.start", enabled=_DEBUG, collect=False)
-                try:
-                    for chunk in iter_content(512):
-                        if chunks == 0:
-                            mem_snapshot("api.spool.iter.after_first_read", enabled=_DEBUG, collect=False)
-                        if chunk:
-                            f.write(chunk)
-                            total += len(chunk)
-                            chunks += 1
-                        del chunk
-                except Exception as e:
-                    if _DEBUG:
-                        print("[API] iter_content error chunks={} bytes={}: {}".format(
-                            chunks, total, e))
-                    mem_snapshot("api.spool.iter.error", enabled=_DEBUG, collect=False)
-                    raise
-                if _DEBUG:
-                    print("[API] iter.done chunks={} bytes={}".format(chunks, total))
-                mem_snapshot("api.spool.iter.done", enabled=_DEBUG, collect=False)
-                return mode
-
-            # Last-resort fallback for request implementations without a raw
-            # stream. This may allocate the full body while TLS buffers remain.
-            mem_snapshot("api.spool.content.before", enabled=_DEBUG, collect=False)
-            content = getattr(resp, "content", b"")
-            mem_snapshot("api.spool.content.after_get", enabled=_DEBUG, collect=False)
-            f.write(content)
-            del content
-            mem_snapshot("api.spool.content.done", enabled=_DEBUG, collect=False)
-        return mode
-
-    @staticmethod
-    def _load_json_file(path):
-        with open(path, "r") as f:
-            load = getattr(json, "load", None)
-            if load:
-                return load(f)
-            return json.loads(f.read())
 
     def _get_json(self, path):
         """GET returning (status_code, parsed_json|None) using plain requests."""
