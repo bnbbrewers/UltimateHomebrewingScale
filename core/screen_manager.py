@@ -37,7 +37,7 @@ class ScreenManager:
         _mem_snapshot("screen.init.start", enabled=_DEBUG, collect=True)
         self._i18n = i18n
         self._screens = {}
-        if initial_screen_id in (None, screen_ids.LAUNCHER):
+        if initial_screen_id == screen_ids.LAUNCHER:
             self._screens[screen_ids.LAUNCHER] = self._new_launcher_screen()
             _collect_runtime()
             _mem_snapshot("screen.after_launcher", enabled=_DEBUG, collect=True)
@@ -273,6 +273,18 @@ class ScreenManager:
             pass
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
+
+    def release_cleanup_screen(self):
+        """Delete the temporary transition screen after the target is loaded."""
+        screen = self._cleanup_screen
+        self._cleanup_screen = None
+        self._cleanup_label = None
+        if screen is None:
+            return
+        try:
+            screen.delete()
+        except Exception:
+            pass
 
     def active_screen_id(self):
         return self._active_id
