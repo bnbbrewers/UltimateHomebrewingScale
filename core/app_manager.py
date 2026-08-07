@@ -175,6 +175,12 @@ class AppManager:
             target_exists = target_app_id in self._apps
         _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
         current_app.on_exit()
+        release_runtime_state = getattr(current_app, "release_runtime_state", None)
+        if release_runtime_state:
+            try:
+                release_runtime_state()
+            except Exception:
+                pass
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
@@ -208,6 +214,9 @@ class AppManager:
         self._active_app_id = target_app_id
         _mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
+        release_cleanup = getattr(self._screen_manager, "release_cleanup_screen", None)
+        if release_cleanup:
+            release_cleanup()
         _collect_runtime()
         _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
 

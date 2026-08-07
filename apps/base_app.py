@@ -46,6 +46,10 @@ class BaseApp:
             except Exception:
                 pass
 
+    def release_runtime_state(self):
+        """Release app-owned transient references before another app enters."""
+        self.release_screen_refs()
+
     def tick(self):
         return None
 
