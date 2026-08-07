@@ -5,6 +5,8 @@ import time
 
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
+MAX_REQUEST_HEADER_BYTES = 4096
+MAX_REQUEST_BODY_BYTES = 4096
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
@@ -511,13 +513,16 @@ class SetupPortalService:
         except Exception:
             pass
         data = b""
-        while b"\r\n\r\n" not in data and len(data) < 4096:
+        while (b"\r\n\r\n" not in data and
+               len(data) < MAX_REQUEST_HEADER_BYTES):
             try:
                 chunk = client.recv(1024)
             except Exception:
                 break
             if not chunk:
                 break
+            if len(data) + len(chunk) > MAX_REQUEST_HEADER_BYTES:
+                return "", "", {}, ""
             data += chunk
         head, sep, tail = data.partition(b"\r\n\r\n")
         if not sep:
@@ -546,7 +551,9 @@ class SetupPortalService:
             content_length = int(headers.get("content-length", "0") or "0")
         except Exception:
             content_length = 0
-        while len(body) < content_length and len(body) < 4096:
+        if content_length < 0 or content_length > MAX_REQUEST_BODY_BYTES:
+            return "", "", {}, ""
+        while len(body) < content_length and len(body) < MAX_REQUEST_BODY_BYTES:
             try:
                 chunk = client.recv(min(512, content_length - len(body)))
             except Exception:

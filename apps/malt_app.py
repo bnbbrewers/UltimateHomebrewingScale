@@ -117,6 +117,7 @@ class GrainAssistantApp(BaseApp):
             self.t("grain.title"), self.t("grain.loading_grains"), _COLOR_MALT)
         batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
+        self._release_screens_for_malt_loading()
         gc.collect()
 
         self._malts = self._api.get_malts(batch_id) if self._api else []
@@ -145,6 +146,25 @@ class GrainAssistantApp(BaseApp):
             self._rotary.reset()
         if config.DEBUG:
             print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
+
+    def _release_screens_for_malt_loading(self):
+        select_screen = self._select_screen
+        if select_screen:
+            try:
+                select_screen.set_items([])
+            except Exception:
+                pass
+        self._select_screen = None
+        self._weigh_screen = None
+        cleanup = getattr(self.screen_manager, "memory_cleanup", None)
+        if cleanup:
+            try:
+                cleanup(
+                    loading_message=self.t("grain.loading_grains"),
+                    loading_color=_COLOR_MALT,
+                )
+            except TypeError:
+                cleanup(loading_message=self.t("grain.loading_grains"))
 
     # ── tick handlers ──────────────────────────────────────────────
 

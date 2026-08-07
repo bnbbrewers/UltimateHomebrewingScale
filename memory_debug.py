@@ -60,21 +60,27 @@ def stats(collect=False):
     return py_free, c_free, c_largest
 
 
-def snapshot(tag, enabled=False, collect=False):
+def snapshot(tag, enabled=False, collect=False, verbose=False):
     """
     Print a memory snapshot if enabled.
 
     Args:
         tag: Short label for the snapshot.
         enabled: Usually config.DEBUG.
-        collect: Kept for backward-compatible call sites; ignored here.
-            Runtime code must call gc.collect() explicitly where resources
-            are released.
+        collect: Collect the Python heap before measuring when true.
+        verbose: Best-effort MicroPython allocator dump, disabled by default.
     """
     if not enabled:
         return
 
-    py_free, c_free, c_largest = stats(collect=False)
+    py_free, c_free, c_largest = stats(collect=collect)
+
+    if verbose:
+        try:
+            import micropython
+            micropython.mem_info(1)
+        except Exception:
+            pass
 
     if c_free is None:
         print("[MEM] {} py_free={}".format(tag, py_free))
