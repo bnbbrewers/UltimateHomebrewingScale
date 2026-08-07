@@ -46,6 +46,11 @@ the latest files from GitHub. The updater:
 - never updates directly from branches
 - shows progress on screen and waits for OK before rebooting
 
+The runtime keeps the boot path light: Wi-Fi is not started by the idle main
+loop, and the Brewfather connector is imported only when Malt or Hop requests
+it. During HTTP workflows, bodies are streamed/spooled and closed before JSON
+parsing. The embedded portal rejects request bodies larger than 4096 bytes.
+
 ## 5) Calibrate the scale
 
 - Run the calibration wizard from the device (UIFlow2 console):

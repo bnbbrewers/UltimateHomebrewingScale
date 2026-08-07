@@ -137,6 +137,21 @@ The app manager creates only the active app at boot and lazy-loads the others.
 This is intentional: the M5Dial has limited Python and C heap, and the project
 tries to avoid loading every UI and API flow at once.
 
+### Memory and I/O policy
+
+- Wi-Fi connection attempts start only when an API, portal, or updater workflow
+  requests them.
+- API connectors and LVGL screens are created on first use and released at
+  workflow boundaries.
+- HTTP responses are streamed to a temporary file, closed, and only then parsed
+  as JSON. Small non-streaming fallbacks are bounded; update archives require a
+  streaming response.
+- The two portal modules cap request headers and bodies at 4096 bytes before
+  reading the body. `setup_portal_service.py` is the normal lightweight entry
+  point; `setup_portal.py` remains the full compatibility implementation.
+- With `DEBUG = True`, compare `py_free`, `c_free`, and especially
+  `c_largest` at the markers documented in `DEBUG_GUIDE.md`.
+
 ## Features
 
 ### Scale Mode
