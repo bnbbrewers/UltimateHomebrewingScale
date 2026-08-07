@@ -12,6 +12,8 @@ AP_SETTLE_MS = 300
 RESPONSE_DRAIN_MS = 200
 SEND_CHUNK_SIZE = 256
 SEND_YIELD_MS = 5
+MAX_REQUEST_HEADER_BYTES = 4096
+MAX_REQUEST_BODY_BYTES = 4096
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
@@ -538,7 +540,8 @@ class SetupPortalService:
             pass
         data = b""
         recv_count = 0
-        while b"\r\n\r\n" not in data and len(data) < 4096:
+        while (b"\r\n\r\n" not in data and
+               len(data) < MAX_REQUEST_HEADER_BYTES):
             try:
                 chunk = client.recv(1024)
             except Exception as e:
@@ -547,6 +550,9 @@ class SetupPortalService:
             if not chunk:
                 self._log("recv header eof bytes", len(data), "reads", recv_count)
                 break
+            if len(data) + len(chunk) > MAX_REQUEST_HEADER_BYTES:
+                self._log("request header too large")
+                return "", "", {}, ""
             recv_count += 1
             self._log("recv header chunk", len(chunk), "total", len(data) + len(chunk))
             data += chunk
@@ -589,7 +595,10 @@ class SetupPortalService:
             content_length = int(headers.get("content-length", "0") or "0")
         except Exception:
             content_length = 0
-        while len(body) < content_length and len(body) < 4096:
+        if content_length < 0 or content_length > MAX_REQUEST_BODY_BYTES:
+            self._log("request body too large", content_length)
+            return "", "", {}, ""
+        while len(body) < content_length and len(body) < MAX_REQUEST_BODY_BYTES:
             try:
                 chunk = client.recv(min(512, content_length - len(body)))
             except Exception as e:

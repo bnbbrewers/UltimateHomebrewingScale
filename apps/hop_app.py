@@ -410,6 +410,12 @@ class HopAssistantApp(BaseApp):
             mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
 
     def _release_screens_for_hops_loading(self):
+        select_screen = self._select_screen
+        if select_screen:
+            try:
+                select_screen.set_items([])
+            except Exception:
+                pass
         self._select_screen = None
         self._weigh_screen = None
         cleanup = getattr(self.screen_manager, "memory_cleanup", None)

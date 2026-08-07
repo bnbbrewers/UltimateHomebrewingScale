@@ -31,7 +31,7 @@ def _collect_runtime(cycles=1):
 
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=False)
+        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 def _file_exists(path):

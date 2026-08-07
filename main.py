@@ -165,8 +165,8 @@ def main():
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
     while _RUNNING:
         M5.update()
-        app_manager.tick()
         hardware.tick()
+        app_manager.tick()
         lv.task_handler()
         time.sleep_ms(10)
 
