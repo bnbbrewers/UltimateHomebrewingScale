@@ -148,6 +148,10 @@ def main():
     elif not startup_ready:
         initial_app_id = "settings_app"
     elif startup_ready:
+        # Keep the normal configured path compatible with the alpha runtime:
+        # Wi-Fi warms up in the background while the launcher is available,
+        # leaving the API workflow to use an already-settled interface.
+        hardware.wifi.request_connection()
         # The connector is deliberately warmed while the C heap is still
         # healthy. Its import used to happen at boot; deferring it until the
         # first Malt/Hop transition leaves too little contiguous heap for TLS.

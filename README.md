@@ -140,8 +140,9 @@ tries to avoid loading every UI and API flow at once.
 
 ### Memory and I/O policy
 
-- Wi-Fi connection attempts start only when an API, portal, or updater workflow
-  requests them.
+- In the normal configured path, Wi-Fi warms up in the background while the
+  launcher is displayed; unconfigured setup and updater flows remain demand-
+  driven.
 - API connectors and LVGL screens are created on first use and released at
   workflow boundaries.
 - HTTP responses are streamed to a temporary file, closed, and only then parsed
