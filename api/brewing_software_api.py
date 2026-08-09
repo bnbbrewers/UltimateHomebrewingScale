@@ -65,6 +65,27 @@ class ApiBase:
 
     def __init__(self, wifi_device=None):
         self._wifi_device = wifi_device
+        self._requests_module = None
+        self._http_session = None
+        self._last_error = None
+
+    @property
+    def last_error(self):
+        return self._last_error
+
+    @staticmethod
+    def _is_memory_error(error):
+        if getattr(error, "errno", None) == 12:
+            return True
+        try:
+            return bool(error.args) and error.args[0] == 12
+        except Exception:
+            return False
+
+    def close_http(self):
+        session = self._http_session
+        self._http_session = None
+        http_transport.close_session(session)
 
     def _get(self, url, headers, retries=2, stream=False):
         """
@@ -86,11 +107,19 @@ class ApiBase:
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
-                requests_module = http_transport.default_requests_module()
+                requests_module = self._requests_module
+                if requests_module is None:
+                    requests_module = http_transport.default_requests_module()
                 if requests_module is None:
                     raise RuntimeError("Missing requests2 module")
+                client = self._http_session
+                if client is None:
+                    client = http_transport.create_session(requests_module)
+                    self._http_session = client
+                if client is None:
+                    client = requests_module
                 return http_transport.get(
-                    requests_module,
+                    client,
                     url,
                     headers=headers,
                     stream=stream,
@@ -100,8 +129,14 @@ class ApiBase:
                 last_exc = e
                 if _DEBUG:
                     print(f"[HTTP] attempt {attempt + 1} failed: {e}")
+                if self._is_memory_error(e):
+                    self.close_http()
+                    raise
                 if attempt < retries - 1:
-                    time.sleep_ms(1000)
+                    try:
+                        time.sleep_ms(1000)
+                    except AttributeError:
+                        time.sleep(1)
                     gc.collect()
         raise last_exc
 
