@@ -125,7 +125,7 @@ api/        Brewfather connector and brewing software API interface
 apps/       Application controllers and business logic
 core/       App, screen, hardware, API and updater managers
 devices/    Hardware abstractions for scale, Wi-Fi, button and rotary encoder
-network/    Lightweight HTTP transport without LVGL dependencies
+netcore/    Lightweight HTTP transport without LVGL dependencies
 i18n/       English/French translations
 ui/         LVGL screens and reusable UI helpers
 webportal/  Embedded HTTP settings portal

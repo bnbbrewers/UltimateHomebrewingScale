@@ -6,7 +6,7 @@ For UIFlow2.0 / MicroPython on M5Stack
 import gc
 import time
 
-from network import http_transport
+from netcore import http_transport
 
 try:
     import config as _config
