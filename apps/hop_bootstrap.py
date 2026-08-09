@@ -39,16 +39,42 @@ class HopBootstrapApp(BaseApp):
         self._load_batches()
 
     def on_exit(self):
-        if self._delegate is not None:
-            self._delegate.on_exit()
-            release_runtime_state = getattr(
-                self._delegate, "release_runtime_state", None
-            )
-            if release_runtime_state:
-                release_runtime_state()
-            self._delegate = None
-        self._batches = []
-        super().on_exit()
+        delegate = self._delegate
+        self._delegate = None
+        try:
+            if delegate is not None:
+                try:
+                    delegate.on_exit()
+                except Exception:
+                    pass
+                try:
+                    release_runtime_state = getattr(
+                        delegate, "release_runtime_state", None
+                    )
+                    if release_runtime_state:
+                        release_runtime_state()
+                except Exception:
+                    pass
+        finally:
+            delegate = None
+            self._unload_hop_module()
+            self._batches = []
+            super().on_exit()
+
+    @staticmethod
+    def _unload_hop_module():
+        try:
+            import sys
+            sys.modules.pop("apps.hop_app", None)
+            package = sys.modules.get("apps")
+            if package is not None:
+                try:
+                    delattr(package, "hop_app")
+                except AttributeError:
+                    pass
+        except Exception:
+            pass
+        gc.collect()
 
     def tick(self):
         if self._delegate is not None:
