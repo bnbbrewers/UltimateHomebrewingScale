@@ -64,11 +64,6 @@ class GrainAssistantApp(BaseApp):
         super().on_enter()
         self._select_screen = None
         self._weigh_screen = None
-        try:
-            import lvgl as lv
-            lv.image_cache_drop(None)
-        except Exception:
-            pass
         gc.collect()
         self._load_batches()
 

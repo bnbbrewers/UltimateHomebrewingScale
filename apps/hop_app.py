@@ -101,16 +101,13 @@ class HopAssistantApp(BaseApp):
         self._prep_flow_active = False
         if self._select_screen:
             self._select_screen.set_items([])
+        self._select_screen = None
+        self._weigh_screen = None
         gc.collect()
         mem_snapshot("hop.on_exit.after_cleanup", enabled=config.DEBUG, collect=False)
 
     def on_enter(self):
         super().on_enter()
-        try:
-            import lvgl as lv
-            lv.image_cache_drop(None)
-        except Exception:
-            pass
         gc.collect()
         if self._initial_hops is not None:
             self._batch_id = self._initial_batch_id

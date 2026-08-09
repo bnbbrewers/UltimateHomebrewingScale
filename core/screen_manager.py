@@ -158,7 +158,24 @@ class ScreenManager:
             except Exception:
                 pass
 
+    @staticmethod
+    def _flush_lvgl():
+        try:
+            import lvgl as lv
+            handler = getattr(lv, "task_handler", None)
+            if handler is None:
+                handler = getattr(lv, "timer_handler", None)
+            if handler:
+                handler()
+        except Exception:
+            pass
+
     def release(self, screen_id):
+        _mem_snapshot(
+            "screen.release.before.{}".format(screen_id),
+            enabled=_DEBUG,
+            collect=False,
+        )
         screen = self._screens.pop(screen_id, None)
         if screen is None:
             return
@@ -178,9 +195,17 @@ class ScreenManager:
             screen.root().delete()
         except Exception:
             pass
+        self._flush_lvgl()
+        _collect_runtime()
+        _mem_snapshot(
+            "screen.release.after.{}".format(screen_id),
+            enabled=_DEBUG,
+            collect=False,
+        )
 
     def release_all(self, keep_ids=(), cleanup_message=None, cleanup_color=0x333333):
         keep = set(keep_ids or ())
+        _mem_snapshot("screen.release_all.before", enabled=_DEBUG, collect=False)
         if self._active_id is not None and self._active_id not in keep:
             self._load_cleanup_screen(
                 cleanup_message,
@@ -198,6 +223,9 @@ class ScreenManager:
                 screen.root().delete()
             except Exception:
                 pass
+        self._flush_lvgl()
+        _collect_runtime()
+        _mem_snapshot("screen.release_all.after", enabled=_DEBUG, collect=False)
         if self._active_id not in self._screens:
             self._active_id = None
 
@@ -259,9 +287,11 @@ class ScreenManager:
             pass
 
     def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
-        keep = tuple(keep_ids or ())
+        keep = list(keep_ids or ())
+        if screen_ids.LAUNCHER not in keep:
+            keep.append(screen_ids.LAUNCHER)
         self.release_all(
-            keep_ids=keep,
+            keep_ids=tuple(keep),
             cleanup_message=loading_message,
             cleanup_color=loading_color,
         )
@@ -271,6 +301,7 @@ class ScreenManager:
             lv.image_cache_drop(None)
         except Exception:
             pass
+        self._flush_lvgl()
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup", enabled=_DEBUG, collect=False)
 
@@ -285,6 +316,7 @@ class ScreenManager:
             screen.delete()
         except Exception:
             pass
+        self._flush_lvgl()
 
     def active_screen_id(self):
         return self._active_id

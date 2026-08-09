@@ -148,6 +148,9 @@ largest contiguous C-heap block available for the second HTTPS handshake.
   driven.
 - API connectors and LVGL screens are created on first use and released at
   workflow boundaries.
+- The screen manager keeps the launcher screen stable across transitions,
+  releases transient screens before memory-sensitive HTTP calls, and flushes
+  LVGL after object deletion to reduce allocator churn.
 - HTTP responses are streamed to a temporary file, closed, and only then parsed
   as JSON. Small non-streaming fallbacks are bounded; update archives require a
   streaming response. Response and raw-stream handles are closed explicitly;
