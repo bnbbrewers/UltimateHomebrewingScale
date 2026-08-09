@@ -15,18 +15,18 @@ except Exception:
     _memory_snapshot = None
     _memory_stats = None
 
-from http_transport import BodyTooLargeError
-from http_transport import close_response
-from http_transport import default_requests_module as _default_requests_module
-from http_transport import gc_hard
-from http_transport import get as _transport_get
-from http_transport import load_json_file
-from http_transport import remove_file
-from http_transport import response_header
-from http_transport import response_text
-from http_transport import spool_response_to_file
-from http_transport import ticks_diff
-from http_transport import ticks_ms
+from network.http_transport import BodyTooLargeError
+from network.http_transport import close_response
+from network.http_transport import default_requests_module as _default_requests_module
+from network.http_transport import gc_hard
+from network.http_transport import get as _transport_get
+from network.http_transport import load_json_file
+from network.http_transport import remove_file
+from network.http_transport import response_header
+from network.http_transport import response_text
+from network.http_transport import spool_response_to_file
+from network.http_transport import ticks_diff
+from network.http_transport import ticks_ms
 
 
 REQUEST_TIMEOUT_S = 15

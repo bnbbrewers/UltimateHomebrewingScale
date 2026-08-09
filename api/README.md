@@ -38,7 +38,7 @@ The `BrewingSoftwareAPI` base class provides a common interface for different br
 ✅ **Brewfather** - Full support with `BrewfatherAPI`
 
 The connector receives the shared hardware Wi-Fi device from `ApiFactory` and
-uses the repository-level `http_transport` module for requests and response
+uses the lightweight `network.http_transport` module for requests and response
 lifecycle management. JSON is spooled to a temporary file, the HTTP response
 is closed, and only then is the JSON tree loaded. This ordering is important on
 the M5Dial because TLS buffers and parsed JSON must not occupy the largest C
