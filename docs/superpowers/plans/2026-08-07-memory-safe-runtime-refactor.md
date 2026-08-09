@@ -15,7 +15,7 @@
 - Modify `core/screen_manager.py`: empty-by-default screen registry and disposable transition screen.
 - Modify `core/app_manager.py`: explicit app runtime cleanup and transition lifecycle.
 - Modify `core/hardware_manager.py` and `devices/wifi.py`: demand-driven Wi-Fi and one-pass hardware events.
-- Create `http_transport.py`: shared HTTP request, retry, response-spooling, status, close, and GC policy without importing the LVGL-heavy `core` package.
+- Create `network/http_transport.py`: shared HTTP request, retry, response-spooling, status, close, and GC policy without importing the LVGL-heavy `core` package.
 - Modify `updater/http_client.py`: compatibility facade over the shared transport and updater-specific diagnostics.
 - Modify `api/brewing_software_api.py` and `api/brewfather_api.py`: use the shared transport and remove duplicated HTTP behavior.
 - Modify `core/api_factory.py`: lazy connector creation.
@@ -150,7 +150,7 @@ rtk git commit -m "refactor: defer Wi-Fi and brewing API initialization"
 
 ### Task 4: Centralize HTTP response handling
 
-**Files:** `http_transport.py`, `updater/http_client.py`, `api/brewfather_api.py`, `updater/workflow.py`, `updater/github_release.py`
+**Files:** `network/http_transport.py`, `updater/http_client.py`, `api/brewfather_api.py`, `updater/workflow.py`, `updater/github_release.py`
 
 - [ ] **Step 1: Write the shared transport tests first**
 
@@ -165,7 +165,7 @@ with assert_raises(BodyTooLargeError):
 assert response.closed is True
 ```
 
-- [ ] **Step 2: Implement `http_transport.py`**
+- [ ] **Step 2: Implement `network/http_transport.py`**
 
 Provide `get()`, `default_requests_module()`, `response_header()`, `response_text()`, `spool_response_to_file()`, `read_response_json()`, `remove_file()`, `close_response()`, and `gc_hard()`. The spooler tries `raw`, then `iter_content`, then bounded `content`, then bounded text. It never silently loads an unbounded archive body.
 
@@ -192,7 +192,7 @@ Expected: PASS for all response variants, close behavior, size limits, and tempo
 - [ ] **Step 7: Commit**
 
 ```powershell
-rtk git add http_transport.py updater/http_client.py api/brewfather_api.py api/brewing_software_api.py updater/workflow.py updater/github_release.py
+rtk git add network/http_transport.py updater/http_client.py api/brewfather_api.py api/brewing_software_api.py updater/workflow.py updater/github_release.py
 rtk git commit -m "refactor: centralize memory-safe HTTP transport"
 ```
 
