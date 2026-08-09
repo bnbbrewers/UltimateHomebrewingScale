@@ -94,6 +94,7 @@ class ApiBase:
                     url,
                     headers=headers,
                     stream=stream,
+                    timeout_s=None,
                 )
             except Exception as e:
                 last_exc = e
