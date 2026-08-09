@@ -50,6 +50,30 @@ def default_requests_module():
     return _requests
 
 
+def create_session(requests_module):
+    """Create one optional requests2 session without making it mandatory."""
+    if requests_module is None:
+        return None
+    factory = getattr(requests_module, "Session", None)
+    if factory is None:
+        return None
+    try:
+        return factory()
+    except Exception:
+        return None
+
+
+def close_session(session):
+    if session is None:
+        return
+    close = getattr(session, "close", None)
+    if close is not None:
+        try:
+            close()
+        except Exception:
+            pass
+
+
 def _request_variants(headers, stream, timeout_s):
     kwargs = {}
     if headers is not None:
@@ -125,6 +149,14 @@ def close_response(response):
         response.close()
     except Exception:
         pass
+    raw = getattr(response, "raw", None)
+    if raw is not None:
+        close = getattr(raw, "close", None)
+        if close is not None:
+            try:
+                close()
+            except Exception:
+                pass
 
 
 def remove_file(path):

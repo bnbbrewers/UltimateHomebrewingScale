@@ -49,6 +49,10 @@ class BaseApp:
     def release_runtime_state(self):
         """Release app-owned transient references before another app enters."""
         self.release_screen_refs()
+        api = getattr(self, "_api", None)
+        close_http = getattr(api, "close_http", None)
+        if close_http:
+            close_http()
 
     def tick(self):
         return None

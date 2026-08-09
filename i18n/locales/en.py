@@ -8,6 +8,7 @@ TRANSLATIONS = {
         'ok': 'OK',
         'back': 'Back',
         'loading_app': 'Loading {0}',
+        'network_error': 'Network error, please retry',
     },
 
     'scale': {

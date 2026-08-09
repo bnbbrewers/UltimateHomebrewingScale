@@ -50,6 +50,7 @@ class BrewfatherAPI(ApiBase):
 
     def _get_json(self, path):
         """GET returning (status_code, parsed_json|None) using plain requests."""
+        self._last_error = None
         url = "https://{}{}".format(self._HOST, path)
         if _DEBUG:
             print("[API] GET {}".format(path))
@@ -135,6 +136,7 @@ class BrewfatherAPI(ApiBase):
             return batches
 
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -167,6 +169,7 @@ class BrewfatherAPI(ApiBase):
             return malts
 
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -181,6 +184,7 @@ class BrewfatherAPI(ApiBase):
                 hops.append(hop_obj)
             return hops
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -218,6 +222,7 @@ class BrewfatherAPI(ApiBase):
             if _DEBUG:
                 print("[API] hops_source=batch")
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
         mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)

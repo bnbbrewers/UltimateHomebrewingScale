@@ -95,6 +95,9 @@ class GrainAssistantApp(BaseApp):
         self._show_msg(
             self.t("grain.title"), self.t("recipe.loading_recipes"), _COLOR_RECIPE)
         self._batches = self._api.get_batches() if self._api else []
+        if self._api and getattr(self._api, "last_error", None) is not None:
+            self._show_network_error()
+            return
         names = [b.name for b in self._batches]
         self._batch_idx = 0
         if len(self._batches) == 1:
@@ -121,6 +124,9 @@ class GrainAssistantApp(BaseApp):
         gc.collect()
 
         self._malts = self._api.get_malts(batch_id) if self._api else []
+        if self._api and getattr(self._api, "last_error", None) is not None:
+            self._show_network_error()
+            return
         gc.collect()
         self._malt_idx = 0
         names = [m.name for m in self._malts]
@@ -146,6 +152,12 @@ class GrainAssistantApp(BaseApp):
             self._rotary.reset()
         if config.DEBUG:
             print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
+
+    def _show_network_error(self):
+        if self._show_msg(
+                self.t("grain.title"), self.t("common.network_error"),
+                _COLOR_MALT, show_ok=True):
+            self._state = _STATE_MESSAGE_ACK
 
     def _release_screens_for_malt_loading(self):
         select_screen = self._select_screen
