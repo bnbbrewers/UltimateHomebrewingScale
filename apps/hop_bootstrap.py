@@ -7,6 +7,12 @@ import config
 from .base_app import BaseApp
 from ui import screen_ids
 
+if getattr(config, "DEBUG", False):
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
+
 
 _STATE_RECIPE = 1
 _STATE_ACK = 2
@@ -35,6 +41,11 @@ class HopBootstrapApp(BaseApp):
     def on_exit(self):
         if self._delegate is not None:
             self._delegate.on_exit()
+            release_runtime_state = getattr(
+                self._delegate, "release_runtime_state", None
+            )
+            if release_runtime_state:
+                release_runtime_state()
             self._delegate = None
         self._batches = []
         super().on_exit()
@@ -58,7 +69,10 @@ class HopBootstrapApp(BaseApp):
         if changed:
             self._select_screen().set_selected_index(self._batch_idx)
         if self.hardware.button.was_short_pressed():
-            self._load_hops(self._batches[self._batch_idx].batch_id)
+            self._load_hops(
+                self._batches[self._batch_idx].batch_id,
+                clear_selection=True,
+            )
         return None
 
     def _select_screen(self):
@@ -83,10 +97,9 @@ class HopBootstrapApp(BaseApp):
             self._rotary.reset()
         self._state = _STATE_RECIPE
 
-    def _load_hops(self, batch_id):
-        had_selection_screen = bool(self._batches)
+    def _load_hops(self, batch_id, clear_selection=False):
         self._batches = []
-        if had_selection_screen:
+        if clear_selection:
             screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
             try:
                 screen.set_items([])
@@ -104,7 +117,9 @@ class HopBootstrapApp(BaseApp):
         self._start_delegate(batch_id, hops)
 
     def _start_delegate(self, batch_id, hops):
+        mem_snapshot("hop.delegate.before_import", enabled=config.DEBUG, collect=False)
         from .hop_app import HopAssistantApp
+        mem_snapshot("hop.delegate.after_import", enabled=config.DEBUG, collect=False)
 
         self._delegate = HopAssistantApp(
             self.screen_manager,
@@ -114,7 +129,9 @@ class HopBootstrapApp(BaseApp):
             initial_batch_id=batch_id,
             initial_hops=hops,
         )
+        mem_snapshot("hop.delegate.after_ctor", enabled=config.DEBUG, collect=False)
         self._delegate.on_enter()
+        mem_snapshot("hop.delegate.after_enter", enabled=config.DEBUG, collect=False)
 
     def _has_api_error(self):
         return self._api and getattr(self._api, "last_error", None) is not None
