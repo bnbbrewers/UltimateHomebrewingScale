@@ -125,6 +125,7 @@ api/        Brewfather connector and brewing software API interface
 apps/       Application controllers and business logic
 core/       App, screen, hardware, API and updater managers
 devices/    Hardware abstractions for scale, Wi-Fi, button and rotary encoder
+netcore/    Lightweight HTTP transport without LVGL dependencies
 i18n/       English/French translations
 ui/         LVGL screens and reusable UI helpers
 webportal/  Embedded HTTP settings portal
@@ -136,6 +137,33 @@ tests/      Host-side regression tests where possible
 The app manager creates only the active app at boot and lazy-loads the others.
 This is intentional: the M5Dial has limited Python and C heap, and the project
 tries to avoid loading every UI and API flow at once.
+Runtime Python modules are deployed as precompiled MicroPython bytecode
+(`.mpy`) on the Dial. `main.py` remains the source bootstrap, while
+`config.py.example` remains available for setup and the private `config.py` is
+never included in release artifacts. The compiler staging is shared by the
+complete firmware image and the differential update archive.
+
+### Memory and I/O policy
+
+- In the normal configured path, Wi-Fi warms up in the background while the
+  launcher is displayed; unconfigured setup and updater flows remain demand-
+  driven.
+- API connectors and LVGL screens are created on first use and released at
+  workflow boundaries.
+- The screen manager keeps the launcher screen stable across transitions,
+  releases transient screens before memory-sensitive HTTP calls, and flushes
+  LVGL after object deletion to reduce allocator churn.
+- HTTP responses are streamed to a temporary file, closed, and only then parsed
+  as JSON. Small non-streaming fallbacks are bounded; update archives require a
+  streaming response. Response and raw-stream handles are closed explicitly;
+  optional HTTP sessions are reused when the installed requests implementation
+  supports them.
+- The portal service caps request headers and bodies at 4096 bytes before
+  reading the body. `setup_portal_service.py` is the entry point; rendering and
+  routing are kept in the separate `portal_html.py` and `portal_routes.py`
+  modules.
+- With `DEBUG = True`, compare `py_free`, `c_free`, and especially
+  `c_largest` at the markers documented in `DEBUG_GUIDE.md`.
 
 ## Features
 
@@ -196,7 +224,12 @@ The hidden updater downloads a compact TAR diff from the latest GitHub Release.
 `UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release.
 The device never updates directly from branches. It skips docs, firmware,
 Markdown files, examples, `.gitignore`, `LICENSE`, and most example files so the
-device receives only runtime files.
+device receives only runtime files. Runtime modules are delivered as `.mpy`;
+after installing `foo.mpy`, the updater removes `foo.py` at the same path when
+that source exists. A first `.mpy` release migrates legacy installations by
+including all compiled modules; later diffs contain only changed artifacts.
+`main.py`, `config.py.example`, and the local `config.py` configuration remain
+source/configuration exceptions.
 
 ## Configuration
 

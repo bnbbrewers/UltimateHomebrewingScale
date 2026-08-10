@@ -8,6 +8,7 @@ TRANSLATIONS = {
         'ok': 'OK',
         'back': 'Retour',
         'loading_app': 'Chargement {0}',
+        'network_error': 'Erreur reseau, veuillez reessayer',
     },
 
     'scale': {

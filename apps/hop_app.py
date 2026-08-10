@@ -98,16 +98,13 @@ class HopAssistantApp(BaseApp):
         self._prep_flow_active = False
         if self._select_screen:
             self._select_screen.set_items([])
+        self._select_screen = None
+        self._weigh_screen = None
         gc.collect()
         mem_snapshot("hop.on_exit.after_cleanup", enabled=config.DEBUG, collect=False)
 
     def on_enter(self):
         super().on_enter()
-        try:
-            import lvgl as lv
-            lv.image_cache_drop(None)
-        except Exception:
-            pass
         gc.collect()
         self._load_batches()
 
@@ -336,6 +333,9 @@ class HopAssistantApp(BaseApp):
 
     def _load_batches(self):
         self._batches = self._api.get_batches() if self._api else []
+        if self._api and getattr(self._api, "last_error", None) is not None:
+            self._show_network_error()
+            return
         names = [b.name for b in self._batches]
         self._batch_idx = 0
         if len(self._batches) == 1:
@@ -357,9 +357,18 @@ class HopAssistantApp(BaseApp):
         if not self._api:
             return []
         hops_list = self._api.get_hops_list(self._batch_id)
+        if getattr(self._api, "last_error", None) is not None:
+            return []
         if not hops_list:
             return []
         return hops_list
+
+    def _show_network_error(self):
+        self._show_msg(
+            self.t("hop.title"), self.t("common.network_error"),
+            _COLOR_HOP, show_ok=True)
+        self._prep_flow_active = False
+        self._state = _STATE_PREP_ACK
 
     @staticmethod
     def _build_step_vessel_numbers(hops_list):
@@ -384,6 +393,12 @@ class HopAssistantApp(BaseApp):
         gc.collect()
         mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
         self._hops_list = self._fetch_hops_list()
+        if self._api and getattr(self._api, "last_error", None) is not None:
+            self._show_network_error()
+            return
+        self._finish_hops_load()
+
+    def _finish_hops_load(self):
         self._vessel_numbers_by_step = self._build_step_vessel_numbers(self._hops_list)
         recipient_count = len(self._vessel_numbers_by_step)
         gc.collect()
@@ -410,6 +425,12 @@ class HopAssistantApp(BaseApp):
             mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
 
     def _release_screens_for_hops_loading(self):
+        select_screen = self._select_screen
+        if select_screen:
+            try:
+                select_screen.set_items([])
+            except Exception:
+                pass
         self._select_screen = None
         self._weigh_screen = None
         cleanup = getattr(self.screen_manager, "memory_cleanup", None)

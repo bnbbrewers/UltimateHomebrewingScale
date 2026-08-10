@@ -45,3 +45,16 @@ to rebuild the final firmware asset:
 ```text
 firmware/UHS-m5dial-repack-base.zip
 ```
+
+## Runtime bytecode packaging
+
+The repack workflow builds `mpy-cross` from the UIFlow MicroPython `2.4.2` tag
+and compiles runtime Python modules to `.mpy` before creating both the complete
+LittleFS image and the update diff. `main.py` remains the source entrypoint so
+the UIFlow startup path is unchanged. `config.py.example` remains available on
+the device, while the private `config.py` is never packaged.
+
+The first `.mpy` release includes every compiled module in its migration diff
+for devices that were installed from `.py` sources. On later updates, installing
+`foo.mpy` removes `foo.py` at the same path when it exists; the updater never
+scans the filesystem to remove unrelated Python files.

@@ -151,14 +151,28 @@ def main():
     mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
     hardware = HardwareManager.get_instance()
     mem_snapshot("boot.after_hardware", enabled=DEBUG, collect=True)
-    apis = ApiFactory().as_dict()
-    mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
+    api_factory = ApiFactory(wifi_device=hardware.wifi)
 
     initial_app_id = None
     initial_screen_id = None
     startup_ready = _startup_config_ready()
-    if not startup_ready:
+    update_requested = startup_ready and _update_requested()
+    if update_requested:
+        initial_app_id = "updater_app"
+        initial_screen_id = "simple_message"
+    elif not startup_ready:
         initial_app_id = "settings_app"
+    elif startup_ready:
+        # Keep the normal configured path compatible with the alpha runtime:
+        # Wi-Fi warms up in the background while the launcher is available,
+        # leaving the API workflow to use an already-settled interface.
+        hardware.wifi.request_connection()
+        # The connector is deliberately warmed while the C heap is still
+        # healthy. Its import used to happen at boot; deferring it until the
+        # first Malt/Hop transition leaves too little contiguous heap for TLS.
+        api_factory.get("brewing")
+    apis = api_factory.as_dict()
+    mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
     if DEBUG:
         try:
             print("[BOOTCFG] initial_app_id={}".format(initial_app_id))
@@ -177,8 +191,8 @@ def main():
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
     while _RUNNING:
         M5.update()
-        app_manager.tick()
         hardware.tick()
+        app_manager.tick()
         lv.task_handler()
         time.sleep_ms(10)
 

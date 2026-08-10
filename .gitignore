@@ -1,4 +1,5 @@
 # Configuration files with credentials
 config.py
 .worktrees/
+docs/superpowers/
 tests/
