@@ -150,11 +150,16 @@ class AppManager:
         _mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
 
     def _create_hop(self, screen_manager, hardware, apis, i18n):
-        from apps.hop_bootstrap import HopBootstrapApp
+        from apps.hop_app import HopAssistantApp
 
-        self._apps["hop_app"] = HopBootstrapApp(screen_manager, hardware, apis, i18n=i18n)
+        self._apps["hop_app"] = HopAssistantApp(
+            screen_manager,
+            hardware,
+            apis,
+            i18n=i18n,
+        )
         _collect_runtime()
-        _mem_snapshot("app.lazy.hop_bootstrap_created", enabled=_DEBUG, collect=True)
+        _mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
 
     def _create_keg(self, screen_manager, hardware, apis, i18n):
         from apps.keg_filler_app import KegFillerApp
