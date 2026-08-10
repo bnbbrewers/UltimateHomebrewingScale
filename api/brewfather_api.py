@@ -5,9 +5,8 @@ For UIFlow2.0 / MicroPython on M5Stack
 
 import gc
 import binascii
-import json
-import os
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
+from netcore import http_transport
 
 try:
     import config as _config
@@ -29,7 +28,8 @@ class BrewfatherAPI(ApiBase):
     _BASE_PATH = "/v2"
     _TMP_JSON_PATH = "brewfather_api.tmp"
 
-    def __init__(self):
+    def __init__(self, wifi_device=None):
+        super().__init__(wifi_device=wifi_device)
         try:
             import config
             user_id = getattr(config, 'BREWFATHER_USER_ID', '')
@@ -48,101 +48,16 @@ class BrewfatherAPI(ApiBase):
 
     # ── stateless HTTP helpers ─────────────────────────────────────
 
-    @staticmethod
-    def _remove_file(path):
-        try:
-            os.remove(path)
-        except Exception:
-            pass
-
-    def _spool_response_to_file(self, resp, path):
-        # On the M5Dial, parsing JSON while the HTTPS response is still open
-        # can exhaust ESP-IDF's largest contiguous heap block. Spool the body
-        # in small chunks so TLS/socket buffers can be released before parsing.
-        mem_snapshot("api.spool.start", enabled=_DEBUG, collect=False)
-        mode = "content"
-        with open(path, "wb") as f:
-            raw = getattr(resp, "raw", None)
-            if raw is not None and hasattr(raw, "read"):
-                mode = "raw"
-                total = 0
-                chunks = 0
-                mem_snapshot("api.spool.raw.start", enabled=_DEBUG, collect=False)
-                while True:
-                    try:
-                        chunk = raw.read(512)
-                    except Exception as e:
-                        if _DEBUG:
-                            print("[API] raw.read error chunks={} bytes={}: {}".format(
-                                chunks, total, e))
-                        mem_snapshot("api.spool.raw.error", enabled=_DEBUG, collect=False)
-                        raise
-                    if chunks == 0:
-                        mem_snapshot("api.spool.raw.after_first_read", enabled=_DEBUG, collect=False)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    total += len(chunk)
-                    chunks += 1
-                    del chunk
-                if _DEBUG:
-                    print("[API] raw.done chunks={} bytes={}".format(chunks, total))
-                mem_snapshot("api.spool.raw.done", enabled=_DEBUG, collect=False)
-                return mode
-
-            iter_content = getattr(resp, "iter_content", None)
-            if iter_content:
-                mode = "iter"
-                total = 0
-                chunks = 0
-                mem_snapshot("api.spool.iter.start", enabled=_DEBUG, collect=False)
-                try:
-                    for chunk in iter_content(512):
-                        if chunks == 0:
-                            mem_snapshot("api.spool.iter.after_first_read", enabled=_DEBUG, collect=False)
-                        if chunk:
-                            f.write(chunk)
-                            total += len(chunk)
-                            chunks += 1
-                        del chunk
-                except Exception as e:
-                    if _DEBUG:
-                        print("[API] iter_content error chunks={} bytes={}: {}".format(
-                            chunks, total, e))
-                    mem_snapshot("api.spool.iter.error", enabled=_DEBUG, collect=False)
-                    raise
-                if _DEBUG:
-                    print("[API] iter.done chunks={} bytes={}".format(chunks, total))
-                mem_snapshot("api.spool.iter.done", enabled=_DEBUG, collect=False)
-                return mode
-
-            # Last-resort fallback for request implementations without a raw
-            # stream. This may allocate the full body while TLS buffers remain.
-            mem_snapshot("api.spool.content.before", enabled=_DEBUG, collect=False)
-            content = getattr(resp, "content", b"")
-            mem_snapshot("api.spool.content.after_get", enabled=_DEBUG, collect=False)
-            f.write(content)
-            del content
-            mem_snapshot("api.spool.content.done", enabled=_DEBUG, collect=False)
-        return mode
-
-    @staticmethod
-    def _load_json_file(path):
-        with open(path, "r") as f:
-            load = getattr(json, "load", None)
-            if load:
-                return load(f)
-            return json.loads(f.read())
-
     def _get_json(self, path):
         """GET returning (status_code, parsed_json|None) using plain requests."""
+        self._last_error = None
         url = "https://{}{}".format(self._HOST, path)
         if _DEBUG:
             print("[API] GET {}".format(path))
         gc.collect()
         mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
         resp = None
-        self._remove_file(self._TMP_JSON_PATH)
+        http_transport.remove_file(self._TMP_JSON_PATH)
         try:
             resp = self._get(url, headers=self._headers, stream=True)
             status = getattr(resp, "status_code", None)
@@ -162,21 +77,20 @@ class BrewfatherAPI(ApiBase):
                     bool(getattr(resp, "iter_content", None)),
                     "not_checked",
                 ))
-            spool_mode = self._spool_response_to_file(resp, self._TMP_JSON_PATH)
+            spool_mode = http_transport.spool_response_to_file(
+                resp, self._TMP_JSON_PATH, max_content_bytes=65536
+            )
             if _DEBUG:
                 print("[API] body_spooled mode={}".format(spool_mode))
             mem_snapshot("api.body.spooled", enabled=_DEBUG, collect=False)
             if resp is not None:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
+                http_transport.close_response(resp)
                 resp = None
             gc.collect()
             mem_snapshot("api.body.closed", enabled=_DEBUG, collect=False)
             # Parse only after closing the response. This avoids holding
             # requests2/TLS buffers and the decoded JSON tree at the same time.
-            data = self._load_json_file(self._TMP_JSON_PATH)
+            data = http_transport.load_json_file(self._TMP_JSON_PATH)
             if _DEBUG:
                 try:
                     if isinstance(data, list):
@@ -192,11 +106,8 @@ class BrewfatherAPI(ApiBase):
             return status, data
         finally:
             if resp is not None:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
-            self._remove_file(self._TMP_JSON_PATH)
+                http_transport.close_response(resp)
+            http_transport.remove_file(self._TMP_JSON_PATH)
 
     # ── public API ─────────────────────────────────────────────────
 
@@ -225,6 +136,7 @@ class BrewfatherAPI(ApiBase):
             return batches
 
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -257,6 +169,7 @@ class BrewfatherAPI(ApiBase):
             return malts
 
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -271,6 +184,7 @@ class BrewfatherAPI(ApiBase):
                 hops.append(hop_obj)
             return hops
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
 
@@ -308,6 +222,7 @@ class BrewfatherAPI(ApiBase):
             if _DEBUG:
                 print("[API] hops_source=batch")
         except Exception as e:
+            self._last_error = e
             print("Error: {}".format(e))
             return []
         mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)

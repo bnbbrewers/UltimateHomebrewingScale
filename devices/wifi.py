@@ -53,6 +53,7 @@ class WifiDevice:
     def __init__(self, debug=False):
         self._debug = debug
         self._started = False
+        self._connect_requested = False
         self._done = False
         self._failed = False
         self._wlan = None
@@ -60,6 +61,8 @@ class WifiDevice:
 
     def tick(self):
         if self._done or self._failed:
+            return
+        if not self._connect_requested:
             return
         if not self._started:
             self._start_connect()
@@ -89,6 +92,7 @@ class WifiDevice:
         if self._done:
             _mem_snapshot("wifi.ensure.already_done", enabled=self._debug)
             return True
+        self.request_connection()
         if not self._started:
             _mem_snapshot("wifi.ensure.before_start", enabled=self._debug)
             self._start_connect()
@@ -132,7 +136,13 @@ class WifiDevice:
             print("[WiFi] Connected:", self._wlan.ifconfig()[0])
         return True
 
+    def request_connection(self):
+        """Enable background connection attempts without starting them twice."""
+        if not self._done and not self._failed:
+            self._connect_requested = True
+
     def _start_connect(self):
+        self._connect_requested = True
         self._started = True
         _mem_snapshot("wifi.start.begin", enabled=self._debug)
         try:

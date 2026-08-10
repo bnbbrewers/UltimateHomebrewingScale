@@ -60,27 +60,63 @@ def stats(collect=False):
     return py_free, c_free, c_largest
 
 
-def snapshot(tag, enabled=False, collect=False):
+def lvgl_memory_stats():
+    """Best-effort LVGL allocator stats when the firmware exposes them."""
+    try:
+        import lvgl as lv
+        monitor = getattr(lv, "mem_monitor", None)
+        if monitor is None:
+            return None
+        result = monitor()
+        if result is None:
+            return None
+
+        def value(name):
+            if isinstance(result, dict):
+                return result.get(name)
+            return getattr(result, name, None)
+
+        free_size = value("free_size")
+        biggest = value("free_biggest_size")
+        fragmentation = value("frag_pct")
+        if free_size is None or biggest is None or fragmentation is None:
+            return None
+        return int(free_size), int(biggest), int(fragmentation)
+    except Exception:
+        return None
+
+
+def snapshot(tag, enabled=False, collect=False, verbose=False):
     """
     Print a memory snapshot if enabled.
 
     Args:
         tag: Short label for the snapshot.
         enabled: Usually config.DEBUG.
-        collect: Kept for backward-compatible call sites; ignored here.
-            Runtime code must call gc.collect() explicitly where resources
-            are released.
+        collect: Collect the Python heap before measuring when true.
+        verbose: Best-effort MicroPython allocator dump, disabled by default.
     """
     if not enabled:
         return
 
-    py_free, c_free, c_largest = stats(collect=False)
+    py_free, c_free, c_largest = stats(collect=collect)
+    lvgl_stats = lvgl_memory_stats()
+
+    if verbose:
+        try:
+            import micropython
+            micropython.mem_info(1)
+        except Exception:
+            pass
 
     if c_free is None:
         print("[MEM] {} py_free={}".format(tag, py_free))
         return
-    print(
-        "[MEM] {} py_free={} c_free={} c_largest={}".format(
-            tag, py_free, c_free, c_largest
-        )
+    message = "[MEM] {} py_free={} c_free={} c_largest={}".format(
+        tag, py_free, c_free, c_largest
     )
+    if lvgl_stats is not None:
+        message += " lv_free={} lv_largest={} lv_frag={}%".format(
+            lvgl_stats[0], lvgl_stats[1], lvgl_stats[2]
+        )
+    print(message)

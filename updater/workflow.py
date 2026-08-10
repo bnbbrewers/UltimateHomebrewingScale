@@ -236,10 +236,7 @@ def _download_archive(url, req, size, sha, progress_callback=None):
                         del chunk
             if total != int(size):
                 raise RuntimeError("archive size mismatch")
-            try:
-                r.close()
-            except Exception:
-                pass
+            http_client.close_response(r)
             r = None
             http_client.gc_hard(cycles=1, pause_ms=10)
             if _file_sha256(ARCHIVE_TMP) != sha:

@@ -26,6 +26,7 @@ With `DEBUG = True`:
 - Long-press detection
 - Scale calibration traces
 - Detailed errors
+- Memory markers with Python heap and ESP-IDF C-heap values
 
 ## Modified Files
 
@@ -107,3 +108,21 @@ Memory impact: none when `DEBUG = False`, because debug strings are not created.
 Smoothness: improved when debug traces are disabled.
 
 Long-press latency: less than 50 ms.
+
+## Memory validation markers
+
+Capture the three values printed by `[MEM]` markers:
+
+- `py_free`: free MicroPython heap.
+- `c_free`: total free ESP-IDF heap, when supported by the firmware.
+- `c_largest`: largest contiguous C-heap block; this is the fragmentation-
+  sensitive value that matters most before LVGL, TLS, and JSON allocations.
+
+Useful boundaries are `boot.after_m5_begin`, `boot.after_hardware`,
+`boot.after_api_factory`, `screen.memory_cleanup`, `wifi.ensure.*`,
+`api.body.spooled`, `api.body.closed`, `api.json.parsed`,
+`updater.workflow.after_archive_download`, and the portal request logs.
+Compare values before/after each boundary and after repeated app transitions.
+The `collect=True` flag now performs one Python GC before the measurement;
+disabled snapshots do not query heap diagnostics. `verbose=True` on
+`memory_debug.snapshot()` additionally requests the MicroPython allocator dump.
