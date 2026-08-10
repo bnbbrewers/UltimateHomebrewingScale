@@ -137,9 +137,9 @@ tests/      Host-side regression tests where possible
 The app manager creates only the active app at boot and lazy-loads the others.
 This is intentional: the M5Dial has limited Python and C heap, and the project
 tries to avoid loading every UI and API flow at once.
-The hop entry point is deliberately split: a small bootstrap fetches both API
-responses before loading the heavier hop/LVGL workflow module. This keeps the
-largest contiguous C-heap block available for the second HTTPS handshake.
+The hop workflow is loaded lazily. Its runtime module is deployed as
+precompiled MicroPython bytecode on the Dial, which avoids compiling the large
+workflow source during a memory-sensitive transition.
 
 ### Memory and I/O policy
 

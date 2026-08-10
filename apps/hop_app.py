@@ -58,8 +58,7 @@ class _HopStepItems:
 class HopAssistantApp(BaseApp):
     APP_ID = "hop_app"
 
-    def __init__(self, screen_manager, hardware, apis, i18n=None,
-                 initial_batch_id=None, initial_hops=None):
+    def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
         self._api = self.apis.get("brewing")
         self._rotary = self.hardware.rotary
@@ -79,8 +78,6 @@ class HopAssistantApp(BaseApp):
         self._step_idx = 0
         self._target_g = 0
         self._last_in_range = None
-        self._initial_batch_id = initial_batch_id
-        self._initial_hops = initial_hops
 
     def _select(self):
         if self._select_screen is None:
@@ -109,14 +106,7 @@ class HopAssistantApp(BaseApp):
     def on_enter(self):
         super().on_enter()
         gc.collect()
-        if self._initial_hops is not None:
-            self._batch_id = self._initial_batch_id
-            self._hops_list = self._initial_hops
-            self._initial_batch_id = None
-            self._initial_hops = None
-            self._finish_hops_load()
-        else:
-            self._load_batches()
+        self._load_batches()
 
     def tick(self):
         if self._check_return_to_launcher():
