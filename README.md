@@ -137,9 +137,11 @@ tests/      Host-side regression tests where possible
 The app manager creates only the active app at boot and lazy-loads the others.
 This is intentional: the M5Dial has limited Python and C heap, and the project
 tries to avoid loading every UI and API flow at once.
-The hop workflow is loaded lazily. Its runtime module is deployed as
-precompiled MicroPython bytecode on the Dial, which avoids compiling the large
-workflow source during a memory-sensitive transition.
+Runtime Python modules are deployed as precompiled MicroPython bytecode
+(`.mpy`) on the Dial. `main.py` remains the source bootstrap, while
+`config.py.example` remains available for setup and the private `config.py` is
+never included in release artifacts. The compiler staging is shared by the
+complete firmware image and the differential update archive.
 
 ### Memory and I/O policy
 
@@ -222,7 +224,12 @@ The hidden updater downloads a compact TAR diff from the latest GitHub Release.
 `UPDATE_CHANNEL = "prerelease"` to allow updates from the newest pre-release.
 The device never updates directly from branches. It skips docs, firmware,
 Markdown files, examples, `.gitignore`, `LICENSE`, and most example files so the
-device receives only runtime files.
+device receives only runtime files. Runtime modules are delivered as `.mpy`;
+after installing `foo.mpy`, the updater removes `foo.py` at the same path when
+that source exists. A first `.mpy` release migrates legacy installations by
+including all compiled modules; later diffs contain only changed artifacts.
+`main.py`, `config.py.example`, and the local `config.py` configuration remain
+source/configuration exceptions.
 
 ## Configuration
 
