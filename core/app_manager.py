@@ -31,7 +31,7 @@ def _collect_runtime(cycles=1):
 
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=False)
+        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 def _file_exists(path):
@@ -150,11 +150,11 @@ class AppManager:
         _mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
 
     def _create_hop(self, screen_manager, hardware, apis, i18n):
-        from apps.hop_app import HopAssistantApp
+        from apps.hop_bootstrap import HopBootstrapApp
 
-        self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        self._apps["hop_app"] = HopBootstrapApp(screen_manager, hardware, apis, i18n=i18n)
         _collect_runtime()
-        _mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
+        _mem_snapshot("app.lazy.hop_bootstrap_created", enabled=_DEBUG, collect=True)
 
     def _create_keg(self, screen_manager, hardware, apis, i18n):
         from apps.keg_filler_app import KegFillerApp
@@ -175,6 +175,12 @@ class AppManager:
             target_exists = target_app_id in self._apps
         _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
         current_app.on_exit()
+        release_runtime_state = getattr(current_app, "release_runtime_state", None)
+        if release_runtime_state:
+            try:
+                release_runtime_state()
+            except Exception:
+                pass
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
@@ -208,6 +214,9 @@ class AppManager:
         self._active_app_id = target_app_id
         _mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
+        release_cleanup = getattr(self._screen_manager, "release_cleanup_screen", None)
+        if release_cleanup:
+            release_cleanup()
         _collect_runtime()
         _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
 

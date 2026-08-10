@@ -7,6 +7,8 @@ the M5Dial; actual HTML strings are still built only for a request.
 
 import time
 
+from .request_limits import MAX_REQUEST_BODY_BYTES, MAX_REQUEST_HEADER_BYTES
+
 PORTAL_HTTP_HOST = "0.0.0.0"
 PORTAL_HTTP_PORT = 8080
 AP_SETTLE_MS = 300
@@ -397,13 +399,17 @@ class SetupPortalService:
                 marker = self._request_data.find(b"\n\n")
                 marker_len = 2
             if marker < 0:
-                if len(self._request_data) >= 4096:
+                if len(self._request_data) >= MAX_REQUEST_HEADER_BYTES:
                     self._log("request too large")
                     self._close_client()
                 return
             self._request_header_end = marker + marker_len
             head = self._request_data[:marker]
             self._parse_request_head(head)
+            if self._request_content_length < 0:
+                self._log("request body too large")
+                self._close_client()
+                return
 
         body = self._request_data[self._request_header_end :]
         if len(body) < self._request_content_length:
@@ -441,6 +447,8 @@ class SetupPortalService:
             self._request_content_length = int(headers.get("content-length", "0") or "0")
         except Exception:
             self._request_content_length = 0
+        if self._request_content_length < 0 or self._request_content_length > MAX_REQUEST_BODY_BYTES:
+            self._request_content_length = -1
         self._log(
             "request",
             self._request_method,

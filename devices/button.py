@@ -44,18 +44,15 @@ class ButtonDevice:
             self._long_fired = False
 
     def is_pressed(self):
-        self._update_state()
         return self._is_pressed
 
     def was_short_pressed(self):
-        self._update_state()
         if self._short_event:
             self._short_event = False
             return True
         return False
 
     def was_long_pressed(self):
-        self._update_state()
         if self._long_event:
             self._long_event = False
             return True
