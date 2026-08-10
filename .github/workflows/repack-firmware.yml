@@ -58,7 +58,7 @@ jobs:
             .ci-mpy-cross/uiflow-micropython
           git -C .ci-mpy-cross/uiflow-micropython submodule update --init --depth 1 micropython
           make -C .ci-mpy-cross/uiflow-micropython/m5stack mpy-cross
-          test -x .ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/mpy-cross
+          test -x .ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/build/mpy-cross
 
       - name: Install ESP-IDF Python tools
         uses: espressif/install-esp-idf-action@v1
@@ -130,7 +130,7 @@ jobs:
             --source-root "$GITHUB_WORKSPACE" \
             --staging-root "$GITHUB_WORKSPACE/dist/fs-user" \
             --version "$TAG_NAME" \
-            --mpy-cross "$GITHUB_WORKSPACE/.ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/mpy-cross"
+            --mpy-cross "$GITHUB_WORKSPACE/.ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/build/mpy-cross"
           test -f dist/fs-user/main.py
           test -f dist/fs-user/config.py.example
           test ! -e dist/fs-user/config.py
