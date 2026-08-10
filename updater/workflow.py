@@ -81,7 +81,9 @@ def _safe_path(path):
     for segment in text.split("/"):
         if segment in (".", ".."):
             raise RuntimeError("unsafe path: %s" % text)
-    if text == "config.py" or text.startswith("storage/") and text.endswith(".json"):
+    if text in ("config.py", "config.py.example") or (
+        text.startswith("storage/") and text.endswith(".json")
+    ):
         raise RuntimeError("unsafe path: %s" % text)
     return text
 
@@ -157,9 +159,14 @@ def _manifest_archive(manifest):
     archive = manifest.get("archive")
     if not isinstance(archive, dict):
         raise RuntimeError("Invalid update archive")
+    runtime_format = manifest.get("runtime_format")
+    if runtime_format is not None and str(runtime_format).strip().lower() != "mpy":
+        raise RuntimeError("Unsupported runtime format")
     return {
         "version": str(manifest.get("version", "") or ""),
         "base_version": str(manifest.get("base_version", "") or ""),
+        "runtime_format": str(runtime_format or ""),
+        "first_mpy_migration": bool(manifest.get("first_mpy_migration", False)),
         "url": _validate_url(archive.get("url", "")),
         "size": _validate_size(archive.get("size", None)),
         "sha256": _validate_sha(archive.get("sha256", "")),
