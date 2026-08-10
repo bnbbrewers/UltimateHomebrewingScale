@@ -47,6 +47,19 @@ jobs:
           HEAD_SHA=$(git rev-parse HEAD)
           git merge-base --is-ancestor "$HEAD_SHA" origin/main
 
+      - name: Build pinned mpy-cross compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .ci-mpy-cross
+          mkdir -p .ci-mpy-cross
+          git clone --depth 1 --branch 2.4.2 \
+            https://github.com/m5stack/uiflow-micropython.git \
+            .ci-mpy-cross/uiflow-micropython
+          git -C .ci-mpy-cross/uiflow-micropython submodule update --init --depth 1 micropython
+          make -C .ci-mpy-cross/uiflow-micropython/m5stack mpy-cross
+          test -x .ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/mpy-cross
+
       - name: Install ESP-IDF Python tools
         uses: espressif/install-esp-idf-action@v1
         with:
@@ -109,17 +122,6 @@ jobs:
           test -f dist/base/repack-base/micropython/tools/uf2families.json
           chmod +x dist/base/repack-base/tools/littlefs2
 
-      - name: Build pinned mpy-cross compiler
-        shell: bash
-        run: |
-          set -euo pipefail
-          git clone --depth 1 --branch 2.4.2 \
-            https://github.com/m5stack/uiflow-micropython.git \
-            dist/uiflow-micropython
-          git -C dist/uiflow-micropython submodule update --init --depth 1 micropython
-          make -C dist/uiflow-micropython/m5stack mpy-cross
-          test -x dist/uiflow-micropython/micropython/mpy-cross/mpy-cross
-
       - name: Build runtime file artifact
         shell: bash
         run: |
@@ -128,7 +130,7 @@ jobs:
             --source-root "$GITHUB_WORKSPACE" \
             --staging-root "$GITHUB_WORKSPACE/dist/fs-user" \
             --version "$TAG_NAME" \
-            --mpy-cross "$GITHUB_WORKSPACE/dist/uiflow-micropython/micropython/mpy-cross/mpy-cross"
+            --mpy-cross "$GITHUB_WORKSPACE/.ci-mpy-cross/uiflow-micropython/micropython/mpy-cross/mpy-cross"
           test -f dist/fs-user/main.py
           test -f dist/fs-user/config.py.example
           test ! -e dist/fs-user/config.py
