@@ -93,7 +93,7 @@ documented here for the reference build.
 
 ### Integration Box
 
-- Waterproof ABS enclosure, ref. F200-120-75: https://s.click.aliexpress.com/e/_c2w8dSkf
+- Waterproof ABS enclosure, select the 100x68x40mm reference: [https://s.click.aliexpress.com/e/_c37dIrCf](https://s.click.aliexpress.com/e/_c37dIrCf)
 - Cable gland, ref. PG7 white: https://s.click.aliexpress.com/e/_c4UINtHd
 - Jack connectors: https://s.click.aliexpress.com/e/_c3Z0z0F5
 - Power supply, EU plug 12 V 3 A: https://s.click.aliexpress.com/e/_c353g2MJ
