@@ -15,6 +15,10 @@ class WorkflowMpyCompilerTests(unittest.TestCase):
         self.assertLess(compiler_start, idf_start)
         self.assertIn(".ci-mpy-cross", compiler_step)
         self.assertNotIn("dist/uiflow-micropython", compiler_step)
+        self.assertIn(
+            "micropython/mpy-cross/build/mpy-cross",
+            compiler_step,
+        )
 
 
 if __name__ == "__main__":
