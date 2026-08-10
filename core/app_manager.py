@@ -179,13 +179,21 @@ class AppManager:
             target_app_id = "launcher"
             target_exists = target_app_id in self._apps
         _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
-        current_app.on_exit()
-        release_runtime_state = getattr(current_app, "release_runtime_state", None)
-        if release_runtime_state:
-            try:
-                release_runtime_state()
-            except Exception:
-                pass
+        try:
+            current_app.on_exit()
+        except Exception as exc:
+            if _DEBUG:
+                try:
+                    print("[AppManager] app exit error: {}".format(exc))
+                except Exception:
+                    pass
+        finally:
+            release_runtime_state = getattr(current_app, "release_runtime_state", None)
+            if release_runtime_state:
+                try:
+                    release_runtime_state()
+                except Exception:
+                    pass
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()

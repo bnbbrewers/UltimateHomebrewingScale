@@ -68,6 +68,12 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._show_intro()
         self._mem_snapshot("calibration.on_enter", collect=True)
 
+    def on_exit(self):
+        super().on_exit()
+        self._reset_state()
+        self._screen = None
+        self._scale = None
+
     def _reset_state(self):
         self._intro_acknowledged = False
         self._current_step = 0

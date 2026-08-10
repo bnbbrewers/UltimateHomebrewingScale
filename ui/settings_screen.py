@@ -52,18 +52,10 @@ class SettingsScreen:
         dark = lv.color_hex(0x111111)
         light = lv.color_hex(0xFFFFFF)
 
-        active_parent = None
-        try:
-            if hasattr(lv, "scr_act"):
-                active_parent = lv.scr_act()
-            elif hasattr(lv, "screen_active"):
-                active_parent = lv.screen_active()
-        except Exception:
-            active_parent = None
-
-        parents = [self.page]
-        if active_parent is not None and active_parent is not self.page:
-            parents.append(active_parent)
+        # Keep every QR widget in this screen's object tree. Falling back to
+        # the active screen would make ScreenManager.root().delete() unable
+        # to reclaim the widget reliably.
+        parents = (self.page,)
 
         first_err = None
 

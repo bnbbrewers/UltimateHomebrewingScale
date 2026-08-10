@@ -158,6 +158,18 @@ class ScreenManager:
             except Exception:
                 pass
 
+    @classmethod
+    def _delete_screen(cls, screen):
+        """Delete the LVGL tree, then release resources owned by that tree."""
+        try:
+            screen.root().delete()
+        except Exception:
+            pass
+        finally:
+            # Native resources such as binfonts may still be referenced by
+            # widgets until the root tree has been deleted.
+            cls._release_screen_resources(screen)
+
     @staticmethod
     def _flush_lvgl():
         try:
@@ -191,8 +203,7 @@ class ScreenManager:
                 self._screens[screen_id] = screen
                 return
         try:
-            self._release_screen_resources(screen)
-            screen.root().delete()
+            self._delete_screen(screen)
         except Exception:
             pass
         self._flush_lvgl()
@@ -219,8 +230,7 @@ class ScreenManager:
             if screen is None:
                 continue
             try:
-                self._release_screen_resources(screen)
-                screen.root().delete()
+                self._delete_screen(screen)
             except Exception:
                 pass
         self._flush_lvgl()
