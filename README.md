@@ -156,9 +156,10 @@ largest contiguous C-heap block available for the second HTTPS handshake.
   streaming response. Response and raw-stream handles are closed explicitly;
   optional HTTP sessions are reused when the installed requests implementation
   supports them.
-- The two portal modules cap request headers and bodies at 4096 bytes before
-  reading the body. `setup_portal_service.py` is the normal lightweight entry
-  point; `setup_portal.py` remains the full compatibility implementation.
+- The portal service caps request headers and bodies at 4096 bytes before
+  reading the body. `setup_portal_service.py` is the entry point; rendering and
+  routing are kept in the separate `portal_html.py` and `portal_routes.py`
+  modules.
 - With `DEBUG = True`, compare `py_free`, `c_free`, and especially
   `c_largest` at the markers documented in `DEBUG_GUIDE.md`.
 
