@@ -31,7 +31,7 @@ def _collect_runtime(cycles=1):
 
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=False)
+        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 def _file_exists(path):
@@ -152,7 +152,12 @@ class AppManager:
     def _create_hop(self, screen_manager, hardware, apis, i18n):
         from apps.hop_app import HopAssistantApp
 
-        self._apps["hop_app"] = HopAssistantApp(screen_manager, hardware, apis, i18n=i18n)
+        self._apps["hop_app"] = HopAssistantApp(
+            screen_manager,
+            hardware,
+            apis,
+            i18n=i18n,
+        )
         _collect_runtime()
         _mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
 
@@ -174,7 +179,21 @@ class AppManager:
             target_app_id = "launcher"
             target_exists = target_app_id in self._apps
         _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
-        current_app.on_exit()
+        try:
+            current_app.on_exit()
+        except Exception as exc:
+            if _DEBUG:
+                try:
+                    print("[AppManager] app exit error: {}".format(exc))
+                except Exception:
+                    pass
+        finally:
+            release_runtime_state = getattr(current_app, "release_runtime_state", None)
+            if release_runtime_state:
+                try:
+                    release_runtime_state()
+                except Exception:
+                    pass
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
@@ -208,6 +227,9 @@ class AppManager:
         self._active_app_id = target_app_id
         _mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
         self._apps[self._active_app_id].on_enter()
+        release_cleanup = getattr(self._screen_manager, "release_cleanup_screen", None)
+        if release_cleanup:
+            release_cleanup()
         _collect_runtime()
         _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
 

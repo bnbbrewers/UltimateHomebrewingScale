@@ -28,7 +28,7 @@ def _collect_runtime(cycles=1):
 
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=False)
+        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 class ScreenManager:
@@ -37,7 +37,7 @@ class ScreenManager:
         _mem_snapshot("screen.init.start", enabled=_DEBUG, collect=True)
         self._i18n = i18n
         self._screens = {}
-        if initial_screen_id in (None, screen_ids.LAUNCHER):
+        if initial_screen_id == screen_ids.LAUNCHER:
             self._screens[screen_ids.LAUNCHER] = self._new_launcher_screen()
             _collect_runtime()
             _mem_snapshot("screen.after_launcher", enabled=_DEBUG, collect=True)
@@ -158,7 +158,36 @@ class ScreenManager:
             except Exception:
                 pass
 
+    @classmethod
+    def _delete_screen(cls, screen):
+        """Delete the LVGL tree, then release resources owned by that tree."""
+        try:
+            screen.root().delete()
+        except Exception:
+            pass
+        finally:
+            # Native resources such as binfonts may still be referenced by
+            # widgets until the root tree has been deleted.
+            cls._release_screen_resources(screen)
+
+    @staticmethod
+    def _flush_lvgl():
+        try:
+            import lvgl as lv
+            handler = getattr(lv, "task_handler", None)
+            if handler is None:
+                handler = getattr(lv, "timer_handler", None)
+            if handler:
+                handler()
+        except Exception:
+            pass
+
     def release(self, screen_id):
+        _mem_snapshot(
+            "screen.release.before.{}".format(screen_id),
+            enabled=_DEBUG,
+            collect=False,
+        )
         screen = self._screens.pop(screen_id, None)
         if screen is None:
             return
@@ -174,13 +203,20 @@ class ScreenManager:
                 self._screens[screen_id] = screen
                 return
         try:
-            self._release_screen_resources(screen)
-            screen.root().delete()
+            self._delete_screen(screen)
         except Exception:
             pass
+        self._flush_lvgl()
+        _collect_runtime()
+        _mem_snapshot(
+            "screen.release.after.{}".format(screen_id),
+            enabled=_DEBUG,
+            collect=False,
+        )
 
     def release_all(self, keep_ids=(), cleanup_message=None, cleanup_color=0x333333):
         keep = set(keep_ids or ())
+        _mem_snapshot("screen.release_all.before", enabled=_DEBUG, collect=False)
         if self._active_id is not None and self._active_id not in keep:
             self._load_cleanup_screen(
                 cleanup_message,
@@ -194,10 +230,12 @@ class ScreenManager:
             if screen is None:
                 continue
             try:
-                self._release_screen_resources(screen)
-                screen.root().delete()
+                self._delete_screen(screen)
             except Exception:
                 pass
+        self._flush_lvgl()
+        _collect_runtime()
+        _mem_snapshot("screen.release_all.after", enabled=_DEBUG, collect=False)
         if self._active_id not in self._screens:
             self._active_id = None
 
@@ -260,9 +298,11 @@ class ScreenManager:
 
     def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
         _mem_snapshot("screen.memory_cleanup.before", enabled=_DEBUG, collect=False)
-        keep = tuple(keep_ids or ())
+        keep = list(keep_ids or ())
+        if screen_ids.LAUNCHER not in keep:
+            keep.append(screen_ids.LAUNCHER)
         self.release_all(
-            keep_ids=keep,
+            keep_ids=tuple(keep),
             cleanup_message=loading_message,
             cleanup_color=loading_color,
         )
@@ -272,8 +312,22 @@ class ScreenManager:
             lv.image_cache_drop(None)
         except Exception:
             pass
+        self._flush_lvgl()
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup.after", enabled=_DEBUG, collect=False)
+
+    def release_cleanup_screen(self):
+        """Delete the temporary transition screen after the target is loaded."""
+        screen = self._cleanup_screen
+        self._cleanup_screen = None
+        self._cleanup_label = None
+        if screen is None:
+            return
+        try:
+            screen.delete()
+        except Exception:
+            pass
+        self._flush_lvgl()
 
     def active_screen_id(self):
         return self._active_id

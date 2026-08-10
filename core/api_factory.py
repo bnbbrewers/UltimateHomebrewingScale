@@ -28,32 +28,50 @@ def _collect_runtime(cycles=1):
 
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=False)
+        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 class ApiFactory:
-    def __init__(self):
+    def __init__(self, wifi_device=None):
+        self._wifi_device = wifi_device
         _collect_runtime()
         _mem_snapshot("api_factory.init.start", enabled=_DEBUG, collect=True)
         self._connectors = {}
-        self._build()
+        self._builders = {
+            "brewing": self._build_brewing,
+        }
         _collect_runtime()
         _mem_snapshot("api_factory.init.done", enabled=_DEBUG, collect=True)
 
-    def _build(self):
-        if _BREWING_SOFTWARE == "brewfather":
-            _collect_runtime()
-            _mem_snapshot("api_factory.brewfather.before_import", enabled=_DEBUG, collect=True)
-            from api.brewfather_api import BrewfatherAPI
+    def _build_brewing(self):
+        if _BREWING_SOFTWARE != "brewfather":
+            return None
+        _collect_runtime()
+        _mem_snapshot("api_factory.brewfather.before_import", enabled=_DEBUG, collect=True)
+        from api.brewfather_api import BrewfatherAPI
 
-            self._connectors["brewing"] = BrewfatherAPI()
-            _collect_runtime()
-            _mem_snapshot("api_factory.brewfather.created", enabled=_DEBUG, collect=True)
-        else:
-            self._connectors["brewing"] = None
+        connector = BrewfatherAPI(wifi_device=self._wifi_device)
+        _collect_runtime()
+        _mem_snapshot("api_factory.brewfather.created", enabled=_DEBUG, collect=True)
+        return connector
 
     def get(self, name):
-        return self._connectors.get(name)
+        if name in self._connectors:
+            return self._connectors[name]
+        builder = self._builders.get(name)
+        if builder is None:
+            return None
+        connector = builder()
+        self._connectors[name] = connector
+        return connector
 
     def as_dict(self):
-        return self._connectors
+        # Existing applications only depend on the mapping's get() contract.
+        # Returning the factory keeps connector construction lazy.
+        return self
+
+    def __getitem__(self, name):
+        value = self.get(name)
+        if value is None:
+            raise KeyError(name)
+        return value

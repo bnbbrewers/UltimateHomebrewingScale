@@ -97,6 +97,21 @@ def _replace(tmp, dest):
             pass
 
 
+def _remove_source_for_mpy(dest_root, path):
+    """Remove the same-path Python source after installing bytecode."""
+    text = str(path or "").replace("\\", "/").strip()
+    if not text.lower().endswith(".mpy"):
+        return
+    source = text[:-4] + ".py"
+    if source.lower() in ("config.py", "config.py.example"):
+        return
+    target = _join(dest_root, source) if dest_root else source
+    try:
+        os.remove(target)
+    except OSError:
+        pass
+
+
 def _count_files(tar_path):
     """Count regular file entries with a small, flash-only first pass."""
     count = 0
@@ -174,6 +189,7 @@ def extract(tar_path, dest_root="", progress_callback=None, i18n=None):
                         remaining -= len(chunk)
                         del chunk
                 _replace(tmp, dest)
+                _remove_source_for_mpy(dest_root, path)
                 count += 1
                 if progress_callback:
                     progress_callback(

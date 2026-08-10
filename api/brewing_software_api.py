@@ -6,6 +6,8 @@ For UIFlow2.0 / MicroPython on M5Stack
 import gc
 import time
 
+from netcore import http_transport
+
 try:
     import config as _config
     _DEBUG = getattr(_config, 'DEBUG', False)
@@ -61,6 +63,30 @@ class Hop:
 class ApiBase:
     """Abstract base class for brewing software API implementations."""
 
+    def __init__(self, wifi_device=None):
+        self._wifi_device = wifi_device
+        self._requests_module = None
+        self._http_session = None
+        self._last_error = None
+
+    @property
+    def last_error(self):
+        return self._last_error
+
+    @staticmethod
+    def _is_memory_error(error):
+        if getattr(error, "errno", None) == 12:
+            return True
+        try:
+            return bool(error.args) and error.args[0] == 12
+        except Exception:
+            return False
+
+    def close_http(self):
+        session = self._http_session
+        self._http_session = None
+        http_transport.close_session(session)
+
     def _get(self, url, headers, retries=2, stream=False):
         """
         HTTP GET helper shared by all implementations.
@@ -70,25 +96,47 @@ class ApiBase:
         (ESP_ERR_HTTP_CONNECT) if the network stack isn't fully ready yet;
         a 1 s pause between retries is enough for DNS/routing to stabilise.
         """
-        from core.hardware_manager import HardwareManager
-        if not HardwareManager.get_instance().wifi.ensure_connected():
+        wifi_device = self._wifi_device
+        if wifi_device is None:
+            # Compatibility for direct connector construction by older apps.
+            from core.hardware_manager import HardwareManager
+            wifi_device = HardwareManager.get_instance().wifi
+        if not wifi_device.ensure_connected():
             raise OSError("WiFi not connected")
 
         last_exc = None
         for attempt in range(max(1, retries)):
             try:
-                import requests2 as requests
-                try:
-                    resp = requests.get(url, headers=headers, stream=stream)
-                except TypeError:
-                    resp = requests.get(url, headers=headers)
-                return resp
+                requests_module = self._requests_module
+                if requests_module is None:
+                    requests_module = http_transport.default_requests_module()
+                if requests_module is None:
+                    raise RuntimeError("Missing requests2 module")
+                client = self._http_session
+                if client is None:
+                    client = http_transport.create_session(requests_module)
+                    self._http_session = client
+                if client is None:
+                    client = requests_module
+                return http_transport.get(
+                    client,
+                    url,
+                    headers=headers,
+                    stream=stream,
+                    timeout_s=None,
+                )
             except Exception as e:
                 last_exc = e
                 if _DEBUG:
                     print(f"[HTTP] attempt {attempt + 1} failed: {e}")
+                if self._is_memory_error(e):
+                    self.close_http()
+                    raise
                 if attempt < retries - 1:
-                    time.sleep_ms(1000)
+                    try:
+                        time.sleep_ms(1000)
+                    except AttributeError:
+                        time.sleep(1)
                     gc.collect()
         raise last_exc
 
