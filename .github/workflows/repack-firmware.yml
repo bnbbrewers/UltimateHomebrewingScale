@@ -109,23 +109,41 @@ jobs:
           test -f dist/base/repack-base/micropython/tools/uf2families.json
           chmod +x dist/base/repack-base/tools/littlefs2
 
+      - name: Build pinned mpy-cross compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 2.4.2 \
+            https://github.com/m5stack/uiflow-micropython.git \
+            dist/uiflow-micropython
+          git -C dist/uiflow-micropython submodule update --init --depth 1 micropython
+          make -C dist/uiflow-micropython/m5stack mpy-cross
+          test -x dist/uiflow-micropython/micropython/mpy-cross/mpy-cross
+
       - name: Build runtime file artifact
         shell: bash
         run: |
           set -euo pipefail
-          git ls-files | grep -Ev "(^docs/|^firmware/|^\\.git|[.][Mm][Dd]$|^config.py$)" > dist/included-files.txt
-          tar -cf - -T dist/included-files.txt | tar -C dist/fs-user -xf -
-          [ ! -f dist/fs-user/config.py ]
+          python3 tools/build_runtime.py \
+            --source-root "$GITHUB_WORKSPACE" \
+            --staging-root "$GITHUB_WORKSPACE/dist/fs-user" \
+            --version "$TAG_NAME" \
+            --mpy-cross "$GITHUB_WORKSPACE/dist/uiflow-micropython/micropython/mpy-cross/mpy-cross"
+          test -f dist/fs-user/main.py
+          test -f dist/fs-user/config.py.example
+          test ! -e dist/fs-user/config.py
           [ ! -d dist/fs-user/docs ]
           [ ! -d dist/fs-user/firmware ]
           [ ! -d dist/fs-user/.github ]
+          [ ! -d dist/fs-user/tools ]
           [ ! -f dist/fs-user/.gitignore ]
-          if find dist/fs-user -type f -iname "*.md" | grep -q .; then
-            echo "Markdown files must not be included in firmware runtime files." >&2
-            find dist/fs-user -type f -iname "*.md" >&2
+          if find dist/fs-user -type f -name "*.py" \
+              ! -path "dist/fs-user/main.py" \
+              ! -path "dist/fs-user/config.py.example" | grep -q .; then
+            echo "Unexpected Python source in runtime staging." >&2
+            find dist/fs-user -type f -name "*.py" >&2
             exit 1
           fi
-          echo "$TAG_NAME" > dist/fs-user/uhs-version.txt
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -185,9 +203,13 @@ jobs:
           import hashlib
           import json
           import os
+          import sys
           import subprocess
           import tarfile
           from pathlib import Path
+
+          sys.path.insert(0, os.environ["GITHUB_WORKSPACE"])
+          from tools.build_runtime import plan_git_diff
 
           firmware = Path("UHS-firmwareM5Dial.bin")
           sha256 = Path("UHS-firmwareM5Dial.sha256").read_text(encoding="utf-8").split()[0]
@@ -195,30 +217,6 @@ jobs:
           code_archive = f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
           update_archive = f"uhs-update-diff-{os.environ['TAG_NAME']}.tar"
           web_download_base = "https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest"
-
-          def runtime_path(path):
-              p = path.replace("\\", "/")
-              lp = p.lower()
-              name = p.rsplit("/", 1)[-1]
-              if not p or p == "config.py":
-                  return False
-              if lp == "license":
-                  return False
-              if lp == ".gitignore":
-                  return False
-              if lp.endswith(".md"):
-                  return False
-              if lp.startswith(("docs/", "firmware/", ".github/")):
-                  return False
-              if "/examples/" in lp or lp.startswith("examples/") or lp.endswith("/examples"):
-                  return False
-              if name.endswith(".example") and lp != "config.py.example":
-                  return False
-              if "example" in name and lp != "config.py.example":
-                  return False
-              if lp.startswith("assets/icons/origin/") or "/icons/origin/" in lp:
-                  return False
-              return True
 
           try:
               base_version = subprocess.check_output(
@@ -228,29 +226,15 @@ jobs:
           except subprocess.CalledProcessError as exc:
               raise SystemExit("No previous tag found; publish full firmware instead of app update") from exc
 
-          diff = subprocess.check_output(
-              ["git", "diff", "--name-status", base_version, os.environ["TAG_NAME"]],
-              text=True,
-          ).splitlines()
-          changed = set()
-          deleted = []
-          for line in diff:
-              parts = line.split("\t")
-              if not parts:
-                  continue
-              status = parts[0]
-              path = parts[-1]
-              if not runtime_path(path):
-                  continue
-              if status.startswith("D"):
-                  deleted.append(path)
-              elif (Path("../fs-user") / path).is_file():
-                  changed.add(path)
-
-          changed.add("uhs-version.txt")
+          diff_plan = plan_git_diff(
+              source_root=Path(os.environ["GITHUB_WORKSPACE"]),
+              base_ref=base_version,
+              head_ref=os.environ["TAG_NAME"],
+              staging_root=Path("../fs-user"),
+          )
           archive_path = Path(update_archive)
           with tarfile.open(archive_path, "w") as archive:
-              for rel_path in sorted(changed):
+              for rel_path in diff_plan.archive_paths:
                   archive.add(Path("../fs-user") / rel_path, arcname=rel_path)
           archive_sha256 = hashlib.sha256(archive_path.read_bytes()).hexdigest()
           archive_url = (
@@ -272,20 +256,24 @@ jobs:
               "sha256": sha256,
               "size": firmware.stat().st_size,
               "included_files": included_count,
-              "excluded": ["docs/", "firmware/", "*.md", "config.py"],
+              "runtime_format": "mpy",
+              "first_mpy_migration": diff_plan.first_mpy_migration,
+              "excluded": ["docs/", "firmware/", ".github/", "tools/", "*.md", "config.py"],
           }
           update_manifest = {
               "version": os.environ["TAG_NAME"],
               "base_version": base_version,
               "channel": os.environ["RELEASE_CHANNEL"],
               "strategy": "tar-diff",
+              "runtime_format": "mpy",
+              "first_mpy_migration": diff_plan.first_mpy_migration,
               "archive": {
                   "name": update_archive,
                   "url": archive_url,
                   "size": archive_path.stat().st_size,
                   "sha256": archive_sha256,
               },
-              "delete": sorted(set(deleted + ["install.py"])),
+              "delete": sorted(set(list(diff_plan.delete_paths) + ["install.py"])),
           }
           web_install_manifest = {
               "name": "Ultimate Homebrewing Scale",
