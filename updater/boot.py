@@ -18,21 +18,54 @@ def _open_nvs():
     return esp32.NVS(_NVS_NAMESPACE)
 
 
+def _read_update_flag(nvs):
+    if hasattr(nvs, "get_i32"):
+        try:
+            return int(nvs.get_i32(_NVS_UPDATE_KEY))
+        except Exception:
+            pass
+
+    if hasattr(nvs, "get_blob"):
+        try:
+            buf = bytearray(8)
+            size = nvs.get_blob(_NVS_UPDATE_KEY, buf)
+            if isinstance(size, int) and size > 0:
+                raw = bytes(buf[:size])
+            else:
+                raw = bytes(buf).split(b"\x00", 1)[0]
+            if not raw:
+                return 0
+            try:
+                return int(raw.decode("utf-8"))
+            except Exception:
+                return int(raw[0])
+        except Exception:
+            pass
+
+    return 0
+
+
+def _write_update_flag(nvs, value):
+    if hasattr(nvs, "set_i32"):
+        nvs.set_i32(_NVS_UPDATE_KEY, int(value))
+        return
+    if hasattr(nvs, "set_blob"):
+        nvs.set_blob(_NVS_UPDATE_KEY, str(int(value)))
+        return
+    raise OSError("NVS integer write API unavailable")
+
+
 def is_update_requested(nvs=None):
     try:
         nvs = nvs or _open_nvs()
-        if hasattr(nvs, "get_i32"):
-            return int(nvs.get_i32(_NVS_UPDATE_KEY)) == 1
-        return False
+        return _read_update_flag(nvs) == 1
     except Exception:
         return False
 
 
 def set_update_requested(requested, nvs=None):
     nvs = nvs or _open_nvs()
-    if not hasattr(nvs, "set_i32"):
-        raise OSError("NVS integer write API unavailable")
-    nvs.set_i32(_NVS_UPDATE_KEY, 1 if requested else 0)
+    _write_update_flag(nvs, 1 if requested else 0)
     nvs.commit()
 
 
