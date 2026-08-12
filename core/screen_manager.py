@@ -306,12 +306,6 @@ class ScreenManager:
             cleanup_message=loading_message,
             cleanup_color=loading_color,
         )
-        try:
-            import lvgl as lv
-
-            lv.image_cache_drop(None)
-        except Exception:
-            pass
         self._flush_lvgl()
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup.after", enabled=_DEBUG, collect=False)
@@ -319,14 +313,38 @@ class ScreenManager:
     def release_cleanup_screen(self):
         """Delete the temporary transition screen after the target is loaded."""
         screen = self._cleanup_screen
-        self._cleanup_screen = None
-        self._cleanup_label = None
         if screen is None:
             return
         try:
-            screen.delete()
-        except Exception:
-            pass
+            delete = getattr(screen, "delete", None)
+            if delete:
+                try:
+                    delete()
+                except Exception:
+                    delete = None
+            if delete is None:
+                import lvgl as lv
+
+                delete = getattr(lv, "obj_delete", None)
+                if delete is None:
+                    delete = getattr(lv, "obj_del", None)
+                if delete is None:
+                    raise RuntimeError("LVGL object delete unavailable")
+                delete(screen)
+        except Exception as exc:
+            if _DEBUG:
+                try:
+                    print("[LVGL] cleanup screen delete failed: {}".format(exc))
+                except Exception:
+                    pass
+            # Keep the reference so a later transition can retry the delete.
+            # Dropping it here can leave the loading screen visible forever.
+            return
+        self._cleanup_screen = None
+        self._cleanup_label = None
+        # The target screen was already loaded by App.on_enter(). Reloading it
+        # here performs a second LVGL screen transition and can allocate a
+        # second render/task buffer while the heap is at its lowest point.
         self._flush_lvgl()
 
     def active_screen_id(self):
