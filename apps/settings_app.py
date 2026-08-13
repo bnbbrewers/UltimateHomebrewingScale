@@ -124,7 +124,6 @@ class SettingsApp(BaseApp):
             else:
                 status = self.t("settings.portal_connect_sta")
             self.screen_manager.show(screen_ids.SETTINGS)
-            self._flush_lvgl()
             self._screen.configure(
                 title=self.t("settings.title"),
                 status=status,

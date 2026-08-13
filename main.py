@@ -135,7 +135,10 @@ def main():
     import M5
     from M5 import Speaker
     import m5ui
-    import lvgl as lv
+    # m5ui.init() owns the LVGL event loop and schedules lv.task_handler()
+    # through micropython.schedule(). Do not call it again from this loop:
+    # two concurrent LVGL task-handler owners can re-enter the port callback
+    # and fail on a native allocation during screen transitions.
     from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 
     M5.begin()
@@ -193,7 +196,6 @@ def main():
         M5.update()
         hardware.tick()
         app_manager.tick()
-        lv.task_handler()
         time.sleep_ms(10)
 
 try:

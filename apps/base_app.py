@@ -63,13 +63,6 @@ class BaseApp:
             return True
         return False
 
-    def _flush_lvgl(self):
-        try:
-            import lvgl as lv
-            lv.task_handler()
-        except Exception:
-            pass
-
     def _show_msg(self, title, message, bar_color=0x333333, show_ok=False):
         scr = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)
         if not scr:
@@ -81,7 +74,6 @@ class BaseApp:
             show_ok_button=show_ok,
         )
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
-        self._flush_lvgl()
         return True
 
     def _rotary_navigate(self, idx, count):
