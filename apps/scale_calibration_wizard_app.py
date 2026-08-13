@@ -144,7 +144,6 @@ class ScaleCalibrationWizardApp(BaseApp):
             show_ok_button=True,
         )
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
-        self._flush_lvgl()
 
     def _show_wizard(self):
         if self._screen is None:
@@ -281,7 +280,6 @@ class ScaleCalibrationWizardApp(BaseApp):
         )
         self._waiting_restart_confirmation = True
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
-        self._flush_lvgl()
 
     def _save_calibration_data(self):
         try:

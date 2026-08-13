@@ -31,6 +31,37 @@ def _mem_snapshot(tag, enabled=True, collect=False):
         _debug_snapshot(tag, enabled=True, collect=collect)
 
 
+def _trace(message):
+    if not _DEBUG:
+        return
+    try:
+        print("[TRACE] {}".format(message))
+    except Exception:
+        pass
+
+
+def _trace_lvgl_state(label, cleanup=None, target=None):
+    if not _DEBUG:
+        return
+    try:
+        import lvgl as lv
+
+        getter = getattr(lv, "screen_active", None)
+        if getter is None:
+            getter = getattr(lv, "scr_act", None)
+        active = getter() if getter else None
+        print(
+            "[TRACE] {} active={} cleanup={} target={}".format(
+                label,
+                id(active) if active is not None else None,
+                id(cleanup) if cleanup is not None else None,
+                id(target) if target is not None else None,
+            )
+        )
+    except Exception:
+        pass
+
+
 class ScreenManager:
     def __init__(self, i18n=None, initial_screen_id=None):
         _collect_runtime()
@@ -143,11 +174,19 @@ class ScreenManager:
         return self._screens.get(screen_id)
 
     def show(self, screen_id):
+        # A cleanup transition may already have loaded the launcher as the
+        # fallback screen before the target app's on_enter() is called. Do not
+        # load the same LVGL root twice: apart from being unnecessary, the
+        # second native screen_load() can fail when the heap is fragmented.
+        if self._active_id == screen_id and screen_id in self._screens:
+            return
         screen = self.get(screen_id)
         if screen is None:
             return
         self._active_id = screen_id
+        _trace("screen.show.before_load {}".format(screen_id))
         screen.root().screen_load()
+        _trace("screen.show.after_load {}".format(screen_id))
 
     @staticmethod
     def _release_screen_resources(screen):
@@ -169,18 +208,6 @@ class ScreenManager:
             # Native resources such as binfonts may still be referenced by
             # widgets until the root tree has been deleted.
             cls._release_screen_resources(screen)
-
-    @staticmethod
-    def _flush_lvgl():
-        try:
-            import lvgl as lv
-            handler = getattr(lv, "task_handler", None)
-            if handler is None:
-                handler = getattr(lv, "timer_handler", None)
-            if handler:
-                handler()
-        except Exception:
-            pass
 
     def release(self, screen_id):
         _mem_snapshot(
@@ -206,7 +233,6 @@ class ScreenManager:
             self._delete_screen(screen)
         except Exception:
             pass
-        self._flush_lvgl()
         _collect_runtime()
         _mem_snapshot(
             "screen.release.after.{}".format(screen_id),
@@ -214,9 +240,17 @@ class ScreenManager:
             collect=False,
         )
 
-    def release_all(self, keep_ids=(), cleanup_message=None, cleanup_color=0x333333):
+    def release_all(
+        self,
+        keep_ids=(),
+        cleanup_message=None,
+        cleanup_color=0x333333,
+    ):
         keep = set(keep_ids or ())
         _mem_snapshot("screen.release_all.before", enabled=_DEBUG, collect=False)
+        # Keep the active screen valid while deleting the outgoing tree. LVGL
+        # does not support deleting the currently active screen, so always
+        # switch to the small persistent transition screen first.
         if self._active_id is not None and self._active_id not in keep:
             self._load_cleanup_screen(
                 cleanup_message,
@@ -233,7 +267,6 @@ class ScreenManager:
                 self._delete_screen(screen)
             except Exception:
                 pass
-        self._flush_lvgl()
         _collect_runtime()
         _mem_snapshot("screen.release_all.after", enabled=_DEBUG, collect=False)
         if self._active_id not in self._screens:
@@ -285,6 +318,7 @@ class ScreenManager:
                     pass
 
             loader = getattr(lv, "screen_load", None)
+            _trace("screen.cleanup.before_load")
             if loader:
                 loader(self._cleanup_screen)
             else:
@@ -293,10 +327,20 @@ class ScreenManager:
                     loader(self._cleanup_screen)
                 elif hasattr(self._cleanup_screen, "screen_load"):
                     self._cleanup_screen.screen_load()
+            _trace("screen.cleanup.after_load")
+            _trace_lvgl_state(
+                "screen.cleanup.state_after_load",
+                cleanup=self._cleanup_screen,
+            )
         except Exception:
             pass
 
-    def memory_cleanup(self, keep_ids=(), loading_message=None, loading_color=0x333333):
+    def memory_cleanup(
+        self,
+        keep_ids=(),
+        loading_message=None,
+        loading_color=0x333333,
+    ):
         _mem_snapshot("screen.memory_cleanup.before", enabled=_DEBUG, collect=False)
         keep = list(keep_ids or ())
         if screen_ids.LAUNCHER not in keep:
@@ -306,46 +350,32 @@ class ScreenManager:
             cleanup_message=loading_message,
             cleanup_color=loading_color,
         )
-        self._flush_lvgl()
         _collect_runtime(cycles=2)
         _mem_snapshot("screen.memory_cleanup.after", enabled=_DEBUG, collect=False)
 
     def release_cleanup_screen(self):
-        """Delete the temporary transition screen after the target is loaded."""
+        """Keep the lightweight transition screen for later reuse.
+
+        Deleting this LVGL root during an app transition can schedule native
+        work in the M5UI port while the launcher is being rendered. Keeping
+        one inactive instance avoids that fragile delete path and prevents
+        repeated allocation/deallocation of the transition tree.
+        """
         screen = self._cleanup_screen
         if screen is None:
             return
-        try:
-            delete = getattr(screen, "delete", None)
-            if delete:
-                try:
-                    delete()
-                except Exception:
-                    delete = None
-            if delete is None:
-                import lvgl as lv
-
-                delete = getattr(lv, "obj_delete", None)
-                if delete is None:
-                    delete = getattr(lv, "obj_del", None)
-                if delete is None:
-                    raise RuntimeError("LVGL object delete unavailable")
-                delete(screen)
-        except Exception as exc:
-            if _DEBUG:
-                try:
-                    print("[LVGL] cleanup screen delete failed: {}".format(exc))
-                except Exception:
-                    pass
-            # Keep the reference so a later transition can retry the delete.
-            # Dropping it here can leave the loading screen visible forever.
-            return
-        self._cleanup_screen = None
-        self._cleanup_label = None
-        # The target screen was already loaded by App.on_enter(). Reloading it
-        # here performs a second LVGL screen transition and can allocate a
-        # second render/task buffer while the heap is at its lowest point.
-        self._flush_lvgl()
+        _trace("screen.cleanup.retain")
+        target = None
+        if self._active_id in self._screens:
+            try:
+                target = self._screens[self._active_id].root()
+            except Exception:
+                target = None
+        _trace_lvgl_state(
+            "screen.cleanup.state_retained",
+            cleanup=screen,
+            target=target,
+        )
 
     def active_screen_id(self):
         return self._active_id
