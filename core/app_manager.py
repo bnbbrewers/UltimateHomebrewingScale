@@ -4,7 +4,6 @@ App manager with persistent one-time app instances.
 
 import gc
 import os
-import sys
 
 try:
     import config
@@ -201,17 +200,11 @@ class AppManager:
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
-        if old == "keg_filler_app":
-            self._evict_app(old)
-            # _evict_app() drops its own local reference, but current_app
-            # still keeps the heavy KegFillerApp alive until _switch_to()
-            # returns. Release it before LVGL and the next app allocate.
-            current_app = None
-            # _evict_app() collected while current_app was still alive. Run
-            # another collection now that the last app reference is gone,
-            # before the transition screen can allocate LVGL objects.
-            _collect_runtime(cycles=2)
-            _mem_snapshot("switch.after_evict", enabled=_DEBUG, collect=False)
+        # The app has already released its transient state in on_exit().
+        # Keep the lightweight app instance and its loaded MPY module cached:
+        # MicroPython does not reclaim the module bytecode when sys.modules is
+        # manipulated, so evicting only causes a costly re-import next time.
+        current_app = None
         self._memory_cleanup_before_enter(target_app_id)
         _collect_runtime()
         _mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
@@ -245,8 +238,12 @@ class AppManager:
         release_cleanup = getattr(self._screen_manager, "release_cleanup_screen", None)
         if release_cleanup:
             release_cleanup()
-        _collect_runtime()
-        _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=True)
+        # Do not run GC after entering the new screen. On the Dial, collecting
+        # here can finalize LVGL wrappers while the m5ui task handler is being
+        # serviced, causing a native allocation failure in m5ui/port.py. The
+        # transition cleanup above already collects before the new app enters;
+        # the next loop iteration can service LVGL without this re-entrant GC.
+        _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=False)
 
     @staticmethod
     def _is_known_app_id(app_id):
@@ -269,29 +266,6 @@ class AppManager:
                     release_refs()
                 except Exception:
                     pass
-
-    def _evict_app(self, app_id):
-        """Drop a heavy lazy app and its module after its exit lifecycle."""
-        app = self._apps.pop(app_id, None)
-        if app is None:
-            return
-        module_name = getattr(app.__class__, "__module__", None)
-        if module_name and module_name.startswith("apps."):
-            module = sys.modules.pop(module_name, None)
-            if module is not None:
-                package_name, _, child_name = module_name.rpartition(".")
-                package = sys.modules.get(package_name)
-                if package is not None:
-                    try:
-                        # Importing apps.keg_filler_app also stores the module
-                        # as apps.keg_filler_app. Remove that second reference
-                        # or the module code remains reachable after pop().
-                        if getattr(package, child_name, None) is module:
-                            delattr(package, child_name)
-                    except Exception:
-                        pass
-        del app
-        _collect_runtime(cycles=2)
 
     def _memory_cleanup_before_enter(self, app_id):
         cleanup = getattr(self._screen_manager, "memory_cleanup", None)
