@@ -4,6 +4,7 @@ App manager with persistent one-time app instances.
 
 import gc
 import os
+import sys
 
 try:
     import config
@@ -32,6 +33,23 @@ def _collect_runtime(cycles=1):
 def _mem_snapshot(tag, enabled=True, collect=False):
     if enabled and _debug_snapshot:
         _debug_snapshot(tag, enabled=True, collect=collect)
+
+
+def _evict_module(module_name):
+    if not module_name:
+        return
+    module = sys.modules.pop(module_name, None)
+    if module is None:
+        return
+    package_name, _, child_name = module_name.rpartition(".")
+    package = sys.modules.get(package_name)
+    if package is None:
+        return
+    try:
+        if getattr(package, child_name, None) is module:
+            delattr(package, child_name)
+    except Exception:
+        pass
 
 
 def _file_exists(path):
@@ -200,11 +218,12 @@ class AppManager:
         _collect_runtime()
         _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
         self._release_app_screen_refs()
-        # The app has already released its transient state in on_exit().
-        # Keep the lightweight app instance and its loaded MPY module cached:
-        # MicroPython does not reclaim the module bytecode when sys.modules is
-        # manipulated, so evicting only causes a costly re-import next time.
+
+        self._evict_non_launcher_apps()
         current_app = None
+        _collect_runtime(cycles=2)
+        _mem_snapshot("switch.after_evict", enabled=_DEBUG, collect=False)
+        target_exists = target_app_id in self._apps
         self._memory_cleanup_before_enter(target_app_id)
         _collect_runtime()
         _mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
@@ -266,6 +285,21 @@ class AppManager:
                     release_refs()
                 except Exception:
                     pass
+
+    def _evict_non_launcher_apps(self):
+        for app_id in list(self._apps.keys()):
+            if app_id == "launcher":
+                continue
+            app = self._apps.pop(app_id, None)
+            if app is None:
+                continue
+            module_name = getattr(app.__class__, "__module__", None)
+            if module_name and (
+                module_name.startswith("apps.")
+                or module_name.startswith("updater.")
+            ):
+                _evict_module(module_name)
+            del app
 
     def _memory_cleanup_before_enter(self, app_id):
         cleanup = getattr(self._screen_manager, "memory_cleanup", None)
