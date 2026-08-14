@@ -3,6 +3,7 @@ Screen manager that lazy-loads screens to keep heap pressure low.
 """
 
 import gc
+import sys
 
 from ui import screen_ids
 
@@ -58,6 +59,34 @@ def _trace_lvgl_state(label, cleanup=None, target=None):
                 id(target) if target is not None else None,
             )
         )
+    except Exception:
+        pass
+
+
+_SCREEN_MODULES = {
+    screen_ids.SELECT_ITEM: "ui.select_item_screen",
+    screen_ids.WEIGHT: "ui.weight_screen",
+    screen_ids.KEG_VOLUME: "ui.keg_volume_screen",
+    screen_ids.SIMPLE_MESSAGE: "ui.simple_message_screen",
+    screen_ids.SETTINGS: "ui.settings_screen",
+    screen_ids.UPDATER: "ui.updater_screen",
+    screen_ids.CALIBRATION_WIZARD: "ui.scale_calibration_wizard_screen",
+}
+
+
+def _evict_module(module_name):
+    if not module_name:
+        return
+    module = sys.modules.pop(module_name, None)
+    if module is None:
+        return
+    package_name, _, child_name = module_name.rpartition(".")
+    package = sys.modules.get(package_name)
+    if package is None:
+        return
+    try:
+        if getattr(package, child_name, None) is module:
+            delattr(package, child_name)
     except Exception:
         pass
 
@@ -209,6 +238,13 @@ class ScreenManager:
             # widgets until the root tree has been deleted.
             cls._release_screen_resources(screen)
 
+    @staticmethod
+    def _evict_screen_modules(screen_ids_to_release):
+        for screen_id in screen_ids_to_release:
+            module_name = _SCREEN_MODULES.get(screen_id)
+            if module_name:
+                _evict_module(module_name)
+
     def release(self, screen_id):
         _mem_snapshot(
             "screen.release.before.{}".format(screen_id),
@@ -233,6 +269,7 @@ class ScreenManager:
             self._delete_screen(screen)
         except Exception:
             pass
+        self._evict_screen_modules((screen_id,))
         _collect_runtime()
         _mem_snapshot(
             "screen.release.after.{}".format(screen_id),
@@ -257,6 +294,7 @@ class ScreenManager:
                 cleanup_color,
                 clear_message=cleanup_message is None,
             )
+        released_screen_ids = []
         for screen_id in list(self._screens.keys()):
             if screen_id in keep:
                 continue
@@ -267,6 +305,8 @@ class ScreenManager:
                 self._delete_screen(screen)
             except Exception:
                 pass
+            released_screen_ids.append(screen_id)
+        self._evict_screen_modules(released_screen_ids)
         _collect_runtime()
         _mem_snapshot("screen.release_all.after", enabled=_DEBUG, collect=False)
         if self._active_id not in self._screens:
