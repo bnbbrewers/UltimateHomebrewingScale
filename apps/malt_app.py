@@ -15,6 +15,7 @@ _STATE_MALT = 2
 _STATE_WEIGHT = 3
 _STATE_DONE = 4
 _STATE_MESSAGE_ACK = 5
+_STATE_LOADING_RECIPES = 6
 _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
 
@@ -64,13 +65,19 @@ class GrainAssistantApp(BaseApp):
         super().on_enter()
         self._select_screen = None
         self._weigh_screen = None
+        self._state = _STATE_LOADING_RECIPES
         gc.collect()
-        self._load_batches()
+        self.screen_manager.memory_cleanup(
+            loading_message=self.t("recipe.loading_recipes"),
+            loading_color=_COLOR_RECIPE,
+        )
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
-        if self._state == _STATE_RECIPE:
+        if self._state == _STATE_LOADING_RECIPES:
+            self._load_batches()
+        elif self._state == _STATE_RECIPE:
             return self._tick_recipe()
         elif self._state == _STATE_MALT:
             self._tick_malt()
@@ -87,8 +94,6 @@ class GrainAssistantApp(BaseApp):
     # ── loading / display ──────────────────────────────────────────
 
     def _load_batches(self):
-        self._show_msg(
-            self.t("grain.title"), self.t("recipe.loading_recipes"), _COLOR_RECIPE)
         self._batches = self._api.get_batches() if self._api else []
         if self._api and getattr(self._api, "last_error", None) is not None:
             self._show_network_error()
@@ -111,8 +116,6 @@ class GrainAssistantApp(BaseApp):
             print("[MEM] grain.batches_loaded free={}".format(gc.mem_free()))
 
     def _load_malts(self):
-        self._show_msg(
-            self.t("grain.title"), self.t("grain.loading_grains"), _COLOR_MALT)
         batch_id = self._batches[self._batch_idx].batch_id
         self._batches = []
         self._release_screens_for_malt_loading()
