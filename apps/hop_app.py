@@ -23,6 +23,7 @@ _STATE_PLACE_RECIPIENT_ACK = 5
 _STATE_WEIGHT = 6
 _STATE_HOP_DONE_ACK = 7
 _STATE_ALL_DONE_ACK = 8
+_STATE_LOADING_RECIPES = 9
 _COLOR_HOP = 0x388E3C
 
 
@@ -105,13 +106,19 @@ class HopAssistantApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        self._state = _STATE_LOADING_RECIPES
         gc.collect()
-        self._load_batches()
+        self.screen_manager.memory_cleanup(
+            loading_message=self.t("recipe.loading_recipes"),
+            loading_color=_COLOR_HOP,
+        )
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
-        if self._state == _STATE_RECIPE:
+        if self._state == _STATE_LOADING_RECIPES:
+            self._load_batches()
+        elif self._state == _STATE_RECIPE:
             return self._tick_recipe()
         elif self._state == _STATE_PREP_ACK:
             return self._tick_ack(self._on_prep_ok)
