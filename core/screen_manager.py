@@ -288,7 +288,9 @@ class ScreenManager:
         # Keep the active screen valid while deleting the outgoing tree. LVGL
         # does not support deleting the currently active screen, so always
         # switch to the small persistent transition screen first.
-        if self._active_id is not None and self._active_id not in keep:
+        if cleanup_message is not None or (
+            self._active_id is not None and self._active_id not in keep
+        ):
             self._load_cleanup_screen(
                 cleanup_message,
                 cleanup_color,
