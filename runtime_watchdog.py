@@ -111,7 +111,7 @@ class RuntimeWatchdog:
         if self.running:
             return True
         try:
-            self._wdt = self._machine.WDT(self.timeout_ms)
+            self._wdt = self._machine.WDT(timeout=self.timeout_ms)
         except Exception as error:
             self._logger("Unable to start runtime watchdog: %s" % error)
             self._wdt = None
