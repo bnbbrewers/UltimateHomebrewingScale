@@ -53,7 +53,7 @@ class RuntimeWatchdog:
                     try:
                         return max(0, int(raw.decode("utf-8")))
                     except Exception:
-                        return max(0, int(raw[0]))
+                        return 0
             except Exception:
                 pass
         return 0
@@ -105,8 +105,9 @@ class RuntimeWatchdog:
                 return
         self.reset_count = stored_count
 
-    def start(self):
-        if not self.enabled or self.locked or self._machine is None:
+    def start(self, allow_start=True):
+        if (not allow_start or not self.enabled or self.locked or
+                self._machine is None):
             return False
         if self.running:
             return True

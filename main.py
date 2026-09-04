@@ -221,7 +221,7 @@ def main():
     )
     mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
-    watchdog.start()
+    watchdog.start(allow_start=initial_app_id != "updater_app")
     while _RUNNING:
         M5.update()
         hardware.tick()
