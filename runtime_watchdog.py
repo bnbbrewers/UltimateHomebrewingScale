@@ -26,6 +26,8 @@ class RuntimeWatchdog:
         self._time = time_module
         self._logger = logger or print
         self._wdt = None
+        self._armed_at_ms = None
+        self._healthy_checked = False
 
     @property
     def running(self):
@@ -34,16 +36,38 @@ class RuntimeWatchdog:
     def _read_reset_count(self):
         if self._nvs is None:
             return 0
-        try:
-            return max(0, int(self._nvs.get_i32(_NVS_COUNT_KEY)))
-        except Exception:
-            return 0
+        if hasattr(self._nvs, "get_i32"):
+            try:
+                return max(0, int(self._nvs.get_i32(_NVS_COUNT_KEY)))
+            except Exception:
+                pass
+        if hasattr(self._nvs, "get_blob"):
+            try:
+                buffer = bytearray(8)
+                size = self._nvs.get_blob(_NVS_COUNT_KEY, buffer)
+                if isinstance(size, int) and size > 0:
+                    raw = bytes(buffer[:size])
+                else:
+                    raw = bytes(buffer).split(b"\x00", 1)[0]
+                if raw:
+                    try:
+                        return max(0, int(raw.decode("utf-8")))
+                    except Exception:
+                        return max(0, int(raw[0]))
+            except Exception:
+                pass
+        return 0
 
     def _write_reset_count(self, value):
         if self._nvs is None:
             return False
         try:
-            self._nvs.set_i32(_NVS_COUNT_KEY, int(value))
+            if hasattr(self._nvs, "set_i32"):
+                self._nvs.set_i32(_NVS_COUNT_KEY, int(value))
+            elif hasattr(self._nvs, "set_blob"):
+                self._nvs.set_blob(_NVS_COUNT_KEY, str(int(value)))
+            else:
+                raise OSError("NVS integer write API unavailable")
             self._nvs.commit()
             return True
         except Exception as error:
@@ -107,7 +131,8 @@ class RuntimeWatchdog:
         return True
 
     def _clear_streak_if_healthy(self):
-        if not self.reset_count or self._armed_at_ms is None:
+        if (self._healthy_checked or not self.reset_count or
+                self._armed_at_ms is None):
             return
         try:
             elapsed_ms = self._time.ticks_diff(
@@ -117,6 +142,7 @@ class RuntimeWatchdog:
             return
         if elapsed_ms < _HEALTHY_RUNTIME_MS:
             return
+        self._healthy_checked = True
         if self._write_reset_count(0):
             self.reset_count = 0
 
