@@ -263,7 +263,9 @@ The Wi-Fi manager first tries UIFlow NVS credentials (`uiflow:ssid0` /
 The normal application watchdog is enabled only when `config.py` defines
 `WATCHDOG_TIMEOUT_MS`. A value of `15000` gives a 15-second timeout; values
 below 5000 or invalid values disable it. Leave the setting absent or commented
-to disable the feature. The updater never starts or feeds the watchdog.
+to disable the feature. Keep at least 15 seconds when using Brewfather so its
+10-second request timeout has enough margin. The updater never starts or feeds
+the watchdog.
 
 The keg relay output is forced low before the updater, normal application, or
 watchdog error screen starts. During normal operation the main loop feeds the
@@ -274,7 +276,9 @@ The bounded Wi-Fi connection wait also feeds it, and Brewfather requests use a
 After three consecutive watchdog resets, the device remains on a recovery
 error screen without launching the application or updater. An incomplete reset
 streak is cleared after five minutes of healthy operation, but power cycling
-does not clear a locked state.
+does not clear a locked state. Removing `WATCHDOG_TIMEOUT_MS` bypasses watchdog
+and lock processing but does not erase `wdt_count`; re-enabling it restores the
+previous lock until the counter is cleared.
 
 From the USB MicroPython REPL, clear the lock with:
 
