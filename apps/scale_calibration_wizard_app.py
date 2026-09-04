@@ -99,7 +99,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         if self._waiting_restart_confirmation:
             button = self.hardware.button
             if button and button.was_short_pressed():
-                self._soft_reset()
+                self._reset_device()
             return None
 
         if not self._intro_acknowledged:
@@ -320,13 +320,10 @@ class ScaleCalibrationWizardApp(BaseApp):
                 print(message)
             return False
 
-    def _soft_reset(self):
+    def _reset_device(self):
         import machine
 
-        if hasattr(machine, "soft_reset"):
-            machine.soft_reset()
-        else:
-            machine.reset()
+        machine.reset()
 
     def _t(self, key, *args):
         if self.i18n:

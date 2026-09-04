@@ -25,6 +25,10 @@ KEG_SPUNDING_VALVE_INERTIA_ML = 200
 # M5Dial Port B pins for the Unit Relay
 KEG_RELAY_IO = (1, 2)
 
+# Optional runtime watchdog timeout in milliseconds (minimum: 5000).
+# Leave this setting absent/commented to disable the watchdog.
+# WATCHDOG_TIMEOUT_MS = 15000
+
 # Debug mode
 DEBUG = False
 
