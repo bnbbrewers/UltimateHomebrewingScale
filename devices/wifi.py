@@ -4,6 +4,8 @@ Wi-Fi device manager for UIFlow2 (non-blocking connect).
 
 import time
 
+import runtime_watchdog
+
 try:
     from memory_debug import snapshot as _debug_snapshot
 except Exception:
@@ -127,6 +129,7 @@ class WifiDevice:
                 M5.update()
             except Exception:
                 pass
+            runtime_watchdog.feed()
             time.sleep_ms(200)
         self._done = True
         # DNS/routing may not be ready immediately after DHCP; 500 ms is enough.
