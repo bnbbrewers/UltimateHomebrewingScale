@@ -3,3 +3,5 @@ config.py
 .worktrees/
 docs/superpowers/
 tests/
+.claude-memory
+CLAUDE.md
