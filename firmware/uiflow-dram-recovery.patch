@@ -1,0 +1,80 @@
+diff --git a/m5stack/boards/M5STACK_Dial/mpconfigboard.h b/m5stack/boards/M5STACK_Dial/mpconfigboard.h
+index 6e16f42d..0a44488a 100644
+--- a/m5stack/boards/M5STACK_Dial/mpconfigboard.h
++++ b/m5stack/boards/M5STACK_Dial/mpconfigboard.h
+@@ -9,6 +9,12 @@
+ 
+ #define MICROPY_PY_MACHINE_DAC              (0)
+ 
++// Bluetooth is disabled in sdkconfig.board (CONFIG_BT_ENABLED=n). The ESP32
++// port defaults MICROPY_PY_BLUETOOTH to 1 behind a bare #ifndef, and this
++// board header is included first, so it must opt out explicitly or the build
++// fails against the absent NimBLE stack.
++#define MICROPY_PY_BLUETOOTH                (0)
++
+ // Enable UART REPL for modules that have an external USB-UART and don't use native USB.
+ #define MICROPY_HW_ENABLE_UART_REPL         (1)
+ 
+diff --git a/m5stack/boards/M5STACK_Dial/sdkconfig.board b/m5stack/boards/M5STACK_Dial/sdkconfig.board
+index 750d8563..812ed105 100644
+--- a/m5stack/boards/M5STACK_Dial/sdkconfig.board
++++ b/m5stack/boards/M5STACK_Dial/sdkconfig.board
+@@ -20,6 +20,36 @@ CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_8mb_lvgl.csv"
+ CONFIG_TINYUSB_DESC_CDC_STRING="M5Stack Dial(UiFlow2)"
+ 
+ # SSL
++CONFIG_MBEDTLS_DYNAMIC_FREE_CONFIG_DATA=y
++CONFIG_MBEDTLS_DYNAMIC_FREE_CA_CERT=y
++CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN=y
++CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=16384
++CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=2048
++CONFIG_MBEDTLS_SSL_KEEP_PEER_CERTIFICATE=n
++CONFIG_MBEDTLS_SSL_PROTO_DTLS=n
++CONFIG_MBEDTLS_DYNAMIC_BUFFER=y
+ CONFIG_MBEDTLS_AES_USE_INTERRUPT=n
+ 
+ CONFIG_FREERTOS_ENABLE_BACKWARD_COMPATIBILITY=y
++
++# --- UHS: DRAM recovery for TLS handshakes ---
++# Rationale and measurements: firmware/CustomFirmware.MD in the UHS repo.
++
++# Bluetooth is unused by this project. The BLE controller and the NimBLE host
++# reserve static DRAM and IRAM whether or not they are ever initialised.
++CONFIG_BT_ENABLED=n
++
++# Wi-Fi buffer pools, left at ESP-IDF defaults in the base configuration.
++CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=4
++CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=12
++CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=12
++CONFIG_ESP_WIFI_MGMT_SBUF_NUM=8
++CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=n
++
++# lwIP: TCP window and send buffer are allocated per active socket.
++CONFIG_LWIP_TCP_SND_BUF_DEFAULT=2880
++CONFIG_LWIP_TCP_WND_DEFAULT=2880
++CONFIG_LWIP_TCP_QUEUE_OOSEQ=n
++
++# The ESP32-S3 data cache is carved out of internal SRAM.
++CONFIG_ESP32S3_DATA_CACHE_16KB=y
+diff --git a/m5stack/libs/manifest.py b/m5stack/libs/manifest.py
+index 3349eec6..df26317d 100644
+--- a/m5stack/libs/manifest.py
++++ b/m5stack/libs/manifest.py
+@@ -3,7 +3,7 @@
+ # SPDX-License-Identifier: MIT
+ 
+ include("base/manifest.py")
+-include("bleuart/manifest.py")
++# include("bleuart/manifest.py")  # UHS: BLE disabled (CONFIG_BT_ENABLED=n)
+ include("cap/manifest.py")
+ include("driver/manifest.py")
+ include("ezdata/manifest.py")
+@@ -11,7 +11,7 @@ include("hardware/manifest.py")
+ include("hat/manifest.py")
+ include("image_plus/manifest.py")
+ include("lv_utils/manifest.py")
+-include("m5ble/manifest.py")
++# include("m5ble/manifest.py")  # UHS: BLE disabled (CONFIG_BT_ENABLED=n)
+ include("m5espnow/manifest.py")
+ include("modbus/modbus/manifest.py")
+ include("module/manifest.py")
