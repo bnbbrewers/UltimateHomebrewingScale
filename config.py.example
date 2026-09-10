@@ -27,6 +27,9 @@ KEG_RELAY_IO = (1, 2)
 
 # Optional runtime watchdog timeout in milliseconds (minimum: 5000).
 # Leave this setting absent/commented to disable the watchdog.
+# The setup portal manages this line through its "Battery powered" checkbox:
+# on battery there is no way to recover but the watchdog, on mains you can
+# simply cut the power.
 # WATCHDOG_TIMEOUT_MS = 15000
 
 # Debug mode
