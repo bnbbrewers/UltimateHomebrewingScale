@@ -52,6 +52,7 @@ TRANSLATIONS = {
     'grain': {
         'title': 'Grain',
         'select_malt': 'Select a malt',
+        'place_recipient': 'Place the container on the scale',
         'no_malts': 'No malts found',
         'loading_grains': 'Loading grains...',
         'all_malts_done': 'All malts weighed!',

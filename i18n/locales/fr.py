@@ -52,6 +52,7 @@ TRANSLATIONS = {
     'grain': {
         'title': 'Malt',
         'select_malt': 'Selectionner un malt',
+        'place_recipient': 'Placer le recipient sur la balance',
         'no_malts': 'Aucun malt trouve',
         'loading_grains': 'Chargement des grains...',
         'all_malts_done': 'Tous les malts peses !',
