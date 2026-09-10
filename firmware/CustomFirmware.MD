@@ -161,16 +161,21 @@ From `m5stack/`, the build is `make BOARD=M5STACK_Dial pack_all`. Three stale
 artefacts must be cleared first, or the change silently fails to apply:
 
 ```sh
-rm -f  build-M5STACK_Dial/sdkconfig   # generated config wins over the defaults
-rm -rf build-M5STACK_Dial/genhdr      # stale moduledefs.h keeps the BT entry
-rm -f  build-M5STACK_Dial/frozen_content.c
+rm -rf build-M5STACK_Dial
 ```
 
-The first is the one that bites hardest: once ESP-IDF has written
-`build-M5STACK_Dial/sdkconfig`, values already in it take precedence over
-`sdkconfig.board`, so editing the board file alone changes nothing and the build
-still succeeds. Check the effective values in the generated `sdkconfig` after
-building, never in `sdkconfig.board`.
+Reconfiguring in place does not work when an sdkconfig value changes. It failed
+twice, first leaving a stale `genhdr/moduledefs.h` that kept `mp_module_bluetooth`
+in the module table, then leaving the generated LVGL bindings out of sync
+(`undefined reference to mp_lv_roots`, `mp_lv_init_gc`, `mp_module_lvgl`). The
+incremental build does not track those dependencies. Wipe the directory.
+
+The reason a clean directory is mandatory rather than merely safer: once
+ESP-IDF has written `build-M5STACK_Dial/sdkconfig`, values already in it take
+precedence over `sdkconfig.board`, so editing the board file alone changes
+nothing **and the build still succeeds**. Three builds silently shipped the old
+configuration that way. Always check the effective values in the generated
+`sdkconfig` after building, never in `sdkconfig.board`.
 
 Source the ESP-IDF that lives **inside the uiflow tree**
 (`uiflow-micropython/esp-idf/export.sh`), not a separate system-wide checkout.
@@ -211,6 +216,42 @@ With the full sdkconfig set applied on a clean build dir:
 because the linker had already dropped every BT member once nothing referenced
 them. Keep both: the sdkconfig value is what stops the component being built at
 all, and it is the honest expression of intent.
+
+### Runtime Result, and Why the Static Figure Misleads
+
+Measured on hardware at the `api.http.pre` marker, entering the hop app:
+
+| Build | `py_free` | `c_free` | `c_largest` |
+| --- | --- | --- | --- |
+| Before the fix | 52848 | 11664 | 7680 |
+| BT off + Wi-Fi/lwIP, 32 KB cache | 86448 | 22792 | 13824 |
+| Same, 16 KB cache | 79408 | 38264 | 15360 |
+
+And at `api.http.post`, the low point during the handshake:
+
+| Cache | `c_free` | `c_largest` |
+| --- | --- | --- |
+| 32 KB | 16584 | **7680** |
+| 16 KB | 34296 | 15360 |
+
+Two conclusions, both of which contradict what the static size report suggests.
+
+The data-cache reduction really does return its full 16384 bytes to the heap;
+the difference between the two configurations is 15940. It is invisible in the
+linker report because that report measures a fixed DRAM region, so do not
+conclude anything about this setting from `esp_idf_size`. With the cache back
+at 32 KB the largest block falls to exactly 7680 mid-handshake -- the value
+that used to fail -- and the requests only succeed because total free memory is
+now sufficient. That is too thin a margin for the OTA path, which runs TLS over
+a 5.7 MB transfer. Keep the cache at 16 KB.
+
+Dropping Bluetooth freed 25764 bytes of static D/IRAM, but only about 10660 of
+them reach the C heap. MicroPython absorbs the rest: the port sets
+`MICROPY_GC_SPLIT_HEAP_AUTO`, so its heap grows to take whatever DRAM is
+available, and `py_free` rose from 52848 to 86448 in the process. The
+application ran comfortably on the old 52 KB Python heap, so capping that growth
+is the most promising remaining lever -- it would return roughly 20 KB to the C
+heap and could buy back the 32 KB cache without losing margin.
 
 This static figure **understates** the runtime gain. It is computed against a
 fixed DRAM region in the linker script, so it does not show the data-cache
