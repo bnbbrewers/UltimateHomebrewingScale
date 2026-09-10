@@ -267,6 +267,13 @@ to disable the feature. Keep at least 15 seconds when using Brewfather so its
 10-second request timeout has enough margin. The updater never starts or feeds
 the watchdog.
 
+The setup portal exposes this as the **Battery powered** checkbox. It exists
+because a mains-powered scale can always be recovered by cutting the power,
+while a scale running on the M5Dial battery cannot. Checking the box writes
+`WATCHDOG_TIMEOUT_MS = 15000`; unchecking it removes the setting. A timeout
+already tuned by hand is kept as is while the box stays checked, so the portal
+offers no timeout field of its own.
+
 The keg relay output is forced low before the updater, normal application, or
 watchdog error screen starts. During normal operation the main loop feeds the
 watchdog only after the UI, hardware, and active application ticks complete.

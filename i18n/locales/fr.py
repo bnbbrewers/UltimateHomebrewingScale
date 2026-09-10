@@ -165,6 +165,7 @@ TRANSLATIONS = {
             'GRAIN_WEIGHT_TOLERANCE': 'Tolerance malt (g)',
             'HOP_WEIGHT_TOLERANCE': 'Tolerance houblon (g)',
             'KEG_SPUNDING_VALVE_INERTIA_ML': 'Inertie spunding valve (ml)',
+            'BATTERY': 'Alimentation sur batterie',
             'DEBUG': 'Mode debug',
             'WIFI_SSID': 'SSID Wi-Fi',
             'WIFI_PASSWORD': 'Mot de passe Wi-Fi',
