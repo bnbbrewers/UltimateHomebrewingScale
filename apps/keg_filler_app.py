@@ -402,6 +402,7 @@ class KegFillerApp(BaseApp):
             title=self.t("keg.filling_title", self._selected_keg["name"]),
             mode=getattr(screen, "MODE_FILLING_L", "filling_l"),
             target=target_weight_g,
+            progress_target=self._filling_stop_weight_g - empty_weight_g,
             empty_weight_g=empty_weight_g,
             title_bg_color=_COLOR_KEG,
         )
