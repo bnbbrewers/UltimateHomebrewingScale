@@ -82,6 +82,17 @@ class StandbyManager:
 
         return active
 
+    def _inhibited(self, app_manager):
+        if app_manager is None:
+            return False
+        getter = getattr(app_manager, "active_app_id", None)
+        if getter is None:
+            return False
+        try:
+            return getter() in _INHIBITING_APPS
+        except Exception:
+            return False
+
     def _weight_sample_due(self, now_ms):
         if self._last_weight_sample_ms is None:
             return True
@@ -97,6 +108,9 @@ class StandbyManager:
             if self._idle_since_ms is None:
                 self._idle_since_ms = now_ms
             if self._sample_activity(hardware, now_ms):
+                self._idle_since_ms = now_ms
+                return False
+            if self._inhibited(app_manager):
                 self._idle_since_ms = now_ms
                 return False
             if self._time.ticks_diff(now_ms, self._idle_since_ms) < self.timeout_ms:
