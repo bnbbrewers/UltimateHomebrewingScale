@@ -120,8 +120,62 @@ class StandbyManager:
             self._logger("Standby tick failed: %s" % error)
             return False
 
+    def _release_hold(self):
+        try:
+            self._esp32.gpio_deep_sleep_hold(False)
+        except Exception:
+            pass
+        try:
+            self._machine.Pin(self.relay_pin, self._machine.Pin.OUT,
+                              value=0, hold=False)
+        except Exception:
+            pass
+
+    def _abort_sleep(self, reason, restore_brightness):
+        self._logger("Standby did not sleep: %s" % reason)
+        self._release_hold()
+        if restore_brightness is not None and self._display is not None:
+            try:
+                self._display.setBrightness(restore_brightness)
+            except Exception:
+                pass
+        self.note_activity()
+        return False
+
     def sleep_now(self):
-        """Replaced in Task 4. Sleeping is not implemented yet."""
+        """Pin the relay line, arm the touch wake, and enter deep sleep."""
+        if self._machine is None or self._esp32 is None:
+            return self._abort_sleep("platform modules unavailable", None)
+
+        try:
+            self._machine.Pin(self.relay_pin, self._machine.Pin.OUT,
+                              value=0, hold=True)
+            self._esp32.gpio_deep_sleep_hold(True)
+        except Exception as error:
+            return self._abort_sleep("relay line could not be pinned: %s" % error, None)
+
+        previous_brightness = None
+        if self._display is not None:
+            try:
+                previous_brightness = self._display.getBrightness()
+            except Exception:
+                previous_brightness = None
+            try:
+                self._display.setBrightness(0)
+            except Exception as error:
+                self._logger("Standby could not dim the display: %s" % error)
+
+        try:
+            self._esp32.wake_on_ext0(
+                pin=self._machine.Pin(_TOUCH_INT_PIN, self._machine.Pin.IN),
+                level=self._esp32.WAKEUP_ALL_LOW,
+            )
+        except Exception as error:
+            # Sleeping with no wake source would need a physical power cycle.
+            return self._abort_sleep("wake source could not be armed: %s" % error,
+                                     previous_brightness)
+
+        self._machine.deepsleep()
         return True
 
 
