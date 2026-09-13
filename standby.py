@@ -43,10 +43,72 @@ class StandbyManager:
             return
         self._idle_since_ms = self._time.ticks_ms()
 
+    def _sample_activity(self, hardware, now_ms):
+        active = False
+
+        button = getattr(hardware, "button", None)
+        if button is not None:
+            try:
+                if button.is_pressed():
+                    active = True
+            except Exception:
+                pass
+
+        rotary = getattr(hardware, "rotary", None)
+        if rotary is not None:
+            try:
+                value = rotary.get_rotary_value()
+            except Exception:
+                value = None
+            if value is not None:
+                if self._last_rotary is None:
+                    self._last_rotary = value
+                elif value != self._last_rotary:
+                    self._last_rotary = value
+                    active = True
+
+        scale = getattr(hardware, "scale", None)
+        if scale is not None and self._weight_sample_due(now_ms):
+            self._last_weight_sample_ms = now_ms
+            try:
+                weight = scale.read_weight_filtered()
+            except Exception:
+                weight = None
+            if weight is not None:
+                previous = self._last_weight
+                self._last_weight = weight
+                if previous is not None and abs(weight - previous) > self.weight_tolerance_g:
+                    active = True
+
+        return active
+
+    def _weight_sample_due(self, now_ms):
+        if self._last_weight_sample_ms is None:
+            return True
+        if self._time is None:
+            return False
+        return self._time.ticks_diff(now_ms, self._last_weight_sample_ms) >= _WEIGHT_SAMPLE_MS
+
     def tick(self, hardware, app_manager=None):
         if not self.enabled:
             return False
-        return False
+        try:
+            now_ms = self._time.ticks_ms()
+            if self._idle_since_ms is None:
+                self._idle_since_ms = now_ms
+            if self._sample_activity(hardware, now_ms):
+                self._idle_since_ms = now_ms
+                return False
+            if self._time.ticks_diff(now_ms, self._idle_since_ms) < self.timeout_ms:
+                return False
+            return self.sleep_now()
+        except Exception as error:
+            self._logger("Standby tick failed: %s" % error)
+            return False
+
+    def sleep_now(self):
+        """Replaced in Task 4. Sleeping is not implemented yet."""
+        return True
 
 
 def _configured_timeout_ms(config_module, logger):
