@@ -165,6 +165,7 @@ TRANSLATIONS = {
             'GRAIN_WEIGHT_TOLERANCE': 'Grain tolerance (g)',
             'HOP_WEIGHT_TOLERANCE': 'Hop tolerance (g)',
             'KEG_SPUNDING_VALVE_INERTIA_ML': 'Spunding valve inertia (ml)',
+            'STANDBY_TIMEOUT_MIN': 'Standby after (min, 0 = off)',
             'BATTERY': 'Battery powered',
             'DEBUG': 'Debug mode',
             'WIFI_SSID': 'Wi-Fi SSID',
