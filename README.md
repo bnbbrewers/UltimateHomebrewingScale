@@ -219,6 +219,30 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 Saving settings reboots the device. The portal can also request an update, which
 sets a flag and reboots into the hidden updater app.
 
+### Configuration backup and restore
+
+A full firmware flash wipes `config.py`, the Wi-Fi credentials in NVS,
+`kegs.json` and `scale_calibration.json`. The portal's **Backup** section saves
+all four into a single `uhs-backup.txt` and puts them back afterwards:
+
+- **DOWNLOAD BACKUP** (`GET /backup`) serves the file as a download.
+- **RESTORE AND REBOOT** (`POST /restore`) takes the file contents pasted into
+  the text box, applies them and reboots.
+
+The file is plain text, one `KEY=value` per line, prefixed by a `UHS-BACKUP 1`
+version header; a file from another version is refused rather than applied
+partially. Kegs are written as `KEG=<empty_weight_g>|<max_volume_l>|<name>` and
+calibration points as `CALIB=<calibration_point>|<weight>|<adc_average>|<step>`.
+Kegs and calibration are restored only when the file carries them, so a trimmed
+file cannot wipe what the device already holds.
+
+Restoring works on a freshly flashed device: `config.py` is seeded from the
+shipped `config.py.example` first, which also brings back settings the portal
+does not expose such as `KEG_RELAY_IO`.
+
+**The file contains the Wi-Fi password and the Brewfather API key in clear
+text.** Store it accordingly.
+
 ### Updater
 
 The hidden updater downloads a compact TAR diff from the latest GitHub Release.
