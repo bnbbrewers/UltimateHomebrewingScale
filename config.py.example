@@ -25,6 +25,19 @@ KEG_SPUNDING_VALVE_INERTIA_ML = 200
 # M5Dial Port B pins for the Unit Relay
 KEG_RELAY_IO = (1, 2)
 
+# Minutes without activity before the device enters deep sleep.
+# 0 disables standby. Waking is done by touching the screen: the main button
+# cannot wake the board, GPIO42 is not an RTC GPIO on the ESP32-S3.
+# Waking is a full reboot, so the device returns to the launcher.
+STANDBY_TIMEOUT_MIN = 0
+
+# Optional runtime watchdog timeout in milliseconds (minimum: 5000).
+# Leave this setting absent/commented to disable the watchdog.
+# The setup portal manages this line through its "Battery powered" checkbox:
+# on battery there is no way to recover but the watchdog, on mains you can
+# simply cut the power.
+# WATCHDOG_TIMEOUT_MS = 15000
+
 # Debug mode
 DEBUG = False
 

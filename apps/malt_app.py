@@ -16,6 +16,7 @@ _STATE_WEIGHT = 3
 _STATE_DONE = 4
 _STATE_MESSAGE_ACK = 5
 _STATE_LOADING_RECIPES = 6
+_STATE_PLACE_RECIPIENT_ACK = 7
 _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
 
@@ -81,6 +82,8 @@ class GrainAssistantApp(BaseApp):
             return self._tick_recipe()
         elif self._state == _STATE_MALT:
             self._tick_malt()
+        elif self._state == _STATE_PLACE_RECIPIENT_ACK:
+            self._tick_ack(self._start_weighing)
         elif self._state == _STATE_WEIGHT:
             self._tick_weigh()
         elif self._state == _STATE_DONE:
@@ -198,7 +201,11 @@ class GrainAssistantApp(BaseApp):
         if changed:
             self._select().set_selected_index(self._malt_idx)
         if self.hardware.button.was_short_pressed():
-            self._start_weighing()
+            self._show_place_recipient_prompt()
+
+    def _tick_ack(self, on_ok):
+        if self.hardware.button.was_short_pressed():
+            on_ok()
 
     def _tick_weigh(self):
         weight = self._read_and_update_weight(self._weight())
@@ -233,6 +240,14 @@ class GrainAssistantApp(BaseApp):
                 self._state = _STATE_DONE
 
     # ── weighing ───────────────────────────────────────────────────
+
+    def _show_place_recipient_prompt(self):
+        if not self._show_msg(
+                self.t("grain.title"), self.t("grain.place_recipient"),
+                _COLOR_MALT, show_ok=True):
+            self._start_weighing()
+            return
+        self._state = _STATE_PLACE_RECIPIENT_ACK
 
     def _start_weighing(self):
         self.screen_manager.show(screen_ids.WEIGHT)

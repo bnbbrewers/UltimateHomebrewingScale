@@ -90,6 +90,10 @@ class AppManager:
         _collect_runtime()
         _mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
 
+    def active_app_id(self):
+        """Read-only accessor used by standby to inhibit on specific apps."""
+        return self._active_app_id
+
     def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
         if app_id in self._apps:
             return True

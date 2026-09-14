@@ -52,6 +52,7 @@ TRANSLATIONS = {
     'grain': {
         'title': 'Malt',
         'select_malt': 'Selectionner un malt',
+        'place_recipient': 'Placer le recipient sur la balance',
         'no_malts': 'Aucun malt trouve',
         'loading_grains': 'Chargement des grains...',
         'all_malts_done': 'Tous les malts peses !',
@@ -164,6 +165,8 @@ TRANSLATIONS = {
             'GRAIN_WEIGHT_TOLERANCE': 'Tolerance malt (g)',
             'HOP_WEIGHT_TOLERANCE': 'Tolerance houblon (g)',
             'KEG_SPUNDING_VALVE_INERTIA_ML': 'Inertie spunding valve (ml)',
+            'STANDBY_TIMEOUT_MIN': 'Veille après (min, 0 = désactivé)',
+            'BATTERY': 'Alimentation sur batterie',
             'DEBUG': 'Mode debug',
             'WIFI_SSID': 'SSID Wi-Fi',
             'WIFI_PASSWORD': 'Mot de passe Wi-Fi',
