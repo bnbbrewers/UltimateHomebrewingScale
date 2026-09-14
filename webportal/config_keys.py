@@ -28,6 +28,21 @@ EDITABLE_KEYS = {
         "default": 200,
         "label": "Spunding valve inertia (ml)",
     },
+    "STANDBY_TIMEOUT_MIN": {
+        "type": "int",
+        "min": 0,
+        "max": 240,
+        "default": 0,
+        "label": "Standby after (min, 0 = off)",
+    },
+    # Virtual key: config_registry never writes a BATTERY line, it translates
+    # this box into the presence of WATCHDOG_TIMEOUT_MS (see that module).
+    # No timeout field is exposed: on battery the value is always 15000 ms.
+    "BATTERY": {
+        "type": "bool",
+        "default": False,
+        "label": "Battery powered",
+    },
     "DEBUG": {
         "type": "bool",
         "default": False,
@@ -81,6 +96,8 @@ EDITABLE_ORDER = [
     "GRAIN_WEIGHT_TOLERANCE",
     "HOP_WEIGHT_TOLERANCE",
     "KEG_SPUNDING_VALVE_INERTIA_ML",
+    "STANDBY_TIMEOUT_MIN",
+    "BATTERY",
     "DEBUG",
     "UPDATE_CHANNEL",
 ]

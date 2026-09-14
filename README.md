@@ -22,6 +22,7 @@ Implemented:
 - Smartphone settings portal for Wi-Fi, Brewfather credentials, language,
   tolerance, debug mode and update branch.
 - Hidden updater app that downloads application files from GitHub.
+- Optional runtime watchdog with relay-safe reboot and persistent reset lock.
 - English and French UI strings.
 
 Work in progress:
@@ -110,13 +111,14 @@ Scale defaults in code:
 
 The runtime entrypoint is [main.py](main.py). On boot it:
 
-1. Creates `config.py` from `config.py.example` if needed.
-2. Initializes M5, LVGL/m5ui, speaker and i18n.
-3. Builds shared hardware and API managers.
-4. Starts the calibration wizard if no calibration file exists.
-5. Starts Settings if this is the first generated configuration.
-6. Starts the hidden updater if the setup portal requested an update.
-7. Otherwise starts the launcher.
+1. Forces the keg relay output low.
+2. Checks the optional watchdog reset streak and stops on the recovery screen
+   after three consecutive watchdog resets.
+3. Starts the lightweight updater when an update was requested; this path does
+   not start the watchdog.
+4. Initializes M5, LVGL/m5ui, speaker, i18n, hardware and application managers.
+5. Starts the watchdog only after normal application initialization.
+6. Starts Settings for an incomplete configuration, otherwise the launcher.
 
 Main packages:
 
@@ -248,11 +250,56 @@ HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
 DEBUG = False
 UPDATE_CHANNEL = "stable"
+# Optional: uncomment to enable a 15-second runtime watchdog.
+# WATCHDOG_TIMEOUT_MS = 15000
 ```
 
 The Wi-Fi manager first tries UIFlow NVS credentials (`uiflow:ssid0` /
 `uiflow:pswd0`), then falls back to `WIFI_SSID` and `WIFI_PASSWORD` in
 `config.py`.
+
+### Runtime Watchdog
+
+The normal application watchdog is enabled only when `config.py` defines
+`WATCHDOG_TIMEOUT_MS`. A value of `15000` gives a 15-second timeout; values
+below 5000 or invalid values disable it. Leave the setting absent or commented
+to disable the feature. Keep at least 15 seconds when using Brewfather so its
+10-second request timeout has enough margin. The updater never starts or feeds
+the watchdog.
+
+The setup portal exposes this as the **Battery powered** checkbox. It exists
+because a mains-powered scale can always be recovered by cutting the power,
+while a scale running on the M5Dial battery cannot. Checking the box writes
+`WATCHDOG_TIMEOUT_MS = 15000`; unchecking it removes the setting. A timeout
+already tuned by hand is kept as is while the box stays checked, so the portal
+offers no timeout field of its own.
+
+The keg relay output is forced low before the updater, normal application, or
+watchdog error screen starts. During normal operation the main loop feeds the
+watchdog only after the UI, hardware, and active application ticks complete.
+The bounded Wi-Fi connection wait also feeds it, and Brewfather requests use a
+10-second HTTP timeout while the watchdog is running.
+
+After three consecutive watchdog resets, the device remains on a recovery
+error screen without launching the application or updater. An incomplete reset
+streak is cleared after five minutes of healthy operation, but power cycling
+does not clear a locked state. Removing `WATCHDOG_TIMEOUT_MS` bypasses watchdog
+and lock processing but does not erase `wdt_count`; re-enabling it restores the
+previous lock until the counter is cleared.
+
+From the USB MicroPython REPL, clear the lock with:
+
+```python
+import esp32
+nvs = esp32.NVS("uhs")
+nvs.set_i32("wdt_count", 0)
+nvs.commit()
+import machine
+machine.reset()
+```
+
+A complete reflash recovers a locked device only if it erases or replaces the
+NVS partition.
 
 ## Brewfather Integration
 
@@ -273,7 +320,7 @@ Most files are MicroPython/UIFlow2 code intended to run on the M5Dial, but a few
 host-side tests are available:
 
 ```bash
-python -m unittest discover tests
+python -m unittest discover -s tools -p "test_*.py" -v
 ```
 
 Useful local docs:

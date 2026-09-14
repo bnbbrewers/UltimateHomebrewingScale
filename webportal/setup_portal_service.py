@@ -33,6 +33,7 @@ _EDITABLE_FIELDS = (
     ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance (g)", "number", ()),
     ("HOP_WEIGHT_TOLERANCE", "Hop tolerance (g)", "number", ()),
     ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding inertia (ml)", "number", ()),
+    ("BATTERY", "Battery powered", "checkbox", ()),
     ("DEBUG", "Debug mode", "checkbox", ()),
     ("UPDATE_CHANNEL", "Release channel", "select", ("stable", "prerelease")),
 )

@@ -6,6 +6,10 @@ import gc
 import os
 import time
 
+import boot_safety
+import runtime_watchdog
+import standby
+
 
 def _file_exists(path):
     try:
@@ -123,9 +127,35 @@ def request_stop():
     _RUNNING = False
 
 
+def _run_watchdog_lock_screen():
+    import M5
+    import m5ui
+    from ui.simple_message_screen import SimpleMessageScreen
+
+    M5.begin()
+    m5ui.init()
+    screen = SimpleMessageScreen()
+    screen.configure(
+        title="Watchdog",
+        message="Application stopped after 3 resets.\nClear NVS or reflash.",
+        title_bg_color=0xB91C1C,
+        show_ok_button=False,
+    )
+    screen.root().screen_load()
+    while True:
+        M5.update()
+        time.sleep_ms(100)
+
+
 def main():
     global _RUNNING
     _RUNNING = True
+
+    boot_safety.force_relay_off(config)
+    watchdog = runtime_watchdog.configure(config)
+    if watchdog.locked:
+        _run_watchdog_lock_screen()
+        return
 
     # This branch must run before importing the normal runtime and hardware
     # managers. The updater needs only Wi-Fi and filesystem access.
@@ -191,11 +221,15 @@ def main():
         initial_app_id=initial_app_id,
     )
     mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
+    standby_manager = standby.configure(config)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
+    watchdog.start(allow_start=initial_app_id != "updater_app")
     while _RUNNING:
         M5.update()
         hardware.tick()
         app_manager.tick()
+        runtime_watchdog.feed()
+        standby_manager.tick(hardware, app_manager)
         time.sleep_ms(10)
 
 try:

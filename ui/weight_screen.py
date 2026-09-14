@@ -43,6 +43,7 @@ class WeightScreen:
 
         self._mode = self.MODE_SIMPLE
         self._target = 0
+        self._progress_target = 0
         self._empty_weight_g = 0
         self._density = 1.005
         self._tolerance = 0
@@ -181,9 +182,11 @@ class WeightScreen:
         title_bg_color=0x333333,
         tolerance=0,
         empty_weight_g=0,
+        progress_target=0,
     ):
         self._mode = mode
         self._target = target
+        self._progress_target = progress_target if progress_target > 0 else target
         self._tolerance = tolerance
         self._empty_weight_g = empty_weight_g
         self._ok_visible = None
@@ -343,7 +346,11 @@ class WeightScreen:
             remaining_volume = target_volume - volume
             if remaining_volume < 0:
                 remaining_volume = 0
-            progress = int((volume * 100) / target_volume) if target_volume > 0 else 0
+            progress_target = self._progress_target
+            if not progress_target or progress_target <= 0:
+                progress_target = self._target
+            progress_volume = (progress_target / 1000.0) / self._density
+            progress = int((volume * 100) / progress_volume) if progress_volume > 0 else 0
         else:
             remaining_volume = 0
             progress = 0

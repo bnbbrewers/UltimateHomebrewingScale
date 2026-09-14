@@ -6,6 +6,7 @@ For UIFlow2.0 / MicroPython on M5Stack
 import gc
 import time
 
+import runtime_watchdog
 from netcore import http_transport
 
 try:
@@ -123,7 +124,7 @@ class ApiBase:
                     url,
                     headers=headers,
                     stream=stream,
-                    timeout_s=None,
+                    timeout_s=runtime_watchdog.http_timeout_s(),
                 )
             except Exception as e:
                 last_exc = e
@@ -133,6 +134,7 @@ class ApiBase:
                     self.close_http()
                     raise
                 if attempt < retries - 1:
+                    runtime_watchdog.feed()
                     try:
                         time.sleep_ms(1000)
                     except AttributeError:

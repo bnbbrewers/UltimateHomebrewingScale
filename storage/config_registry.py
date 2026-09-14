@@ -7,6 +7,18 @@ from webportal.config_keys import EDITABLE_KEYS, EDITABLE_ORDER
 
 _ASSIGN_RE = re.compile(r"^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$")
 _WIFI_KEYS = ("WIFI_SSID", "WIFI_PASSWORD")
+# The portal's Battery checkbox is virtual: no BATTERY line is ever written to
+# config.py, the box only drives the presence of WATCHDOG_TIMEOUT_MS.  A scale
+# running on the M5Dial battery cannot be recovered by cutting the power, so it
+# needs the watchdog; a mains-powered one does not, and a stuck watchdog there
+# only adds reset loops.  Keeping a single source of truth in config.py leaves
+# runtime_watchdog.py unaware of the checkbox.
+_BATTERY_KEY = "BATTERY"
+_WATCHDOG_KEY = "WATCHDOG_TIMEOUT_MS"
+_BATTERY_WATCHDOG_TIMEOUT_MS = 15000
+# Mirrors runtime_watchdog._MIN_TIMEOUT_MS: below this the watchdog ignores the
+# setting, so the checkbox must read back as unchecked.
+_MIN_WATCHDOG_TIMEOUT_MS = 5000
 _NVS_NAMESPACE = "uiflow"
 _NVS_WIFI_SSID_KEY = "ssid0"
 _NVS_WIFI_PASSWORD_KEY = "pswd0"
@@ -121,6 +133,40 @@ def _format_literal(value, kind):
     text = str(value)
     text = text.replace("\\", "\\\\").replace('"', '\\"')
     return '"{}"'.format(text)
+
+
+def _watchdog_timeout_in_text(src_text):
+    """Return the active watchdog timeout, or None when the watchdog is off.
+
+    Applies the same rules as runtime_watchdog: a commented-out line, a
+    non-integer, or a value below the minimum all mean "disabled".
+    """
+    for line in src_text.splitlines():
+        m = _ASSIGN_RE.match(line)
+        if not m or m.group(1) != _WATCHDOG_KEY:
+            continue
+        value = _parse_literal(m.group(2))
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+        if value < _MIN_WATCHDOG_TIMEOUT_MS:
+            return None
+        return value
+    return None
+
+
+def _apply_battery_to_text(src_text, on_battery):
+    """Enable or disable the watchdog line according to the Battery checkbox."""
+    if not on_battery:
+        return remove_keys_from_text(src_text, (_WATCHDOG_KEY,))
+    if _watchdog_timeout_in_text(src_text) is not None:
+        # Keep a timeout the user tuned by hand instead of forcing the default:
+        # the portal exposes no timeout field, so overwriting it here would give
+        # no way to get that value back.
+        return src_text
+    # Drop any ignored value (too small, malformed) before appending a valid one
+    # so the file never ends up with two competing assignments.
+    out = remove_keys_from_text(src_text, (_WATCHDOG_KEY,))
+    return "{}{} = {}\n".format(out, _WATCHDOG_KEY, _BATTERY_WATCHDOG_TIMEOUT_MS)
 
 
 def _read_wifi_from_nvs():
@@ -270,6 +316,9 @@ def load_current_values(config_path=None):
         if key not in values:
             values[key] = spec.get("default")
 
+    # Derived, never stored: the checkbox reflects the watchdog line itself.
+    values[_BATTERY_KEY] = _watchdog_timeout_in_text(text) is not None
+
     # Source of truth for Wi-Fi credentials is NVS.
     nvs_ssid, nvs_password = _read_wifi_from_nvs()
     if nvs_ssid:
@@ -377,6 +426,9 @@ def save_updates(updates, config_path=None):
 
     file_updates = {}
     wifi_updates = {}
+    # Pull the virtual key out before the file update so it is never written as
+    # an assignment; None means the caller did not submit the checkbox at all.
+    on_battery = clean.pop(_BATTERY_KEY, None)
     for key, value in clean.items():
         if key in _WIFI_KEYS:
             wifi_updates[key] = value
@@ -398,6 +450,9 @@ def save_updates(updates, config_path=None):
     out = apply_updates_to_text(src, file_updates)
     if wifi_updates:
         out = remove_keys_from_text(out, _WIFI_KEYS)
+    # Last, so the watchdog line is decided on the fully updated file.
+    if on_battery is not None:
+        out = _apply_battery_to_text(out, on_battery)
 
     _write_config_text(path, out)
     return True, {}
