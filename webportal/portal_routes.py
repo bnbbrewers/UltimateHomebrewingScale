@@ -50,6 +50,55 @@ def handle_request(service, client, method, target, body):
         send(client, 200, "text/html; charset=utf-8", portal.render_kegs_html(portal._load_kegs(), i18n=service._i18n))
         return
 
+    if method == "GET" and path == "/backup":
+        if not service._token_ok(query, {}):
+            send(client, 403, body="Forbidden")
+            return
+        from storage import config_backup
+
+        send(
+            client,
+            200,
+            "text/plain; charset=utf-8",
+            config_backup.collect_backup_text(),
+            headers={"Content-Disposition": 'attachment; filename="{}"'.format(
+                config_backup.BACKUP_FILENAME)},
+        )
+        return
+
+    if method == "POST" and path == "/restore":
+        form = portal.parse_form_urlencoded(body)
+        if not service._token_ok(query, form):
+            send(client, 403, body="Forbidden")
+            return
+        text = form.get("backup", "")
+        translate = portal._portal_content()._t
+        if not text.strip():
+            send(client, 400, "text/html; charset=utf-8",
+                 translate(service._i18n, "portal.backup_restore_failed",
+                           "Restore failed: {0}").format("empty backup"))
+            return
+        try:
+            from storage import config_backup
+            ok, error = config_backup.apply_backup_text(text)
+        except Exception as e:
+            ok, error = False, str(e)
+        if not ok:
+            send(client, 400, "text/html; charset=utf-8",
+                 translate(service._i18n, "portal.backup_restore_failed",
+                           "Restore failed: {0}").format(error))
+            return
+        send(client, 200, "text/html; charset=utf-8",
+             translate(service._i18n, "portal.backup_restored",
+                       "Configuration restored. Rebooting..."))
+        try:
+            import machine
+            portal._sleep_ms(200)
+            machine.reset()
+        except Exception:
+            pass
+        return
+
     if method == "GET" and path == "/":
         if not service._token_ok(query, {}):
             send(client, 403, body="Forbidden")
