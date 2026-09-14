@@ -8,6 +8,7 @@ import time
 
 import boot_safety
 import runtime_watchdog
+import standby
 
 
 def _file_exists(path):
@@ -220,6 +221,7 @@ def main():
         initial_app_id=initial_app_id,
     )
     mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
+    standby_manager = standby.configure(config)
     mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
     watchdog.start(allow_start=initial_app_id != "updater_app")
     while _RUNNING:
@@ -227,6 +229,7 @@ def main():
         hardware.tick()
         app_manager.tick()
         runtime_watchdog.feed()
+        standby_manager.tick(hardware, app_manager)
         time.sleep_ms(10)
 
 try:
