@@ -1,10 +1,9 @@
 name: Repack M5Dial firmware
 
 on:
-  push:
-    tags:
-      - 'v*'
-      - 'pre-v*'
+  # Publishing a release also creates the tag, so a tag-push trigger here
+  # started a second, identical run that raced this one while uploading the
+  # release assets. Publish from the release event only.
   release:
     types: [published]
   workflow_dispatch:
