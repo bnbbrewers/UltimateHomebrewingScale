@@ -24,6 +24,9 @@ _NVS_WIFI_SSID_KEY = "ssid0"
 _NVS_WIFI_PASSWORD_KEY = "pswd0"
 _APP_NVS_NAMESPACE = "uhs"
 _NVS_UPDATE_KEY = "update"
+# Mirrors devices.scale.CALIBRATION_FILE; importing that module here would pull
+# the hardware layer into the portal.
+_CALIBRATION_FILE = "scale_calibration.json"
 
 
 def _nvs_get_text(nvs, key, max_len=128):
@@ -109,6 +112,67 @@ def resolve_config_path():
         except Exception:
             pass
     return "config.py"
+
+
+def resolve_calibration_path():
+    for path in ("/flash/" + _CALIBRATION_FILE, _CALIBRATION_FILE):
+        try:
+            os.stat(path)
+            return path
+        except Exception:
+            pass
+    return _CALIBRATION_FILE
+
+
+def read_calibration_points(calibration_path=None):
+    """Return the scale calibration points, or [] when there are none."""
+    import json
+
+    path = calibration_path or resolve_calibration_path()
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+        points = data["scale"]["CalibrationPoints"]
+    except Exception:
+        return []
+    return points if isinstance(points, list) else []
+
+
+def write_calibration_points(points, calibration_path=None):
+    import json
+
+    path = calibration_path or resolve_calibration_path()
+    try:
+        with open(path, "w") as f:
+            json.dump({"scale": {"CalibrationPoints": list(points)}}, f)
+    except Exception:
+        return False
+    return True
+
+
+def ensure_config_file(config_path=None):
+    """Create config.py when it is missing, so a restore has a file to edit.
+
+    A full firmware flash ships config.py.example only (build_runtime keeps the
+    real config out of the image), and that is exactly when a restore runs.
+    Seeding from the example also brings back the settings the portal does not
+    expose, such as KEG_RELAY_IO.
+    """
+    path = config_path or resolve_config_path()
+    try:
+        os.stat(path)
+        return path
+    except Exception:
+        pass
+
+    try:
+        with open(path + ".example", "r") as f:
+            seed = f.read()
+    except Exception:
+        seed = ""
+    with open(path, "w") as f:
+        f.write(seed)
+    return path
 
 
 def _parse_literal(raw):
