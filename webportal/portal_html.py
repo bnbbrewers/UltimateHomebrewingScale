@@ -58,6 +58,20 @@ def _append_kegs(parts, kegs, i18n):
         parts.append("<p><button type='submit' formaction='/kegs/delete' name='idx' value='{}'>{} {}</button></p></fieldset>".format(idx, _escape(_t(i18n, "portal.keg_delete", "Delete")), _escape(name)))
 
 
+def _append_backup(parts, i18n):
+    """Two standalone forms.
+
+    The restore box must stay outside the /save form: posted along with the
+    settings it would push the request body past MAX_REQUEST_BODY_BYTES.
+    """
+    parts.append("<hr><h4>{}</h4>".format(_escape(_t(i18n, "portal.backup_title", "Backup"))))
+    parts.append("<form method='get' action='/backup'><p><button type='submit'>{}</button></p></form>".format(_escape(_t(i18n, "portal.backup_download", "DOWNLOAD BACKUP"))))
+    parts.append("<form method='post' action='/restore'><p>{}<br><textarea name='backup' rows='6' cols='40'></textarea></p><p><button type='submit'>{}</button></p></form>".format(
+        _escape(_t(i18n, "portal.backup_paste", "Paste a backup file here")),
+        _escape(_t(i18n, "portal.backup_restore", "RESTORE AND REBOOT")),
+    ))
+
+
 def render_form_html(values, kegs=None, include_kegs=False, error="", i18n=None):
     values = values or {}
     parts = ["<!doctype html><html><head><meta charset='utf-8'>",
@@ -87,6 +101,7 @@ def render_form_html(values, kegs=None, include_kegs=False, error="", i18n=None)
         _append_kegs(parts, kegs or [], i18n)
     parts.append("<p><button type='submit'>{}</button></p></form>".format(_escape(_t(i18n, "portal.save_reboot", "Save and reboot"))))
     parts.append("<form method='post' action='/update'><p><button type='submit'>{}</button></p></form>".format(_escape(_t(i18n, "portal.update_app", "UPDATE APP"))))
+    _append_backup(parts, i18n)
     parts.append("</body></html>")
     return "".join(parts)
 
