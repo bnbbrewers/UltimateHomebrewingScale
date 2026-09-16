@@ -113,21 +113,7 @@ class KegFillerApp(BaseApp):
         self._relay = None
         self._state = _STATE_EMPTY_PLATFORM_ACK
         self._kegs = []
-        self._items = []
-        self._selected_idx = 0
-        self._pending_name = None
-        self._empty_weight_g = None
-        self._selected_volume_l = DEFAULT_VOLUME_L
-        self._selected_keg = None
-        self._filling_stop_weight_g = 0
-        self._filling_done_items = []
-        self._filling_done_selected_idx = 0
-        self._samples = []
-        self._calibration_started_at = 0
-        self._next_sample_at = 0
-        self._fill_reference_weight_g = None
-        self._fill_reference_at = 0
-        self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
+        self._reset_state()
 
     def _simple(self):
         if self._simple_screen is None:
@@ -149,21 +135,32 @@ class KegFillerApp(BaseApp):
             self._weight_screen = self.screen_manager.get(screen_ids.WEIGHT)
         return self._weight_screen
 
-    def on_exit(self):
-        super().on_exit()
-        self._close_relay()
-        self._kegs = []
+    def _reset_state(self):
+        """Reset every per-session field. Leaves self._kegs to the caller."""
         self._items = []
-        self._samples = []
+        self._selected_idx = 0
         self._pending_name = None
         self._empty_weight_g = None
-        self._scale = None
-        self._rotary = None
-        self._relay = None
+        self._selected_volume_l = DEFAULT_VOLUME_L
         self._selected_keg = None
         self._filling_stop_weight_g = 0
         self._filling_done_items = []
         self._filling_done_selected_idx = 0
+        self._samples = []
+        self._calibration_started_at = 0
+        self._next_sample_at = 0
+        self._fill_reference_weight_g = None
+        self._fill_reference_at = 0
+        self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
+
+    def on_exit(self):
+        super().on_exit()
+        self._close_relay()
+        self._reset_state()
+        self._kegs = []
+        self._scale = None
+        self._rotary = None
+        self._relay = None
         if self._select_screen:
             self._select_screen.set_items([])
         self._simple_screen = None
@@ -180,18 +177,9 @@ class KegFillerApp(BaseApp):
         # it to _start_filling: boot_safety.force_relay_off() already drove the
         # pad low at boot, and RelayDevice.__init__ closes the relay itself.
         self._relay = None
+        self._reset_state()
         self._kegs = load_kegs(self._keg_file)
         gc.collect()
-        self._items = []
-        self._selected_idx = 0
-        self._pending_name = None
-        self._empty_weight_g = None
-        self._selected_volume_l = DEFAULT_VOLUME_L
-        self._selected_keg = None
-        self._filling_stop_weight_g = 0
-        self._filling_done_items = []
-        self._filling_done_selected_idx = 0
-        self._samples = []
         self._show_empty_platform()
 
     def tick(self):
