@@ -20,9 +20,10 @@ Implemented:
 - Scale calibration wizard with multi-point calibration saved to
   `scale_calibration.json`.
 - Smartphone settings portal for Wi-Fi, Brewfather credentials, language,
-  tolerance, debug mode and update branch.
+  tolerance, standby delay, battery mode, debug mode and release channel.
 - Hidden updater app that downloads application files from GitHub.
 - Optional runtime watchdog with relay-safe reboot and persistent reset lock.
+- Optional idle standby with deep sleep and touch wake, for battery builds.
 - English and French UI strings.
 
 Work in progress:
@@ -63,6 +64,26 @@ enclosure complexity, and overall project cost.
 - Weight Reader I2C: https://s.click.aliexpress.com/e/_c42It9IZ
 - Weight Reader I2C alternative link: https://s.click.aliexpress.com/e/_c3VIvQvL
 - Relay: https://s.click.aliexpress.com/e/_c3OikdVR
+
+### Battery (optional)
+
+The M5Dial carries an internal battery socket, so a flat LiPo cell turns the
+scale into a portable one. The Dial then runs without the 12 V supply and still
+feeds the Unit Weight I2C through Port A, which is convenient for weighing malt
+away from the brewing station. Keg filling stays out of reach on battery: the
+solenoid valve needs the 12 V line.
+
+The cell must use a **JST 1.25 mm 2-pin** connector; the larger JST-PH 2.0 mm
+connector does not fit. Fitting it means opening the Dial back cover, so do it
+before mounting the Dial in the enclosure. The
+[Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/)
+shows the socket and the assembly order.
+
+- Battery: https://s.click.aliexpress.com/e/_c3O6l6n3
+
+On battery, set `STANDBY_TIMEOUT_MIN` and enable the watchdog through the
+portal's **Battery powered** checkbox. See [Idle Standby](#idle-standby) and
+[Runtime Watchdog](#runtime-watchdog).
 
 ### Scale Platform
 
@@ -213,8 +234,14 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 - `GRAIN_WEIGHT_TOLERANCE`
 - `HOP_WEIGHT_TOLERANCE`
 - `KEG_SPUNDING_VALVE_INERTIA_ML`
+- `STANDBY_TIMEOUT_MIN`
+- `BATTERY` (virtual key, see below)
 - `DEBUG`
 - `UPDATE_CHANNEL`
+
+`BATTERY` is never written to `config.py` as such. The **Battery powered**
+checkbox is translated by `storage/config_registry.py` into the presence or
+absence of `WATCHDOG_TIMEOUT_MS`.
 
 Saving settings reboots the device. The portal can also request an update, which
 sets a flag and reboots into the hidden updater app.
@@ -279,6 +306,7 @@ LANGUAGE = "en"  # "en" or "fr"
 GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
+STANDBY_TIMEOUT_MIN = 0  # minutes before deep sleep; 30 on battery, 0 disables
 DEBUG = False
 UPDATE_CHANNEL = "stable"
 # Optional: uncomment to enable a 15-second runtime watchdog.
@@ -332,6 +360,31 @@ machine.reset()
 A complete reflash recovers a locked device only if it erases or replaces the
 NVS partition.
 
+### Idle Standby
+
+`STANDBY_TIMEOUT_MIN` puts the device into ESP32 deep sleep after that many
+minutes without operator activity. `0` disables the feature, and values outside
+`1`-`240` are rejected with a log line rather than applied. **30 minutes is the
+recommended value in every install, and is what makes a battery build usable.**
+The setting is editable from the portal as **Standby after (min, 0 = off)**.
+
+Activity is the button, the rotary encoder, and a weight change larger than
+`HOP_WEIGHT_TOLERANCE`. The updater and the calibration wizard inhibit standby
+while they run, so a long download or a calibration session is never cut short.
+
+Before sleeping, the manager pins the keg relay line low and holds it through
+deep sleep, dims the display, then arms the wake source. If the relay cannot be
+pinned or the wake source cannot be armed, it stays awake rather than sleeping
+with no way back.
+
+**Waking is done by touching the screen.** The main button cannot wake the
+board: GPIO42 is not an RTC GPIO on the ESP32-S3, so the wake source is the
+touch interrupt on GPIO14. Waking is a full reboot, so the device returns to the
+launcher rather than to the screen it left.
+
+`standby.py` stays dependency-light on purpose: no UI, no application managers,
+no network clients, and no retained references to any of them.
+
 ## Brewfather Integration
 
 The current brewing software connector is Brewfather. It uses Basic Auth with
@@ -353,6 +406,18 @@ host-side tests are available:
 ```bash
 python -m unittest discover -s tools -p "test_*.py" -v
 ```
+
+The setup portal screenshot used by the Software Installation Guide is
+generated, not captured by hand:
+
+```bash
+python tools/render_portal_screenshot.py
+```
+
+It renders `webportal.portal_html.render_form_html` itself in headless Chrome or
+Edge and overwrites `docs/SoftwareInstallationGuide/img/PortalPage.png`, so the
+image cannot drift from the real form. Rerun it after changing `FIELDS` in
+[webportal/portal_html.py](webportal/portal_html.py).
 
 Useful local docs:
 

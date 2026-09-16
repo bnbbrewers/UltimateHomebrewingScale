@@ -800,44 +800,59 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Langue</td>
+                    <td>Language</td>
                     <td>Choisissez <code>English</code> ou <code>French</code> pour l'interface du Dial.</td>
                   </tr>
                   <tr>
-                    <td>SSID Wi-Fi</td>
+                    <td>Wi-Fi SSID</td>
                     <td>Saisissez le nom exact de votre réseau Wi-Fi 2,4 GHz.</td>
                   </tr>
                   <tr>
-                    <td>Mot de passe Wi-Fi</td>
+                    <td>Wi-Fi password</td>
                     <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
                   </tr>
                   <tr>
-                    <td>User ID Brewfather</td>
+                    <td>Brewing software</td>
+                    <td>Laissez <code>brewfather</code> sélectionné.</td>
+                  </tr>
+                  <tr>
+                    <td>Brewfather user id</td>
                     <td>Collez votre user ID API Brewfather.</td>
                   </tr>
                   <tr>
-                    <td>Clé API Brewfather</td>
+                    <td>Brewfather API key</td>
                     <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
                   </tr>
                   <tr>
-                    <td>Tolérance grains (g)</td>
+                    <td>Grain tolerance (g)</td>
                     <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée plus large ou plus stricte.</td>
                   </tr>
                   <tr>
-                    <td>Tolérance houblon (g)</td>
+                    <td>Hop tolerance (g)</td>
                     <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée houblon plus large ou plus stricte.</td>
                   </tr>
                   <tr>
-                    <td>Inertie spunding valve (ml)</td>
+                    <td>Spunding valve inertia (ml)</td>
                     <td>Gardez <code>200</code> ml par défaut ; ce paramètre servira au keg filler pour compenser l'inertie de fermeture.</td>
                   </tr>
                   <tr>
-                    <td>Branche de mise à jour</td>
-                    <td>Gardez <code>main</code> pour les installations normales.</td>
+                    <td>Standby after (min, 0 = off)</td>
+                    <td>
+                      Minutes sans activité avant la mise en veille du Dial. <strong>Saisissez <code>30</code></strong> :
+                      c'est la valeur recommandée sur secteur et une nécessité sur batterie. <code>0</code> désactive la veille.
+                    </td>
                   </tr>
                   <tr>
-                    <td>Logiciel de brassage</td>
-                    <td>Laissez <code>brewfather</code> sélectionné.</td>
+                    <td>Battery powered</td>
+                    <td>Cochez cette case <strong>uniquement si une batterie est installée</strong> dans le Dial. Laissez-la décochée sur secteur.</td>
+                  </tr>
+                  <tr>
+                    <td>Debug mode</td>
+                    <td>Laissez décoché. Ne cochez que pour relever des traces mémoire lors d'un signalement de problème.</td>
+                  </tr>
+                  <tr>
+                    <td>Release channel</td>
+                    <td>Gardez <code>stable</code> pour les installations normales. <code>prerelease</code> accepte la dernière pré-version.</td>
                   </tr>
                 </tbody>
               </table>
@@ -845,6 +860,17 @@
               <div class="callout">
                 <strong>Sauvegarder et redémarrer :</strong> appuyez sur <strong>Save and reboot</strong>. Le Dial enregistre
                 les identifiants Wi-Fi et les réglages de l'app, puis redémarre automatiquement.
+              </div>
+
+              <div class="callout info">
+                <strong>Fonctionnement sur batterie :</strong> si vous avez installé la cellule LiPo optionnelle,
+                ces deux réglages vont ensemble. <strong>Standby after</strong> à <code>30</code> minutes évite
+                qu'un écran resté allumé ne vide la charge, et <strong>Battery powered</strong> arme un watchdog
+                de 15 secondes qui redémarre le Dial si l'application se fige. Ce watchdog compte sur batterie
+                parce qu'il n'y a aucune prise à débrancher, alors qu'une installation sur secteur se récupère
+                toujours en coupant le courant. Le Dial sort de veille quand vous <strong>touchez l'écran</strong> —
+                le bouton rotatif ne peut pas le réveiller. Le réveil est un redémarrage complet : le Dial revient
+                sur le launcher et non sur l'écran quitté.
               </div>
             </div>
           </article>
