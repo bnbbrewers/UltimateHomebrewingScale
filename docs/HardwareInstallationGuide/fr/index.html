@@ -693,6 +693,7 @@
         <a href="#shopping-list">Pièces</a>
         <a href="#assembly">Assemblage</a>
         <a href="#keg-filler">Keg filler</a>
+        <a href="#battery">Batterie</a>
         <a href="#software">Logiciel</a>
       </div>
     </nav>
@@ -802,6 +803,72 @@
           </article>
 
           <div class="parts-group-title">
+            <h3>Boîtier et câblage</h3>
+          </div>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/abs-enclosure.jpg" alt="Waterproof ABS enclosure photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Boîtier ABS étanche</h3>
+              <p>
+                Le boîtier regroupe l'électronique, protège les connexions et ne laisse sortir que les câbles utiles.
+              </p>
+              <ul>
+                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c37dIrCf">Boîtier ABS étanche — prendre la référence 100x68x40mm</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/cable-gland.jpg" alt="Presse-étoupe PG7 photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Presse-étoupe PG7</h3>
+              <p>
+                Le presse-étoupe assure le maintien mécanique du câble RJ9 et aide à éloigner les projections de
+                l'électronique dans le boîtier.
+              </p>
+              <ul>
+                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c4UINtHd">Presse-étoupe (REF : PG7 blanc)</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/jack-connectors.jpg" alt="Jack connectors photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Connecteurs Jack</h3>
+              <p>
+                Les connecteurs jack facilitent la déconnexion de l'alimentation et de la vanne optionnelle pour la
+                maintenance ou le transport.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="part-card">
+            <figure class="product-photo">
+              <img src="../img/power-supply.jpg" alt="12V 3A power supply photo produit depuis AliExpress">
+            </figure>
+            <div>
+              <h3>Alimentation 12 V 3 A</h3>
+              <p>
+                L'alimentation 12 V alimente le montage et correspond à la tension de la vanne solénoïde utilisée
+                par l'option de remplissage de keg.
+              </p>
+              <ul>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c353g2MJ">Alimentation (REF : prise EU, 12 V 3 A)</a></li>
+              </ul>
+            </div>
+          </article>
+          <div class="parts-group-title">
             <h3>Spunding valve optionnelle</h3>
             <p>Ajoutez ces pièces uniquement si vous utilisez le remplissage de keg.</p>
           </div>
@@ -870,71 +937,33 @@
           </article>
 
           <div class="parts-group-title">
-            <h3>Boîtier et câblage</h3>
+            <h3>Batterie optionnelle</h3>
+            <p>Ajoutez cette pièce uniquement si vous voulez utiliser la balance loin d'une prise de courant.</p>
           </div>
 
-          <article class="part-card">
+          <article id="battery" class="part-card">
             <figure class="product-photo">
-              <img src="../img/abs-enclosure.jpg" alt="Waterproof ABS enclosure photo produit depuis AliExpress">
+              <img src="../img/battery.jpg" alt="Cellule LiPo plate équipée d'un connecteur JST 1,25 mm 2 broches, photo produit depuis AliExpress">
             </figure>
             <div>
-              <h3>Boîtier ABS étanche</h3>
+              <h3>Batterie LiPo</h3>
               <p>
-                Le boîtier regroupe l'électronique, protège les connexions et ne laisse sortir que les câbles utiles.
+                Une cellule LiPo 3,7 V plate équipée d'un connecteur JST 1,25 mm 2 broches, assez fine pour se
+                loger dans le dos du M5Stack Dial. Le Dial fonctionne alors sans l'alimentation 12 V et continue
+                d'alimenter l'Unit Weight I2C via le Port A : la pesée reste possible partout dans la brasserie.
+                Le Dial recharge la cellule par l'USB-C.
               </p>
               <ul>
-                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c37dIrCf">Boîtier ABS étanche — prendre la référence 100x68x40mm</a></li>
+                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3O6l6n3">Batterie LiPo</a></li>
               </ul>
+              <p>
+                Le connecteur doit être un <strong>JST 1,25 mm 2 broches</strong> : une cellule vendue avec le
+                connecteur JST-PH 2,0 mm, plus gros, n'entre pas dans le socle du Dial. Le remplissage de keg
+                n'est pas couvert par la batterie, l'électrovanne ayant besoin de l'alimentation 12 V.
+              </p>
             </div>
           </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/cable-gland.jpg" alt="Presse-étoupe PG7 photo produit depuis AliExpress">
-            </figure>
-            <div>
-              <h3>Presse-étoupe PG7</h3>
-              <p>
-                Le presse-étoupe assure le maintien mécanique du câble RJ9 et aide à éloigner les projections de
-                l'électronique dans le boîtier.
-              </p>
-              <ul>
-                  <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c4UINtHd">Presse-étoupe (REF : PG7 blanc)</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/jack-connectors.jpg" alt="Jack connectors photo produit depuis AliExpress">
-            </figure>
-            <div>
-              <h3>Connecteurs Jack</h3>
-              <p>
-                Les connecteurs jack facilitent la déconnexion de l'alimentation et de la vanne optionnelle pour la
-                maintenance ou le transport.
-              </p>
-              <ul>
-                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/power-supply.jpg" alt="12V 3A power supply photo produit depuis AliExpress">
-            </figure>
-            <div>
-              <h3>Alimentation 12 V 3 A</h3>
-              <p>
-                L'alimentation 12 V alimente le montage et correspond à la tension de la vanne solénoïde utilisée
-                par l'option de remplissage de keg.
-              </p>
-              <ul>
-                <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c353g2MJ">Alimentation (REF : prise EU, 12 V 3 A)</a></li>
-              </ul>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -958,6 +987,11 @@
                 <li>Percez un trou à 8 mm pour le jack d'alimentation, et un autre pour le jack de la spunding valve si nécessaire.</li>
                 <li>Insérez les Units à l'intérieur du boîtier et fixez-les avec du scotch double face.</li>
               </ol>
+              <div class="callout info">
+                <strong>Vous montez la batterie optionnelle ?</strong> Installez-la maintenant, avant de poser le
+                Dial dans le boîtier. Voir <a href="#battery-assembly">Installer la batterie optionnelle</a> à la
+                fin de cette section.
+              </div>
             </div>
           </article>
 
@@ -1130,6 +1164,42 @@
               <div class="callout warning">
                 <strong>Avant la mise sous tension :</strong> utilisez le Port B noir pour le relais. Le Port A rouge
                 reste réservé au Unit Weight I2C.
+              </div>
+            </div>
+          </article>
+
+          <article id="battery-assembly" class="step">
+            <div class="step-number" aria-hidden="true">7</div>
+            <div class="step-body">
+              <h3>Installer la batterie optionnelle</h3>
+              <p>
+                Passez cette étape si la balance reste toujours reliée à l'alimentation 12 V. La batterie est
+                décrite en dernier parce qu'elle est optionnelle, mais elle s'installe tôt : le Dial doit être
+                ouvert par l'arrière, ce qui n'est plus praticable une fois qu'il est monté dans le boîtier. Lisez
+                cette étape avant d'attaquer l'étape 1, et réalisez-la à ce moment-là.
+              </p>
+              <figure class="wiring-diagram">
+                <img src="../img/m5dial-battery-mount.png" alt="Trois étapes montrant le capot arrière du M5Stack Dial retiré pour exposer le connecteur de batterie JST 1,25 mm 2 broches">
+                <figcaption>Ouverture du capot arrière du M5Stack Dial pour accéder au connecteur de batterie. Source : documentation M5Stack.</figcaption>
+              </figure>
+              <ol>
+                <li>Débranchez le câble USB-C et tous les câbles Grove du Dial.</li>
+                <li>Retirez les deux vis du capot arrière, puis soulevez le capot hors du boîtier orange.</li>
+                <li>Repérez le connecteur blanc <code>1.25mm-2P</code> sur la carte ainsi dégagée, à côté du port USB-C.</li>
+                <li>Branchez le connecteur de la LiPo, fil rouge sur <code>+</code>. Il ne rentre que dans un sens ; ne forcez jamais.</li>
+                <li>Couchez la cellule à plat dans l'espace libre du capot sans pincer de fil, puis refermez le capot et remettez les vis.</li>
+              </ol>
+              <div class="callout">
+                <strong>Polarité :</strong> certaines cellules sont vendues avec les fils rouge et noir inversés
+                dans le connecteur. Vérifiez-les face aux repères <code>+</code> et <code>-</code> de la carte avant
+                de brancher : une cellule inversée détruit le Dial.
+              </div>
+              <div class="callout info">
+                <strong>Charge :</strong> le Dial recharge la cellule dès que l'USB-C est branché. Branchez-le une
+                fois avant la première utilisation, et réglez le délai de mise en veille dans le portail de
+                configuration pour qu'un écran resté allumé ne vide pas la charge. Voir
+                <a href="../../SoftwareInstallationGuide/fr/#brewfather">Renseigner le Wi-Fi, Brewfather et les réglages de l'app</a>
+                dans le guide d'installation logicielle.
               </div>
             </div>
           </article>
