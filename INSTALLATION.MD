@@ -22,6 +22,10 @@ esptool.py --chip esp32s3 --port COM4 --baud 1500000 write_flash 0x0 firmware/fi
   - `WIFI_SSID`
   - `WIFI_PASSWORD`
 - `LANGUAGE` is optional (`en` or `fr`).
+- `STANDBY_TIMEOUT_MIN` is optional: minutes of inactivity before deep sleep,
+  `0` to disable. Set it to `30` when an optional battery is fitted, and enable
+  the watchdog through the portal's **Battery powered** checkbox. Waking is done
+  by touching the screen and is a full reboot.
 
 ## 3) Build/upload the application files
 

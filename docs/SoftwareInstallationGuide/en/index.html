@@ -836,8 +836,23 @@
                     <td>Keep the default <code>200</code> ml; this future keg filler setting will compensate valve closing inertia.</td>
                   </tr>
                   <tr>
-                    <td>Update branch</td>
-                    <td>Keep <code>main</code> for normal installs.</td>
+                    <td>Standby after (min, 0 = off)</td>
+                    <td>
+                      Minutes without activity before the Dial goes to sleep. <strong>Enter <code>30</code></strong>:
+                      it is the recommended value on mains and a requirement on battery. <code>0</code> disables standby.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Battery powered</td>
+                    <td>Tick this box <strong>only if a battery is fitted</strong> inside the Dial. Leave it unticked on mains.</td>
+                  </tr>
+                  <tr>
+                    <td>Debug mode</td>
+                    <td>Leave it unticked. Tick it only to collect memory traces when reporting a problem.</td>
+                  </tr>
+                  <tr>
+                    <td>Release channel</td>
+                    <td>Keep <code>stable</code> for normal installs. <code>prerelease</code> accepts the newest pre-release.</td>
                   </tr>
                 </tbody>
               </table>
@@ -845,6 +860,17 @@
               <div class="callout">
                 <strong>Save and reboot:</strong> Tap <strong>Save and reboot</strong>. The Dial saves
                 Wi-Fi credentials and app settings, then restarts automatically.
+              </div>
+
+              <div class="callout info">
+                <strong>Running on battery:</strong> if you fitted the optional LiPo cell, these two settings go
+                together. <strong>Standby after</strong> set to <code>30</code> minutes stops an idle screen from
+                draining the charge, and <strong>Battery powered</strong> arms a 15-second watchdog that reboots
+                the Dial if the application ever freezes. That watchdog matters on battery because there is no
+                power outlet to unplug, while a mains install can always be recovered by cutting the power. The
+                Dial wakes from standby when you <strong>touch the screen</strong> — the rotary button cannot wake
+                it. Waking is a full reboot, so the Dial comes back on the launcher rather than on the screen you
+                left.
               </div>
             </div>
           </article>
