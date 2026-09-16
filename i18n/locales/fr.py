@@ -95,6 +95,7 @@ TRANSLATIONS = {
         'relay_not_found': 'Relais introuvable',
         'tare_error': 'Erreur de tarage',
         'calibration_no_sample': 'Aucun echantillon valide',
+        'filling_stalled': 'Remplissage arrete :\naucun debit detecte',
         'save_error': 'Erreur sauvegarde keg',
     },
 

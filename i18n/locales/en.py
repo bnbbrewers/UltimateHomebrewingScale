@@ -95,6 +95,7 @@ TRANSLATIONS = {
         'relay_not_found': 'Relay not found',
         'tare_error': 'Tare error',
         'calibration_no_sample': 'No valid sample',
+        'filling_stalled': 'Filling stopped:\nno flow detected',
         'save_error': 'Keg save error',
     },
 

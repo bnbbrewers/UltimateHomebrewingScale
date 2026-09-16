@@ -31,6 +31,13 @@ VOLUME_STEP = VOLUME_STEP_L
 CALIBRATION_DURATION_MS = 10000
 SAMPLE_INTERVAL_MS = 200
 
+# The filling loop is the only loop in the project that drives an actuator.
+# read_weight_filtered() returns its cached value when the ADC read fails, so a
+# dead load cell would otherwise hold the valve open forever. No absolute
+# timeout: a legitimately slow fill must never be cut short.
+FILL_STALL_TOLERANCE_G = 5
+FILL_STALL_TIMEOUT_MS = 30000
+
 _STATE_EMPTY_PLATFORM_ACK = 1
 _STATE_KEG_SELECT = 2
 _STATE_CALIBRATION_1_ACK = 3
@@ -56,6 +63,8 @@ __all__ = (
     "VOLUME_STEP_L",
     "CALIBRATION_DURATION_MS",
     "SAMPLE_INTERVAL_MS",
+    "FILL_STALL_TOLERANCE_G",
+    "FILL_STALL_TIMEOUT_MS",
     "_STATE_EMPTY_PLATFORM_ACK",
     "_STATE_KEG_SELECT",
     "_STATE_CALIBRATION_1_ACK",
@@ -116,6 +125,8 @@ class KegFillerApp(BaseApp):
         self._samples = []
         self._calibration_started_at = 0
         self._next_sample_at = 0
+        self._fill_reference_weight_g = None
+        self._fill_reference_at = 0
         self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
 
     def _simple(self):
@@ -410,6 +421,8 @@ class KegFillerApp(BaseApp):
             title_bg_color=_COLOR_KEG,
         )
         self.screen_manager.show(screen_ids.WEIGHT)
+        self._fill_reference_weight_g = None
+        self._fill_reference_at = _ticks_ms()
         self._open_relay()
         self._state = _STATE_FILLING
 
@@ -421,6 +434,19 @@ class KegFillerApp(BaseApp):
             self._close_relay()
             self._weight().set_ok_visible(True)
             self._state = _STATE_FILLING_DONE_ACK
+            return
+        self._check_fill_stalled(weight)
+
+    def _check_fill_stalled(self, weight):
+        reference = self._fill_reference_weight_g
+        if reference is None or abs(weight - reference) > FILL_STALL_TOLERANCE_G:
+            self._fill_reference_weight_g = weight
+            self._fill_reference_at = _ticks_ms()
+            return
+        if _ticks_diff(_ticks_ms(), self._fill_reference_at) < FILL_STALL_TIMEOUT_MS:
+            return
+        self._close_relay()
+        self._show_error("keg.filling_stalled", _STATE_KEG_SELECT)
 
     def _show_filling_done_select(self):
         keg_name = ""
