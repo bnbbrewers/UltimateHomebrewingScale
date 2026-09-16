@@ -164,8 +164,10 @@ class KegFillerApp(BaseApp):
         super().on_enter()
         self._scale = self.hardware.scale
         self._rotary = self.hardware.rotary
-        self._relay = getattr(self.hardware, "relay", None)
-        self._close_relay()
+        # The relay driver is imported on first read of hardware.relay. Defer
+        # it to _start_filling: boot_safety.force_relay_off() already drove the
+        # pad low at boot, and RelayDevice.__init__ closes the relay itself.
+        self._relay = None
         self._kegs = load_kegs(self._keg_file)
         gc.collect()
         self._items = []
@@ -496,19 +498,29 @@ class KegFillerApp(BaseApp):
         self._selected_volume_l = volume_l
         self._volume().set_volume(self._selected_volume_l)
 
+    def _acquire_relay(self):
+        if self._relay is None:
+            self._relay = getattr(self.hardware, "relay", None)
+        return self._relay
+
     def _open_relay(self):
-        if self._relay and hasattr(self._relay, "set_on"):
-            self._relay.set_on()
+        relay = self._acquire_relay()
+        if relay and hasattr(relay, "set_on"):
+            relay.set_on()
 
     def _close_relay(self):
-        if self._relay and hasattr(self._relay, "set_off"):
-            self._relay.set_off()
+        # Never acquire here. on_exit runs on every app switch, and closing a
+        # relay that was never opened would import the driver for nothing.
+        relay = self._relay
+        if relay and hasattr(relay, "set_off"):
+            relay.set_off()
 
     def _relay_available(self):
-        if not self._relay:
+        relay = self._acquire_relay()
+        if not relay:
             return False
-        if hasattr(self._relay, "is_available"):
-            return self._relay.is_available()
+        if hasattr(relay, "is_available"):
+            return relay.is_available()
         return True
 
 
