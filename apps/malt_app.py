@@ -106,11 +106,11 @@ class GrainAssistantApp(BaseApp):
         if len(self._batches) == 1:
             self._load_malts()
             return
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names if names else [self.t("common.back")],
             accent_color=_COLOR_RECIPE, selected_index=0)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_RECIPE
@@ -133,20 +133,20 @@ class GrainAssistantApp(BaseApp):
         names = [m.name for m in self._malts]
 
         if names:
-            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._select().configure(
                 title=self.t("grain.select_malt"), items=names,
                 accent_color=_COLOR_MALT, selected_index=0)
+            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._state = _STATE_MALT
         elif self._show_msg(
                 self.t("grain.title"), self.t("grain.no_malts"),
                 _COLOR_MALT, show_ok=True):
             self._state = _STATE_MESSAGE_ACK
         else:
-            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._select().configure(
                 title=self.t("grain.no_malts"), items=[],
                 accent_color=_COLOR_MALT, selected_index=0)
+            self.screen_manager.show(screen_ids.SELECT_ITEM)
             self._state = _STATE_MALT
 
         if self._rotary:
@@ -226,10 +226,10 @@ class GrainAssistantApp(BaseApp):
                 if self._malt_idx >= len(self._malts):
                     self._malt_idx = len(self._malts) - 1
                 names = [m.name for m in self._malts]
-                self.screen_manager.show(screen_ids.SELECT_ITEM)
                 self._select().configure(
                     title=self.t("grain.select_malt"), items=names,
                     accent_color=_COLOR_MALT, selected_index=self._malt_idx)
+                self.screen_manager.show(screen_ids.SELECT_ITEM)
                 self._state = _STATE_MALT
             elif self._show_msg(
                     self.t("grain.title"), self.t("grain.all_malts_done"),
@@ -250,13 +250,13 @@ class GrainAssistantApp(BaseApp):
         self._state = _STATE_PLACE_RECIPIENT_ACK
 
     def _start_weighing(self):
-        self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen = self._weight()
         malt = self._malts[self._malt_idx]
         self._target_g = int(malt.amount * 1000)
         weigh_screen.configure(
             title=malt.name, mode="countdown_g", target=self._target_g,
             title_bg_color=0xD4840A, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
+        self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
         if self._scale:

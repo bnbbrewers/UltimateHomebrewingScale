@@ -209,10 +209,10 @@ class HopAssistantApp(BaseApp):
     def _show_hop_select(self):
         names = _HopNameItems(self._hops_list)
         self._current_hop_idx = min(self._current_hop_idx, max(0, len(names) - 1))
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=self.t("hop.select_hop"), items=names,
             accent_color=_COLOR_HOP, selected_index=self._current_hop_idx)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_SELECT_HOP
@@ -221,10 +221,10 @@ class HopAssistantApp(BaseApp):
         hop = self._hops_list[self._current_hop_idx]
         lines = _HopStepItems(self, hop["steps"])
         self._step_idx = min(self._step_idx, max(0, len(lines) - 1))
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=hop["name"], items=lines,
             accent_color=_COLOR_HOP, selected_index=self._step_idx)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_SELECT_STEP
@@ -296,12 +296,12 @@ class HopAssistantApp(BaseApp):
         step = hop["steps"][self._step_idx]
         vessel_number = self._vessel_number_for_step(step[0])
         self._target_g = self._to_target_g(step[1])
-        self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen = self._weight()
         weigh_screen.configure(
             title=self.t("hop.weigh_title", hop["name"], vessel_number),
             mode="countdown_g", target=self._target_g,
             title_bg_color=_COLOR_HOP, tolerance=_hop_weight_tolerance())
+        self.screen_manager.show(screen_ids.WEIGHT)
         weigh_screen.set_status(self.t("scale.tare_ready"))
         self._last_in_range = None
         if self._scale:
@@ -348,11 +348,11 @@ class HopAssistantApp(BaseApp):
         if len(self._batches) == 1:
             self._load_hops()
             return
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
         self._select().configure(
             title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
             items=names if names else [self.t("common.back")],
             accent_color=_COLOR_HOP, selected_index=0)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_RECIPE
