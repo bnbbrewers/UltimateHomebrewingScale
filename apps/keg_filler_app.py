@@ -22,6 +22,12 @@ try:
 except Exception:
     config = None
 
+if getattr(config, "DEBUG", False):
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
+
 
 DEFAULT_VOLUME_L = 18.0
 MIN_VOLUME_L = 0.5
@@ -168,6 +174,7 @@ class KegFillerApp(BaseApp):
         self._volume_screen = None
         self._weight_screen = None
         gc.collect()
+        mem_snapshot("keg.on_exit", enabled=True, collect=False)
 
     def on_enter(self):
         super().on_enter()
@@ -181,6 +188,7 @@ class KegFillerApp(BaseApp):
         self._kegs = load_kegs(self._keg_file)
         gc.collect()
         self._show_empty_platform()
+        mem_snapshot("keg.on_enter", enabled=True, collect=False)
 
     def tick(self):
         if self._check_return_to_launcher():
@@ -284,6 +292,7 @@ class KegFillerApp(BaseApp):
         # allocates WEIGHT and its 40pt binfont.
         self._volume_screen = None
         self._release_volume_screen()
+        mem_snapshot("keg.volume_screen_released", enabled=True, collect=False)
         self._simple().configure(
             title=self.t("keg.calibrated_title"),
             message=self.t("keg.calibrated_message", self._pending_name),
@@ -426,6 +435,7 @@ class KegFillerApp(BaseApp):
         self._fill_reference_weight_g = None
         self._fill_reference_at = _ticks_ms()
         self._open_relay()
+        mem_snapshot("keg.filling_started", enabled=True, collect=False)
         self._state = _STATE_FILLING
 
     def _tick_filling(self):
