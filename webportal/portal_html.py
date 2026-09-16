@@ -59,16 +59,18 @@ def _append_kegs(parts, kegs, i18n):
 
 
 def _append_backup(parts, i18n):
-    """Two standalone forms.
+    """One box holding both actions, each in its own standalone form.
 
-    The restore box must stay outside the /save form: posted along with the
-    settings it would push the request body past MAX_REQUEST_BODY_BYTES.
+    They must stay outside the /save form: nested there, the upload would ride
+    along with every settings save and push the body past the request cap.
     """
-    parts.append("<hr><h4>{}</h4>".format(_escape(_t(i18n, "portal.backup_title", "Backup"))))
-    parts.append("<form method='get' action='/backup'><p><button type='submit'>{}</button></p></form>".format(_escape(_t(i18n, "portal.backup_download", "DOWNLOAD BACKUP"))))
-    parts.append("<form method='post' action='/restore'><p>{}<br><textarea name='backup' rows='6' cols='40'></textarea></p><p><button type='submit'>{}</button></p></form>".format(
-        _escape(_t(i18n, "portal.backup_paste", "Paste a backup file here")),
-        _escape(_t(i18n, "portal.backup_restore", "RESTORE AND REBOOT")),
+    parts.append("<fieldset><legend>{}</legend>".format(
+        _escape(_t(i18n, "portal.backup_title", "Configuration backup and restore"))))
+    parts.append("<form method='get' action='/backup'><p><button type='submit'>{}</button></p></form>".format(
+        _escape(_t(i18n, "portal.backup_download", "Back up"))))
+    parts.append("<form method='post' action='/restore' enctype='multipart/form-data'><p>{}<br><input type='file' name='backup' accept='.txt'></p><p><button type='submit'>{}</button></p></form></fieldset>".format(
+        _escape(_t(i18n, "portal.backup_file", "Backup file")),
+        _escape(_t(i18n, "portal.backup_restore", "Restore")),
     ))
 
 

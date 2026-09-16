@@ -225,9 +225,16 @@ A full firmware flash wipes `config.py`, the Wi-Fi credentials in NVS,
 `kegs.json` and `scale_calibration.json`. The portal's **Backup** section saves
 all four into a single `uhs-backup.txt` and puts them back afterwards:
 
-- **DOWNLOAD BACKUP** (`GET /backup`) serves the file as a download.
-- **RESTORE AND REBOOT** (`POST /restore`) takes the file contents pasted into
-  the text box, applies them and reboots.
+- **Back up** (`GET /backup`) serves the file as a download.
+- **Restore** (`POST /restore`) takes the file picked in the upload field,
+  applies it and reboots.
+
+The upload arrives as `multipart/form-data`, which `webportal/multipart.py`
+reads; the boundary comes from the request `Content-Type`, kept by
+`setup_portal_service` for that single purpose. A file larger than
+`MAX_REQUEST_BODY_BYTES` is dropped by the request parser before the route
+runs, so the browser shows a connection error rather than a message — the
+upload field is restricted to `.txt` to make that unlikely.
 
 The file is plain text, one `KEY=value` per line, prefixed by a `UHS-BACKUP 1`
 version header; a file from another version is refused rather than applied
