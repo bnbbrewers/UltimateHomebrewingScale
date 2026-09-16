@@ -239,6 +239,7 @@ class SetupPortalService:
         self._request_data = b""
         self._request_header_end = -1
         self._request_content_length = 0
+        self._request_content_type = ""
         self._request_method = ""
         self._request_target = ""
         self._request_body = ""
@@ -445,6 +446,9 @@ class SetupPortalService:
             if ":" in line:
                 key, value = line.split(":", 1)
                 headers[key.strip().lower()] = value.strip()
+        # Kept for /restore: a multipart upload carries its boundary here and
+        # nowhere else.
+        self._request_content_type = headers.get("content-type", "")
         try:
             self._request_content_length = int(headers.get("content-length", "0") or "0")
         except Exception:
