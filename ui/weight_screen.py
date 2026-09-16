@@ -7,6 +7,7 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import ACTION_BUTTON_Y, UIHelper
+from .units import LIQUID_DENSITY
 
 try:
     import config
@@ -45,7 +46,7 @@ class WeightScreen:
         self._target = 0
         self._progress_target = 0
         self._empty_weight_g = 0
-        self._density = 1.005
+        self._density = LIQUID_DENSITY
         self._tolerance = 0
         self._ok_visible = None
         self._last_raw_weight = None
