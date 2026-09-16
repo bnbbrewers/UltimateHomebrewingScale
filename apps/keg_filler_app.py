@@ -15,11 +15,18 @@ from storage.keg_registry import (
     save_kegs,
 )
 from ui import screen_ids
+from ui.units import volume_l_to_weight_g
 
 try:
     import config
 except Exception:
     config = None
+
+if getattr(config, "DEBUG", False):
+    from memory_debug import snapshot as mem_snapshot
+else:
+    def mem_snapshot(*args, **kwargs):
+        return None
 
 
 DEFAULT_VOLUME_L = 18.0
@@ -29,6 +36,13 @@ VOLUME_STEP_L = 0.5
 VOLUME_STEP = VOLUME_STEP_L
 CALIBRATION_DURATION_MS = 10000
 SAMPLE_INTERVAL_MS = 200
+
+# The filling loop is the only loop in the project that drives an actuator.
+# read_weight_filtered() returns its cached value when the ADC read fails, so a
+# dead load cell would otherwise hold the valve open forever. No absolute
+# timeout: a legitimately slow fill must never be cut short.
+FILL_STALL_TOLERANCE_G = 5
+FILL_STALL_TIMEOUT_MS = 30000
 
 _STATE_EMPTY_PLATFORM_ACK = 1
 _STATE_KEG_SELECT = 2
@@ -55,6 +69,8 @@ __all__ = (
     "VOLUME_STEP_L",
     "CALIBRATION_DURATION_MS",
     "SAMPLE_INTERVAL_MS",
+    "FILL_STALL_TOLERANCE_G",
+    "FILL_STALL_TIMEOUT_MS",
     "_STATE_EMPTY_PLATFORM_ACK",
     "_STATE_KEG_SELECT",
     "_STATE_CALIBRATION_1_ACK",
@@ -103,19 +119,7 @@ class KegFillerApp(BaseApp):
         self._relay = None
         self._state = _STATE_EMPTY_PLATFORM_ACK
         self._kegs = []
-        self._items = []
-        self._selected_idx = 0
-        self._pending_name = None
-        self._empty_weight_g = None
-        self._selected_volume_l = DEFAULT_VOLUME_L
-        self._selected_keg = None
-        self._filling_stop_weight_g = 0
-        self._filling_done_items = []
-        self._filling_done_selected_idx = 0
-        self._samples = []
-        self._calibration_started_at = 0
-        self._next_sample_at = 0
-        self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
+        self._reset_state()
 
     def _simple(self):
         if self._simple_screen is None:
@@ -137,37 +141,8 @@ class KegFillerApp(BaseApp):
             self._weight_screen = self.screen_manager.get(screen_ids.WEIGHT)
         return self._weight_screen
 
-    def on_exit(self):
-        super().on_exit()
-        self._close_relay()
-        self._kegs = []
-        self._items = []
-        self._samples = []
-        self._pending_name = None
-        self._empty_weight_g = None
-        self._scale = None
-        self._rotary = None
-        self._relay = None
-        self._selected_keg = None
-        self._filling_stop_weight_g = 0
-        self._filling_done_items = []
-        self._filling_done_selected_idx = 0
-        if self._select_screen:
-            self._select_screen.set_items([])
-        self._simple_screen = None
-        self._select_screen = None
-        self._volume_screen = None
-        self._weight_screen = None
-        gc.collect()
-
-    def on_enter(self):
-        super().on_enter()
-        self._scale = self.hardware.scale
-        self._rotary = self.hardware.rotary
-        self._relay = getattr(self.hardware, "relay", None)
-        self._close_relay()
-        self._kegs = load_kegs(self._keg_file)
-        gc.collect()
+    def _reset_state(self):
+        """Reset every per-session field. Leaves self._kegs to the caller."""
         self._items = []
         self._selected_idx = 0
         self._pending_name = None
@@ -177,8 +152,44 @@ class KegFillerApp(BaseApp):
         self._filling_stop_weight_g = 0
         self._filling_done_items = []
         self._filling_done_selected_idx = 0
+        self._resume_without_setup = False
         self._samples = []
+        self._calibration_started_at = 0
+        self._next_sample_at = 0
+        self._fill_reference_weight_g = None
+        self._fill_reference_at = 0
+        self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
+
+    def on_exit(self):
+        super().on_exit()
+        self._close_relay()
+        self._reset_state()
+        self._kegs = []
+        self._scale = None
+        self._rotary = None
+        self._relay = None
+        if self._select_screen:
+            self._select_screen.set_items([])
+        self._simple_screen = None
+        self._select_screen = None
+        self._volume_screen = None
+        self._weight_screen = None
+        gc.collect()
+        mem_snapshot("keg.on_exit", enabled=True, collect=False)
+
+    def on_enter(self):
+        super().on_enter()
+        self._scale = self.hardware.scale
+        self._rotary = self.hardware.rotary
+        # The relay driver is imported on first read of hardware.relay. Defer
+        # it to _start_filling: boot_safety.force_relay_off() already drove the
+        # pad low at boot, and RelayDevice.__init__ closes the relay itself.
+        self._relay = None
+        self._reset_state()
+        self._kegs = load_kegs(self._keg_file)
+        gc.collect()
         self._show_empty_platform()
+        mem_snapshot("keg.on_enter", enabled=True, collect=False)
 
     def tick(self):
         if self._check_return_to_launcher():
@@ -277,6 +288,12 @@ class KegFillerApp(BaseApp):
         self._state = _STATE_FILLING_SETUP_ACK
 
     def _show_calibration_done(self):
+        # Calibration is the only user of KEG_VOLUME. Drop our reference first,
+        # then let the manager delete the tree: the filling phase that follows
+        # allocates WEIGHT and its 40pt binfont.
+        self._volume_screen = None
+        self._release_volume_screen()
+        mem_snapshot("keg.volume_screen_released", enabled=True, collect=False)
         self._simple().configure(
             title=self.t("keg.calibrated_title"),
             message=self.t("keg.calibrated_message", self._pending_name),
@@ -285,6 +302,15 @@ class KegFillerApp(BaseApp):
         )
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
         self._state = _STATE_CALIBRATION_DONE_ACK
+
+    def _release_volume_screen(self):
+        release = getattr(self.screen_manager, "release", None)
+        if not release:
+            return
+        try:
+            release(screen_ids.KEG_VOLUME)
+        except Exception:
+            pass
 
     def _show_error(self, message_key, return_state):
         self._error_return_state = return_state
@@ -392,7 +418,7 @@ class KegFillerApp(BaseApp):
             self._show_select()
             return
         empty_weight_g = float(self._selected_keg["empty_weight_g"])
-        target_weight_g = float(self._selected_keg["max_volume_l"]) * 1000.0
+        target_weight_g = volume_l_to_weight_g(self._selected_keg["max_volume_l"])
         inertia_g = _spunding_valve_inertia_ml()
         self._filling_stop_weight_g = empty_weight_g + target_weight_g - inertia_g
         if self._filling_stop_weight_g < empty_weight_g:
@@ -407,7 +433,10 @@ class KegFillerApp(BaseApp):
             title_bg_color=_COLOR_KEG,
         )
         self.screen_manager.show(screen_ids.WEIGHT)
+        self._fill_reference_weight_g = None
+        self._fill_reference_at = _ticks_ms()
         self._open_relay()
+        mem_snapshot("keg.filling_started", enabled=True, collect=False)
         self._state = _STATE_FILLING
 
     def _tick_filling(self):
@@ -418,19 +447,33 @@ class KegFillerApp(BaseApp):
             self._close_relay()
             self._weight().set_ok_visible(True)
             self._state = _STATE_FILLING_DONE_ACK
+            return
+        self._check_fill_stalled(weight)
 
-    def _show_filling_done_select(self):
+    def _check_fill_stalled(self, weight):
+        reference = self._fill_reference_weight_g
+        if reference is None or abs(weight - reference) > FILL_STALL_TOLERANCE_G:
+            self._fill_reference_weight_g = weight
+            self._fill_reference_at = _ticks_ms()
+            return
+        if _ticks_diff(_ticks_ms(), self._fill_reference_at) < FILL_STALL_TIMEOUT_MS:
+            return
+        self._close_relay()
+        self._show_filling_stalled_select()
+
+    def _show_post_fill_select(self, title, first_item_key, resume_without_setup):
         keg_name = ""
         if self._selected_keg:
             keg_name = self._selected_keg.get("name", "")
         self._filling_done_items = [
-            self.t("keg.fill_same", keg_name),
+            self.t(first_item_key, keg_name),
             self.t("keg.fill_other"),
             self.t("keg.return_menu"),
         ]
         self._filling_done_selected_idx = 0
+        self._resume_without_setup = resume_without_setup
         self._select().configure(
-            title=self.t("keg.filling_done_title"),
+            title=title,
             items=self._filling_done_items,
             accent_color=_COLOR_KEG,
             selected_index=0,
@@ -439,6 +482,25 @@ class KegFillerApp(BaseApp):
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_FILLING_DONE_SELECT
+
+    def _show_filling_done_select(self):
+        # The keg is full and about to be swapped, so the next fill starts from
+        # the setup prompt like any other.
+        self._show_post_fill_select(
+            self.t("keg.filling_done_title"),
+            "keg.fill_same",
+            resume_without_setup=False,
+        )
+
+    def _show_filling_stalled_select(self):
+        # Recovery, not a new fill: the keg is still on the platform, still
+        # holding the tare this fill was measured against. Resuming must not
+        # prompt the operator to place the keg, and must not re-tare.
+        self._show_post_fill_select(
+            self.t("keg.filling_stalled_title"),
+            "keg.fill_resume",
+            resume_without_setup=True,
+        )
 
     def _tick_filling_done_ack(self):
         if self.hardware.button.was_short_pressed():
@@ -457,7 +519,10 @@ class KegFillerApp(BaseApp):
         if not self.hardware.button.was_short_pressed():
             return None
         if idx == 0:
-            self._show_filling_setup()
+            if self._resume_without_setup:
+                self._start_filling()
+            else:
+                self._show_filling_setup()
             return None
         if idx == 1:
             self._show_select()
@@ -496,19 +561,29 @@ class KegFillerApp(BaseApp):
         self._selected_volume_l = volume_l
         self._volume().set_volume(self._selected_volume_l)
 
+    def _acquire_relay(self):
+        if self._relay is None:
+            self._relay = getattr(self.hardware, "relay", None)
+        return self._relay
+
     def _open_relay(self):
-        if self._relay and hasattr(self._relay, "set_on"):
-            self._relay.set_on()
+        relay = self._acquire_relay()
+        if relay and hasattr(relay, "set_on"):
+            relay.set_on()
 
     def _close_relay(self):
-        if self._relay and hasattr(self._relay, "set_off"):
-            self._relay.set_off()
+        # Never acquire here. on_exit runs on every app switch, and closing a
+        # relay that was never opened would import the driver for nothing.
+        relay = self._relay
+        if relay and hasattr(relay, "set_off"):
+            relay.set_off()
 
     def _relay_available(self):
-        if not self._relay:
+        relay = self._acquire_relay()
+        if not relay:
             return False
-        if hasattr(self._relay, "is_available"):
-            return self._relay.is_available()
+        if hasattr(relay, "is_available"):
+            return relay.is_available()
         return True
 
 

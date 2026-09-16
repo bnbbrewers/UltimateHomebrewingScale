@@ -26,7 +26,6 @@ class ScaleApp(BaseApp):
     def on_enter(self):
         super().on_enter()
         self._screen = None
-        self.screen_manager.show(screen_ids.WEIGHT)
         screen = self._weight()
         screen.configure(
             title=self.t("scale.title"),
@@ -35,6 +34,7 @@ class ScaleApp(BaseApp):
             title_bg_color=0x1E40AF,
             tolerance=0,
         )
+        self.screen_manager.show(screen_ids.WEIGHT)
         if self._scale:
             screen.set_status(self.t("scale.taring"))
             if self._scale.tare():

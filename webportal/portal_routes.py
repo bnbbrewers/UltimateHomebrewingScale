@@ -67,16 +67,20 @@ def handle_request(service, client, method, target, body):
         return
 
     if method == "POST" and path == "/restore":
-        form = portal.parse_form_urlencoded(body)
-        if not service._token_ok(query, form):
+        if not service._token_ok(query, {}):
             send(client, 403, body="Forbidden")
             return
-        text = form.get("backup", "")
+        # Lazily: the file picker makes the browser send multipart, which the
+        # urlencoded parser cannot read.
+        from webportal import multipart
+
+        text = multipart.field_value(
+            body, multipart.boundary_of(service._request_content_type), "backup")
         translate = portal._portal_content()._t
-        if not text.strip():
+        if not text or not text.strip():
             send(client, 400, "text/html; charset=utf-8",
                  translate(service._i18n, "portal.backup_restore_failed",
-                           "Restore failed: {0}").format("empty backup"))
+                           "Restore failed: {0}").format("no backup file"))
             return
         try:
             from storage import config_backup
