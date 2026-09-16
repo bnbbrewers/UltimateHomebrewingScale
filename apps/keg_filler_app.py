@@ -152,6 +152,7 @@ class KegFillerApp(BaseApp):
         self._filling_stop_weight_g = 0
         self._filling_done_items = []
         self._filling_done_selected_idx = 0
+        self._resume_without_setup = False
         self._samples = []
         self._calibration_started_at = 0
         self._next_sample_at = 0
@@ -458,20 +459,21 @@ class KegFillerApp(BaseApp):
         if _ticks_diff(_ticks_ms(), self._fill_reference_at) < FILL_STALL_TIMEOUT_MS:
             return
         self._close_relay()
-        self._show_error("keg.filling_stalled", _STATE_KEG_SELECT)
+        self._show_filling_stalled_select()
 
-    def _show_filling_done_select(self):
+    def _show_post_fill_select(self, title, first_item_key, resume_without_setup):
         keg_name = ""
         if self._selected_keg:
             keg_name = self._selected_keg.get("name", "")
         self._filling_done_items = [
-            self.t("keg.fill_same", keg_name),
+            self.t(first_item_key, keg_name),
             self.t("keg.fill_other"),
             self.t("keg.return_menu"),
         ]
         self._filling_done_selected_idx = 0
+        self._resume_without_setup = resume_without_setup
         self._select().configure(
-            title=self.t("keg.filling_done_title"),
+            title=title,
             items=self._filling_done_items,
             accent_color=_COLOR_KEG,
             selected_index=0,
@@ -480,6 +482,25 @@ class KegFillerApp(BaseApp):
         if self._rotary:
             self._rotary.reset()
         self._state = _STATE_FILLING_DONE_SELECT
+
+    def _show_filling_done_select(self):
+        # The keg is full and about to be swapped, so the next fill starts from
+        # the setup prompt like any other.
+        self._show_post_fill_select(
+            self.t("keg.filling_done_title"),
+            "keg.fill_same",
+            resume_without_setup=False,
+        )
+
+    def _show_filling_stalled_select(self):
+        # Recovery, not a new fill: the keg is still on the platform, still
+        # holding the tare this fill was measured against. Resuming must not
+        # prompt the operator to place the keg, and must not re-tare.
+        self._show_post_fill_select(
+            self.t("keg.filling_stalled_title"),
+            "keg.fill_resume",
+            resume_without_setup=True,
+        )
 
     def _tick_filling_done_ack(self):
         if self.hardware.button.was_short_pressed():
@@ -498,7 +519,10 @@ class KegFillerApp(BaseApp):
         if not self.hardware.button.was_short_pressed():
             return None
         if idx == 0:
-            self._show_filling_setup()
+            if self._resume_without_setup:
+                self._start_filling()
+            else:
+                self._show_filling_setup()
             return None
         if idx == 1:
             self._show_select()
