@@ -15,6 +15,7 @@ from storage.keg_registry import (
     save_kegs,
 )
 from ui import screen_ids
+from ui.units import volume_l_to_weight_g
 
 try:
     import config
@@ -394,7 +395,7 @@ class KegFillerApp(BaseApp):
             self._show_select()
             return
         empty_weight_g = float(self._selected_keg["empty_weight_g"])
-        target_weight_g = float(self._selected_keg["max_volume_l"]) * 1000.0
+        target_weight_g = volume_l_to_weight_g(self._selected_keg["max_volume_l"])
         inertia_g = _spunding_valve_inertia_ml()
         self._filling_stop_weight_g = empty_weight_g + target_weight_g - inertia_g
         if self._filling_stop_weight_g < empty_weight_g:
