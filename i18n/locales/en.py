@@ -88,6 +88,7 @@ TRANSLATIONS = {
         'filling_setup_message': '1) Put the keg on the scale\n2) Connect the spunding valve\n3) Connect the beer line',
         'filling_done_title': 'Filling complete',
         'fill_same': 'Another {0}',
+        'fill_resume': 'Resume {0}',
         'fill_other': 'Another Keg',
         'return_menu': 'Launcher',
         'error_title': 'Keg Error',
@@ -95,7 +96,7 @@ TRANSLATIONS = {
         'relay_not_found': 'Relay not found',
         'tare_error': 'Tare error',
         'calibration_no_sample': 'No valid sample',
-        'filling_stalled': 'Filling stopped:\nno flow detected',
+        'filling_stalled_title': 'No flow',
         'save_error': 'Keg save error',
     },
 

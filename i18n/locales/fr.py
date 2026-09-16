@@ -88,6 +88,7 @@ TRANSLATIONS = {
         'filling_setup_message': '1) Poser le keg sur la balance\n2) Brancher la spunding\n3) Brancher la biere',
         'filling_done_title': 'Remplissage termine',
         'fill_same': 'Un autre {0}',
+        'fill_resume': 'Reprendre {0}',
         'fill_other': 'Un autre Keg',
         'return_menu': 'Launcher',
         'error_title': 'Erreur Keg',
@@ -95,7 +96,7 @@ TRANSLATIONS = {
         'relay_not_found': 'Relais introuvable',
         'tare_error': 'Erreur de tarage',
         'calibration_no_sample': 'Aucun echantillon valide',
-        'filling_stalled': 'Remplissage arrete :\naucun debit detecte',
+        'filling_stalled_title': 'Aucun debit',
         'save_error': 'Erreur sauvegarde keg',
     },
 
