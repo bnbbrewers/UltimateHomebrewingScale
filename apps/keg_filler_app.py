@@ -291,6 +291,11 @@ class KegFillerApp(BaseApp):
         self._state = _STATE_FILLING_SETUP_ACK
 
     def _show_calibration_done(self):
+        # Calibration is the only user of KEG_VOLUME. Drop our reference first,
+        # then let the manager delete the tree: the filling phase that follows
+        # allocates WEIGHT and its 40pt binfont.
+        self._volume_screen = None
+        self._release_volume_screen()
         self._simple().configure(
             title=self.t("keg.calibrated_title"),
             message=self.t("keg.calibrated_message", self._pending_name),
@@ -299,6 +304,15 @@ class KegFillerApp(BaseApp):
         )
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
         self._state = _STATE_CALIBRATION_DONE_ACK
+
+    def _release_volume_screen(self):
+        release = getattr(self.screen_manager, "release", None)
+        if not release:
+            return
+        try:
+            release(screen_ids.KEG_VOLUME)
+        except Exception:
+            pass
 
     def _show_error(self, message_key, return_state):
         self._error_return_state = return_state
