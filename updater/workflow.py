@@ -8,6 +8,18 @@ VERSION_FILE = "uhs-version.txt"
 ARCHIVE_TMP = "uhs-update.tar.tmp"
 ARCHIVE_PATH = "uhs-update.tar"
 
+# Files the runtime writes on the device. They are never in the release
+# archive, so an update must neither overwrite nor delete them. Duplicated from
+# storage/keg_registry.py and storage/config_registry.py on purpose: importing
+# storage/* here would break the updater's lazy-import discipline.
+# tests/test_updater_state_files.py fails if the copies drift.
+PRESERVED_STATE_FILES = (
+    "config.py",
+    "config.py.example",
+    "scale_calibration.json",
+    "kegs.json",
+)
+
 
 def _t(i18n, key, fallback):
     if i18n:
@@ -81,9 +93,10 @@ def _safe_path(path):
     for segment in text.split("/"):
         if segment in (".", ".."):
             raise RuntimeError("unsafe path: %s" % text)
-    if text in ("config.py", "config.py.example") or (
-        text.startswith("storage/") and text.endswith(".json")
-    ):
+    basename = text.rsplit("/", 1)[-1]
+    if text in PRESERVED_STATE_FILES or basename in PRESERVED_STATE_FILES:
+        raise RuntimeError("unsafe path: %s" % text)
+    if text.startswith("storage/") and text.endswith(".json"):
         raise RuntimeError("unsafe path: %s" % text)
     return text
 
