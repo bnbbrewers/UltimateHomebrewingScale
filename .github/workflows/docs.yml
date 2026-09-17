@@ -1,0 +1,28 @@
+name: Publish the documentation
+
+# A firmware-only commit does not republish an identical site, so the filter
+# lists what actually feeds the published pages.
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - .github/workflows/docs.yml
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish the site
+    # No firmware tag: the web installer files come from the newest stable
+    # release, which is the last one promoted.
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
