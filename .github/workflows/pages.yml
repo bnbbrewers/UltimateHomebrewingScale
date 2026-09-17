@@ -1,0 +1,98 @@
+name: Publish the site
+
+# The only place that knows how to build the published site. Both callers
+# produce the same thing: documentation from the tip of main, web installer
+# files from a published release. That is what makes the order between a docs
+# deployment and a promotion deployment irrelevant.
+on:
+  workflow_call:
+    inputs:
+      firmware_tag:
+        description: Release to take the web installer files from. Defaults to the newest stable release.
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy the site
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout the documentation from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Prepare the site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist/pages
+          mkdir -p dist/pages
+          cp -R docs/. dist/pages/
+
+      # A Pages deployment replaces the whole site, so the web installer files
+      # have to be put back on every deployment. They come from a published
+      # release rather than from the live site: reading the site back would only
+      # work while the files are already online, so one bad deployment could
+      # never be undone.
+      - name: Restore the web installer files
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FIRMWARE_TAG: ${{ inputs.firmware_tag }}
+        run: |
+          set -euo pipefail
+          latest_dir="dist/pages/SoftwareInstallationGuide/latest"
+          mkdir -p "$latest_dir"
+
+          tag="$FIRMWARE_TAG"
+          if [ -z "$tag" ]; then
+            tag="$(gh release list \
+              --exclude-drafts --exclude-pre-releases \
+              --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          fi
+          if [ -z "$tag" ]; then
+            echo "::error::No stable release to take the web installer files from." >&2
+            exit 1
+          fi
+          echo "Restoring the web installer files from $tag"
+
+          files="UHS-firmwareM5Dial.bin UHS-web-install-manifest.json UHS-firmwareM5Dial.sha256 UHS-build-manifest.json"
+          for file in $files; do
+            gh release download "$tag" --dir "$latest_dir" --clobber --pattern "$file"
+          done
+
+          # Publishing a truncated firmware would brick the flash button, so
+          # stop before deploying rather than shipping a partial set.
+          for file in $files; do
+            if [ ! -s "$latest_dir/$file" ]; then
+              echo "::error::$tag does not carry $file." >&2
+              exit 1
+            fi
+          done
+          ls -l "$latest_dir"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+      - name: Deploy the site
+        id: deployment
+        uses: actions/deploy-pages@v4
