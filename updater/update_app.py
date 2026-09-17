@@ -87,9 +87,9 @@ class UpdaterApp(BaseApp):
                 i18n=self.i18n,
             )
             # Keep the request set when the update fails so a later reboot can
-            # retry. This legacy UI path mirrors updater.boot behaviour.
-            if not (isinstance(result, dict) and result.get("more_updates")):
-                self._clear_update_request()
+            # retry. A successful pass always lands on the newest version, so
+            # there is never a second step to keep it for.
+            self._clear_update_request()
             self._waiting_restart = True
             self._screen.configure(
                 title=self._text("updater.title", "Updater"),
