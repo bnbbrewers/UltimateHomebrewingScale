@@ -254,20 +254,6 @@ jobs:
           )
           PY
 
-      - name: Upload repacked firmware artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UHS-firmware-${{ env.TAG_NAME }}
-          if-no-files-found: error
-          retention-days: 30
-          path: |
-            dist/out/UHS-firmwareM5Dial.bin
-            dist/out/UHS-firmwareM5Dial.sha256
-            dist/out/UHS-build-manifest.json
-            dist/out/UHS-web-install-manifest.json
-            dist/out/uhs-update-manifest.json
-            dist/out/UHS-app-files-${{ env.TAG_NAME }}.tar
-
       - name: Publish the pre-release
         uses: softprops/action-gh-release@v2
         with:
