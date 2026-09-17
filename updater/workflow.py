@@ -319,16 +319,69 @@ def _file_sha256(path):
         return str(encoded).lower()
 
 
-def _apply_deletes(paths, dest_root):
-    if not isinstance(paths, list):
-        raise RuntimeError("Invalid manifest delete")
-    for path in paths:
-        path = _safe_path(path)
-        target = _join(dest_root, path) if dest_root else path
+# Files the updater itself writes while an update runs. They sit in the runtime
+# root but belong to no release, so pruning has to walk past them. The two tmp
+# names come from updater/github_release.py; they are literals here because
+# importing that module would pull the whole GitHub API layer into this one.
+_WORKING_FILES = (
+    ARCHIVE_TMP,
+    ARCHIVE_PATH,
+    "updater_github.tmp",
+    "updater_manifest.tmp",
+)
+
+
+def _is_dir(path):
+    # stat.S_ISDIR does not exist on MicroPython; the directory bit does.
+    try:
+        mode = os.stat(path)[0]
+    except Exception:
+        return False
+    return bool(mode & 0x4000)
+
+
+def _walk_runtime(dest_root, prefix=""):
+    """Yield runtime-relative file paths. os.walk is absent on MicroPython."""
+    base = _join(dest_root, prefix) if prefix else (dest_root or ".")
+    try:
+        entries = os.listdir(base)
+    except Exception:
+        return
+    for name in entries:
+        relative = prefix + "/" + name if prefix else name
+        full = _join(dest_root, relative) if dest_root else relative
+        if _is_dir(full):
+            for nested in _walk_runtime(dest_root, relative):
+                yield nested
+        else:
+            yield relative
+
+
+def _prune_stale(files, dest_root):
+    """Delete runtime files the new archive does not ship.
+
+    Replaces both the old manifest delete list and the .py to .mpy migration:
+    a stale module is simply a file absent from the archive listing.
+    """
+    keep = set()
+    for path in files:
+        keep.add(str(path).replace("\\", "/").strip("/"))
+
+    deleted = 0
+    for relative in _walk_runtime(dest_root):
+        if relative in keep or relative in _WORKING_FILES:
+            continue
         try:
-            os.remove(target)
-        except OSError:
+            _safe_path(relative)
+        except RuntimeError:
+            # Device state, and anything else the guard refuses to touch.
+            continue
+        try:
+            os.remove(_join(dest_root, relative) if dest_root else relative)
+            deleted += 1
+        except Exception:
             pass
+    return deleted
 
 
 def update(
@@ -442,7 +495,7 @@ def update(
 
     _emit(progress_callback, "extract", _t(i18n, "updater.installing", "Installing"), archive["version"], 0, 0, 0)
     ok = tar_extract.extract(tar_path, dest_root=dest_root, progress_callback=progress_callback, i18n=i18n)
-    _apply_deletes(archive["delete"], dest_root)
+    _prune_stale(archive["files"], dest_root)
     _write_local_version(dest_root, archive["version"])
     _remove_file(tar_path)
     result = {
