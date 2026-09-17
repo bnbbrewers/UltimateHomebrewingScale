@@ -164,10 +164,26 @@ def _validate_sha(digest):
     return text
 
 
+def _normalized_archive_path(path):
+    """Normalise a path listed in the manifest.
+
+    Unlike _safe_path this accepts the preserved names: config.py.example is
+    legitimately shipped in the archive. Refusing to write over device state is
+    the extractor's job, and refusing to delete it is pruning's.
+    """
+    text = str(path or "").replace("\\", "/").strip()
+    if not text or text.startswith("/") or text.startswith("../") or "/../" in text:
+        raise RuntimeError("unsafe path: %s" % text)
+    for segment in text.split("/"):
+        if segment in (".", ".."):
+            raise RuntimeError("unsafe path: %s" % text)
+    return text
+
+
 def _manifest_archive(manifest):
     if not isinstance(manifest, dict):
         raise RuntimeError("Invalid manifest")
-    if manifest.get("strategy") != "tar-diff":
+    if manifest.get("strategy") != "tar-full":
         raise RuntimeError("Unsupported update manifest strategy")
     archive = manifest.get("archive")
     if not isinstance(archive, dict):
@@ -175,15 +191,16 @@ def _manifest_archive(manifest):
     runtime_format = manifest.get("runtime_format")
     if runtime_format is not None and str(runtime_format).strip().lower() != "mpy":
         raise RuntimeError("Unsupported runtime format")
+    files = manifest.get("files")
+    if not isinstance(files, (list, tuple)) or not files:
+        raise RuntimeError("Missing update file list")
     return {
         "version": str(manifest.get("version", "") or ""),
-        "base_version": str(manifest.get("base_version", "") or ""),
         "runtime_format": str(runtime_format or ""),
-        "first_mpy_migration": bool(manifest.get("first_mpy_migration", False)),
         "url": _validate_url(archive.get("url", "")),
         "size": _validate_size(archive.get("size", None)),
         "sha256": _validate_sha(archive.get("sha256", "")),
-        "delete": manifest.get("delete", []),
+        "files": tuple(_normalized_archive_path(path) for path in files),
     }
 
 
