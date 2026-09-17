@@ -19,7 +19,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ inputs.tag_name || github.ref }}
+  # Only the github context here. Workflow-level concurrency is evaluated
+  # before the run is created, and the inputs context does not exist for a
+  # push event: referencing it makes GitHub create no run at all, not even a
+  # failed one. github.event.inputs is part of the always-available github
+  # context and is null outside a dispatch.
+  group: release-${{ github.event.inputs.tag_name || github.ref }}
   cancel-in-progress: false
 
 jobs:
