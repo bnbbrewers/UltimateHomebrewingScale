@@ -436,8 +436,6 @@ def update(
             "failed": 0,
             "total": 0,
             "version": local,
-            "latest_version": local,
-            "more_updates": False,
             "up_to_date": True,
         }
         _emit(
@@ -503,8 +501,6 @@ def update(
         "failed": 0,
         "total": ok,
         "version": archive["version"],
-        "latest_version": step.get("latest_version", archive["version"]),
-        "more_updates": bool(step.get("more_updates", False)),
         "up_to_date": False,
     }
     del archive

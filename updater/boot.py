@@ -261,9 +261,9 @@ def run_update_boot(
             wifi_device=wifi,
             ensure_wifi=True,
         )
-        more_updates = isinstance(result, dict) and result.get("more_updates", False)
-        if not more_updates:
-            set_update_requested(False, nvs=nvs)
+        # A release ships the complete runtime, so one pass always lands on the
+        # newest version: there is never a second step to keep the flag for.
+        set_update_requested(False, nvs=nvs)
         reset_fn()
         return True
     except Exception as error:
