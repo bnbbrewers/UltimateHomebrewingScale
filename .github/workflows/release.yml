@@ -1,42 +1,38 @@
-name: Repack M5Dial firmware
+name: Build a release from a tag
 
+# A tag always produces a pre-release. Promoting it to a release is a separate,
+# manual act, and that promotion is what publishes it to the site.
+#
+# One trigger only: creating a release from the GitHub UI also creates the tag
+# and emits this same push event, so both gestures converge on a single run.
+# Two triggers is what raced on v0.0.21 and dropped an asset.
 on:
-  # Publishing a release also creates the tag, so a tag-push trigger here
-  # started a second, identical run that raced this one while uploading the
-  # release assets. Publish from the release event only.
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Tag to repack
+        description: Tag to build
         required: true
-      prerelease:
-        description: Build as prerelease channel
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+
+concurrency:
+  group: release-${{ inputs.tag_name || github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  repack:
-    name: Repack firmware from main tag
+  build:
+    name: Build the firmware from a tag on main
     runs-on: ubuntu-latest
-    outputs:
-      tag_name: ${{ steps.release_names.outputs.tag_name }}
-      release_channel: ${{ steps.release_names.outputs.release_channel }}
-      publish_stable_latest: ${{ steps.release_names.outputs.publish_stable_latest }}
 
     steps:
       - name: Checkout tagged commit
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
+          ref: ${{ inputs.tag_name || github.ref }}
 
       - name: Verify tag commit belongs to main
         shell: bash
@@ -69,34 +65,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG_NAME="${{ github.event.release.tag_name }}"
-            IS_PRERELEASE="${{ github.event.release.prerelease }}"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG_NAME="${{ inputs.tag_name }}"
-            IS_PRERELEASE="${{ inputs.prerelease }}"
           else
             TAG_NAME="${GITHUB_REF_NAME}"
-            IS_PRERELEASE="false"
-            if [[ "$TAG_NAME" == pre-v* || "$TAG_NAME" == *-alpha* || "$TAG_NAME" == *-beta* || "$TAG_NAME" == *-rc* ]]; then
-              IS_PRERELEASE="true"
-            fi
-          fi
-          if [ "$IS_PRERELEASE" = "true" ]; then
-            echo "RELEASE_CHANNEL=prerelease" >> "$GITHUB_ENV"
-            echo "PUBLISH_STABLE_LATEST=false" >> "$GITHUB_ENV"
-            RELEASE_CHANNEL="prerelease"
-            PUBLISH_STABLE_LATEST="false"
-          else
-            echo "RELEASE_CHANNEL=stable" >> "$GITHUB_ENV"
-            echo "PUBLISH_STABLE_LATEST=true" >> "$GITHUB_ENV"
-            RELEASE_CHANNEL="stable"
-            PUBLISH_STABLE_LATEST="true"
           fi
           echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
-          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
-          echo "release_channel=${RELEASE_CHANNEL}" >> "$GITHUB_OUTPUT"
-          echo "publish_stable_latest=${PUBLISH_STABLE_LATEST}" >> "$GITHUB_OUTPUT"
           echo "HEAD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
@@ -147,16 +121,15 @@ jobs:
           fi
           python3 - <<'PY'
           import os
+          import tarfile
           from pathlib import Path
-          from zipfile import ZIP_DEFLATED, ZipFile
 
           src = Path("dist/fs-user")
-          out = Path("dist/out") / f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
-          with ZipFile(out, "w", ZIP_DEFLATED) as archive:
+          out = Path("dist/out") / ("UHS-app-files-%s.tar" % os.environ["TAG_NAME"])
+          with tarfile.open(out, "w") as archive:
               for path in sorted(p for p in src.rglob("*") if p.is_file()):
-                  archive.write(path, path.relative_to(src).as_posix())
-          print(f"Runtime files: {sum(1 for p in src.rglob('*') if p.is_file())}")
-          print(f"Runtime archive: {out}")
+                  archive.add(path, arcname=path.relative_to(src).as_posix())
+          print("Runtime archive: %s (%d bytes)" % (out, out.stat().st_size))
           PY
 
       - name: Repack firmware
@@ -205,104 +178,79 @@ jobs:
           import json
           import os
           import sys
-          import subprocess
-          import tarfile
           from pathlib import Path
 
           sys.path.insert(0, os.environ["GITHUB_WORKSPACE"])
-          from tools.build_runtime import plan_git_diff
+          from tools.build_runtime import staged_files
 
+          tag = os.environ["TAG_NAME"]
           firmware = Path("UHS-firmwareM5Dial.bin")
           sha256 = Path("UHS-firmwareM5Dial.sha256").read_text(encoding="utf-8").split()[0]
-          included_count = sum(1 for _ in Path("../fs-user").rglob("*") if _.is_file())
-          code_archive = f"UHS-app-files-{os.environ['TAG_NAME']}.zip"
-          update_archive = f"uhs-update-diff-{os.environ['TAG_NAME']}.tar"
-          web_download_base = "https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest"
-
-          try:
-              base_version = subprocess.check_output(
-                  ["git", "describe", "--tags", "--match", "v*", "--abbrev=0", f"{os.environ['TAG_NAME']}^"],
-                  text=True,
-              ).strip()
-          except subprocess.CalledProcessError as exc:
-              raise SystemExit("No previous tag found; publish full firmware instead of app update") from exc
-
-          diff_plan = plan_git_diff(
-              source_root=Path(os.environ["GITHUB_WORKSPACE"]),
-              base_ref=base_version,
-              head_ref=os.environ["TAG_NAME"],
-              staging_root=Path("../fs-user"),
+          archive_name = "UHS-app-files-%s.tar" % tag
+          archive_path = Path(archive_name)
+          files = staged_files(Path("../fs-user"))
+          web_download_base = (
+              "https://bnbbrewers.github.io/UltimateHomebrewingScale"
+              "/SoftwareInstallationGuide/latest"
           )
-          archive_path = Path(update_archive)
-          with tarfile.open(archive_path, "w") as archive:
-              for rel_path in diff_plan.archive_paths:
-                  archive.add(Path("../fs-user") / rel_path, arcname=rel_path)
-          archive_sha256 = hashlib.sha256(archive_path.read_bytes()).hexdigest()
-          archive_url = (
-              "https://github.com/bnbbrewers/UltimateHomebrewingScale/"
-              f"releases/download/{os.environ['TAG_NAME']}/{update_archive}"
-          )
+
           build_manifest = {
               "name": "Ultimate Homebrewing Scale M5Dial firmware",
-              "tag": os.environ["TAG_NAME"],
+              "tag": tag,
               "commit": os.environ["HEAD_SHA"],
               "short_commit": os.environ["SHORT_SHA"],
               "source_branch": "main",
               "firmware": "UHS-firmwareM5Dial.bin",
-              "code": code_archive,
-              "update_archive": update_archive,
+              "code": archive_name,
               "updater_manifest": "uhs-update-manifest.json",
               "web_install_manifest": "UHS-web-install-manifest.json",
-              "web_install_url": f"{web_download_base}/UHS-web-install-manifest.json",
+              "web_install_url": "%s/UHS-web-install-manifest.json" % web_download_base,
               "sha256": sha256,
               "size": firmware.stat().st_size,
-              "included_files": included_count,
+              "included_files": len(files),
               "runtime_format": "mpy",
-              "first_mpy_migration": diff_plan.first_mpy_migration,
               "excluded": ["docs/", "firmware/", ".github/", "tools/", "*.md", "config.py"],
           }
+          # "channel" is read by nothing and goes stale on promotion. The
+          # device takes its channel from its own configuration, and a
+          # release's audience from GitHub's prerelease flag.
           update_manifest = {
-              "version": os.environ["TAG_NAME"],
-              "base_version": base_version,
-              "channel": os.environ["RELEASE_CHANNEL"],
-              "strategy": "tar-diff",
+              "version": tag,
+              "strategy": "tar-full",
               "runtime_format": "mpy",
-              "first_mpy_migration": diff_plan.first_mpy_migration,
+              "channel": "prerelease",
               "archive": {
-                  "name": update_archive,
-                  "url": archive_url,
+                  "name": archive_name,
+                  "url": (
+                      "https://github.com/bnbbrewers/UltimateHomebrewingScale/"
+                      "releases/download/%s/%s" % (tag, archive_name)
+                  ),
                   "size": archive_path.stat().st_size,
-                  "sha256": archive_sha256,
+                  "sha256": hashlib.sha256(archive_path.read_bytes()).hexdigest(),
               },
-              "delete": sorted(set(list(diff_plan.delete_paths) + ["install.py"])),
+              "files": list(files),
           }
           web_install_manifest = {
               "name": "Ultimate Homebrewing Scale",
-              "version": os.environ["TAG_NAME"],
+              "version": tag,
               "new_install_prompt_erase": True,
               "builds": [
                   {
                       "chipFamily": "ESP32-S3",
                       "parts": [
-                          {
-                              "path": f"{web_download_base}/UHS-firmwareM5Dial.bin",
-                              "offset": 0,
-                          },
+                          {"path": "%s/UHS-firmwareM5Dial.bin" % web_download_base, "offset": 0},
                       ],
                   },
               ],
           }
           Path("UHS-build-manifest.json").write_text(
-              json.dumps(build_manifest, indent=2) + "\n",
-              encoding="utf-8",
+              json.dumps(build_manifest, indent=2) + "\n", encoding="utf-8"
           )
           Path("uhs-update-manifest.json").write_text(
-              json.dumps(update_manifest, indent=2) + "\n",
-              encoding="utf-8",
+              json.dumps(update_manifest, indent=2) + "\n", encoding="utf-8"
           )
           Path("UHS-web-install-manifest.json").write_text(
-              json.dumps(web_install_manifest, indent=2) + "\n",
-              encoding="utf-8",
+              json.dumps(web_install_manifest, indent=2) + "\n", encoding="utf-8"
           )
           PY
 
@@ -318,17 +266,16 @@ jobs:
             dist/out/UHS-build-manifest.json
             dist/out/UHS-web-install-manifest.json
             dist/out/uhs-update-manifest.json
-            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
-            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
+            dist/out/UHS-app-files-${{ env.TAG_NAME }}.tar
 
-      - name: Publish GitHub release
+      - name: Publish the pre-release
         uses: softprops/action-gh-release@v2
         with:
           name: UHS firmware ${{ env.TAG_NAME }}
           tag_name: ${{ env.TAG_NAME }}
           target_commitish: ${{ env.HEAD_SHA }}
-          make_latest: ${{ env.PUBLISH_STABLE_LATEST }}
-          prerelease: ${{ env.RELEASE_CHANNEL == 'prerelease' }}
+          make_latest: false
+          prerelease: true
           generate_release_notes: true
           files: |
             dist/out/UHS-firmwareM5Dial.bin
@@ -336,51 +283,4 @@ jobs:
             dist/out/UHS-build-manifest.json
             dist/out/UHS-web-install-manifest.json
             dist/out/uhs-update-manifest.json
-            dist/out/uhs-update-diff-${{ env.TAG_NAME }}.tar
-            dist/out/UHS-app-files-${{ env.TAG_NAME }}.zip
-
-  deploy_pages:
-    name: Deploy stable firmware to GitHub Pages
-    needs: repack
-    if: needs.repack.outputs.publish_stable_latest == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Checkout tagged commit
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.release.tag_name || inputs.tag_name || github.ref }}
-
-      - name: Download repacked firmware artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: UHS-firmware-${{ needs.repack.outputs.tag_name }}
-          path: dist/out
-
-      - name: Prepare GitHub Pages files
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p dist/pages
-          cp -R docs/. dist/pages/
-          mkdir -p dist/pages/SoftwareInstallationGuide/latest
-          cp dist/out/UHS-firmwareM5Dial.bin dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-web-install-manifest.json dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-firmwareM5Dial.sha256 dist/pages/SoftwareInstallationGuide/latest/
-          cp dist/out/UHS-build-manifest.json dist/pages/SoftwareInstallationGuide/latest/
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/pages
-
-      - name: Deploy GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+            dist/out/UHS-app-files-${{ env.TAG_NAME }}.tar
