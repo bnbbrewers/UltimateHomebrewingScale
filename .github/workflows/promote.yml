@@ -1,0 +1,42 @@
+name: Promote a release to the site
+
+# A tag creates a pre-release. Clearing its pre-release flag is what publishes
+# it: GitHub emits "released" both when a release is published directly and when
+# a pre-release is turned into one. Nothing is rebuilt here, the assets are
+# already on the release.
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Release to publish to the site
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  check:
+    name: Check the release is promoted
+    runs-on: ubuntu-latest
+    steps:
+      # A mis-fire must not be able to put an untested firmware on the site.
+      - name: Refuse a release still flagged as a pre-release
+        if: github.event_name == 'release' && github.event.release.prerelease
+        run: |
+          echo "::error::${{ github.event.release.tag_name }} is still a pre-release." >&2
+          exit 1
+
+  publish:
+    name: Publish the site
+    needs: check
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      firmware_tag: ${{ github.event.release.tag_name || inputs.tag_name }}
