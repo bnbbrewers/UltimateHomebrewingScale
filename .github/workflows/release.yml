@@ -275,3 +275,27 @@ jobs:
             dist/out/UHS-web-install-manifest.json
             dist/out/uhs-update-manifest.json
             dist/out/UHS-app-files-${{ env.TAG_NAME }}.tar
+
+      # softprops uploads the assets in parallel and one failure does not fail
+      # the step: v0.0.21 lost UHS-firmwareM5Dial.sha256 that way, and v0.0.25
+      # lost the runtime archive. A release missing its archive is a release
+      # the updater cannot install, so fail loudly rather than leave a
+      # half-published release behind.
+      - name: Verify the release carries every asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          expected="UHS-firmwareM5Dial.bin UHS-firmwareM5Dial.sha256 UHS-build-manifest.json UHS-web-install-manifest.json uhs-update-manifest.json UHS-app-files-${TAG_NAME}.tar"
+          published="$(gh release view "$TAG_NAME" --json assets --jq '.assets[] | "\(.name) \(.size)"')"
+          echo "$published"
+          missing=0
+          for name in $expected; do
+            size="$(echo "$published" | awk -v n="$name" '$1 == n {print $2}')"
+            if [ -z "$size" ] || [ "$size" -eq 0 ]; then
+              echo "::error::$TAG_NAME is missing $name" >&2
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
