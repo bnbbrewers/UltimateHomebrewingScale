@@ -39,4 +39,6 @@ jobs:
       pages: write
       id-token: write
     with:
-      firmware_tag: ${{ github.event.release.tag_name || inputs.tag_name }}
+      # github.event.inputs, not inputs: the inputs context does not exist for
+      # a release event, and referencing it stops the run being created at all.
+      firmware_tag: ${{ github.event.release.tag_name || github.event.inputs.tag_name }}
