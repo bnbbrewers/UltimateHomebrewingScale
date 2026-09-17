@@ -1,4 +1,4 @@
-"""Build and diff planning helpers for the compiled MicroPython runtime."""
+"""Build helpers for the compiled MicroPython runtime."""
 
 import argparse
 import shutil
@@ -18,13 +18,6 @@ class BuildReport:
     files: tuple
     compiled: tuple
     direct: tuple
-
-
-@dataclass(frozen=True)
-class DiffPlan:
-    archive_paths: tuple
-    delete_paths: tuple
-    first_mpy_migration: bool
 
 
 def _normalize(path):
@@ -159,124 +152,15 @@ def build_staging(
     return BuildReport(tuple(files), tuple(sorted(compiled)), tuple(sorted(direct)))
 
 
-def _entry(status, paths):
-    if isinstance(paths, str):
-        paths = (paths,)
-    return str(status or ""), tuple(_normalize(path) for path in paths)
-
-
-def _delete_variants(path, deletes):
-    relative = _normalize(path)
-    if not relative or relative in PROTECTED_CONFIG:
-        return
-    if should_compile(relative):
-        deletes.add(relative)
-        deletes.add(artifact_path(relative))
-    else:
-        deletes.add(relative)
-
-
-def _add_archive(path, staging_root, archives):
-    relative = _normalize(path)
-    if not relative:
-        return
-    if not include_runtime_path(relative):
-        return
-    mapped = artifact_path(relative)
-    if (Path(staging_root) / Path(*mapped.split("/"))).is_file():
-        archives.add(mapped)
-
-
-def plan_diff(changed_paths, base_paths, staging_root):
-    normalized_base = {_normalize(path) for path in base_paths}
-    first_mpy_migration = "tools/build_runtime.py" not in normalized_base
-    archives = set()
-    deletes = set()
-
-    parsed = []
-    for item in changed_paths:
-        if isinstance(item, dict):
-            status = item.get("status", "")
-            paths = item.get("paths", ())
-        else:
-            status = item[0]
-            paths = item[1:]
-        parsed.append(_entry(status, paths))
-
-    if first_mpy_migration:
-        staging_root = Path(staging_root)
-        for path in staging_root.rglob("*.mpy"):
-            archives.add(path.relative_to(staging_root).as_posix())
-        for path in normalized_base:
-            if should_compile(path):
-                deletes.add(path)
-
-    for status, paths in parsed:
-        normalized_status = status.upper()
-        if normalized_status.startswith("R") and len(paths) >= 2:
-            _delete_variants(paths[0], deletes)
-            _add_archive(paths[-1], staging_root, archives)
-            continue
-        if normalized_status.startswith("D"):
-            _delete_variants(paths[-1], deletes)
-            continue
-        if normalized_status.startswith(("A", "M", "T", "C")):
-            _add_archive(paths[-1], staging_root, archives)
-
-    _add_archive(VERSION_FILE, staging_root, archives)
-    deletes.difference_update(PROTECTED_CONFIG)
-    return DiffPlan(
-        tuple(sorted(archives)),
-        tuple(sorted(deletes)),
-        first_mpy_migration,
-    )
-
-
-def _git_diff_paths(source_root, base_ref, head_ref):
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(source_root),
-            "diff",
-            "--name-status",
-            "-z",
-            str(base_ref),
-            str(head_ref),
-        ],
-        check=True,
-        stdout=subprocess.PIPE,
-    )
-    fields = [item.decode("utf-8") for item in result.stdout.split(b"\0") if item]
-    entries = []
-    index = 0
-    while index < len(fields):
-        status = fields[index]
-        index += 1
-        if status.startswith(("R", "C")):
-            entries.append((status, fields[index], fields[index + 1]))
-            index += 2
-        else:
-            entries.append((status, fields[index]))
-            index += 1
-    return entries
-
-
-def _git_tree_paths(source_root, ref):
-    result = subprocess.run(
-        ["git", "-C", str(source_root), "ls-tree", "-r", "--name-only", str(ref)],
-        check=True,
-        stdout=subprocess.PIPE,
-        text=True,
-    )
-    return [line for line in result.stdout.splitlines() if line]
-
-
-def plan_git_diff(source_root, base_ref, head_ref, staging_root):
-    return plan_diff(
-        _git_diff_paths(source_root, base_ref, head_ref),
-        _git_tree_paths(source_root, base_ref),
-        staging_root,
+def staged_files(staging_root):
+    """Every runtime file in the staging tree, as the manifest lists them."""
+    root = Path(staging_root)
+    return tuple(
+        sorted(
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*")
+            if path.is_file()
+        )
     )
 
 
