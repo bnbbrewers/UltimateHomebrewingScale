@@ -1,0 +1,1059 @@
+/* Ultimate Homebrewing Scale — documentation stylesheet.
+   Single stylesheet for every page published under docs/.
+   DOCS_STYLEGUIDE.md is the source of truth; section numbers below match it. */
+
+/* ------------------------------------------------------------------ fonts */
+/* Self-hosted so the documentation stays readable offline from a clone. */
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/space-grotesk-latin-wght-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+}
+
+/* ------------------------------------------------------------- §2 tokens */
+
+:root {
+  color-scheme: light dark;
+
+  /* brand */
+  --uhs-ink:        #0D0F12;
+  --uhs-green:      #13A923;   /* hop   — flat fills and graphics */
+  --uhs-amber:      #FBB500;   /* malt  — flat fills and graphics */
+  --uhs-steel:      #C9CED6;   /* keg   — flat fills and graphics */
+
+  /* readable variants for text on a light surface */
+  --uhs-green-ink:  #0A7A16;
+  --uhs-amber-ink:  #8A6200;
+  --uhs-steel-ink:  #5A6270;
+
+  /* surfaces */
+  --uhs-bg:         #F4F4F2;
+  --uhs-surface:    #FFFFFF;
+  --uhs-surface-2:  #ECECE8;
+  --uhs-border:     #E3E3DF;
+  --uhs-border-strong: #CFCFC9;
+
+  /* text */
+  --uhs-text:       #14171B;
+  --uhs-text-muted: #5A5E65;
+  /* Styleguide 2 gives #80858C, but that is 3.37:1 on --uhs-bg and section 7
+     requires 4.5:1 for text — this token labels the facts band. Darkened to
+     the lightest value clearing 4.5:1 on all three light surfaces
+     (bg 4.88, surface 5.37, surface-2 4.53), still lighter than
+     --uhs-text-muted so the hierarchy holds. */
+  --uhs-text-faint: #666B72;
+
+  /* callout tints */
+  --uhs-tint-green: #F1FAF2;
+  --uhs-tint-amber: #FFF8E6;
+  --uhs-tint-steel: #F2F4F7;
+
+  /* code */
+  --uhs-code-bg:    #0D0F12;
+  --uhs-code-fg:    #EDEFF2;
+
+  /* primary button — inverts in the dark theme */
+  --uhs-btn-bg:       #0D0F12;
+  --uhs-btn-fg:       #FFFFFF;
+  --uhs-btn-bg-hover: #252A32;
+
+  /* type */
+  --uhs-font-sans: "Space Grotesk", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --uhs-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* rhythm */
+  --uhs-space-1: 4px;   --uhs-space-2: 8px;   --uhs-space-3: 12px;
+  --uhs-space-4: 16px;  --uhs-space-5: 24px;  --uhs-space-6: 32px;
+  --uhs-space-7: 48px;  --uhs-space-8: 64px;
+
+  --uhs-radius-sm: 8px;
+  --uhs-radius:    14px;
+  --uhs-radius-lg: 20px;
+  --uhs-radius-pill: 999px;
+
+  --uhs-shadow: 0 1px 2px rgba(13, 15, 18, .04), 0 8px 24px rgba(13, 15, 18, .06);
+  --uhs-shadow-lift: 0 2px 4px rgba(13, 15, 18, .06), 0 14px 32px rgba(13, 15, 18, .10);
+
+  --uhs-measure: 72ch;   /* reading width of body copy */
+  --uhs-page:   1120px;  /* container max width */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --uhs-bg:         #0D0F12;
+    --uhs-surface:    #15181D;
+    --uhs-surface-2:  #1D2128;
+    --uhs-border:     #262B33;
+    --uhs-border-strong: #343A44;
+
+    --uhs-text:       #EDEFF2;
+    --uhs-text-muted: #A2A8B2;
+    /* Same section 7 correction as the light theme: the styleguide value
+       #7C838D is 4.22:1 on --uhs-surface-2. Lightened to clear 4.5:1 on all
+       three dark surfaces, still darker than --uhs-text-muted. */
+    --uhs-text-faint: #818892;
+
+    --uhs-green-ink:  #3FD152;
+    --uhs-amber-ink:  #FFC633;
+    --uhs-steel-ink:  #A8B0BB;
+
+    --uhs-tint-green: #101E13;
+    --uhs-tint-amber: #211A08;
+    --uhs-tint-steel: #161A20;
+
+    --uhs-code-bg:    #05070A;
+
+    --uhs-btn-bg:       #EDEFF2;
+    --uhs-btn-fg:       #0D0F12;
+    --uhs-btn-bg-hover: #FFFFFF;
+
+    --uhs-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    --uhs-shadow-lift: 0 2px 4px rgba(0,0,0,.45), 0 14px 32px rgba(0,0,0,.45);
+  }
+}
+
+/* --------------------------------------------------- §3 base and typography */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--uhs-bg);
+  color: var(--uhs-text);
+  font-family: var(--uhs-font-sans);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.wrap {
+  width: min(100% - 2 * var(--uhs-space-5), var(--uhs-page));
+  margin-inline: auto;
+}
+
+h1, h2, h3 {
+  font-family: var(--uhs-font-sans);
+  font-weight: 700;
+  color: var(--uhs-text);
+  text-wrap: balance;
+}
+
+h1 {
+  margin: 0 0 var(--uhs-space-4);
+  font-size: clamp(2rem, 4.4vw, 2.9rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  margin: 0 0 var(--uhs-space-3);
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+h3 {
+  margin: 0 0 var(--uhs-space-3);
+  font-size: 1.2rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+:where(p) { max-width: var(--uhs-measure); }
+p { margin: 0 0 var(--uhs-space-4); }
+p:last-child { margin-bottom: 0; }
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.07em;
+  text-decoration-color: var(--uhs-text-faint);
+  text-underline-offset: 0.18em;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+strong { font-weight: 700; }
+
+:focus-visible {
+  outline: 2px solid var(--uhs-green);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The sticky anchor bar must never cover the heading it jumped to. */
+[id] { scroll-margin-top: 84px; }
+
+.uhs-skip {
+  position: absolute;
+  left: var(--uhs-space-4);
+  top: -100px;
+  z-index: 40;
+  padding: 10px 16px;
+  border-radius: var(--uhs-radius-pill);
+  background: var(--uhs-btn-bg);
+  color: var(--uhs-btn-fg);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+
+.uhs-skip:focus-visible { top: var(--uhs-space-3); }
+
+/* --------------------------------------------- §5.0 three-colour brand rule */
+
+.uhs-rule {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  margin-bottom: var(--uhs-space-3);
+}
+
+.uhs-rule i { display: block; height: 6px; border-radius: 3px; }
+.uhs-rule i:nth-child(1) { width: 14px; background: var(--uhs-green); }
+.uhs-rule i:nth-child(2) { width: 24px; background: var(--uhs-amber); }
+.uhs-rule i:nth-child(3) { width: 18px; background: var(--uhs-steel); }
+
+/* ------------------------------------------------------------- §5.1 header */
+
+/* Transparent: a filled strip carrying only two flags reads as a separate,
+   empty band above the hero. It sits on the page instead. */
+.uhs-header {
+  background: transparent;
+  border-bottom: 0;
+}
+
+.uhs-header .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 50px;
+}
+
+.uhs-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--uhs-space-3);
+}
+
+.uhs-lang a {
+  display: inline-flex;
+  border-radius: 4px;
+  text-decoration: none;
+  opacity: .55;
+  transition: opacity .15s ease;
+}
+
+.uhs-lang a:hover { opacity: 1; }
+
+.uhs-lang a[aria-current="true"] {
+  opacity: 1;
+  outline: 2px solid var(--uhs-green);
+  outline-offset: 2px;
+}
+
+.uhs-lang img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* --------------------------------------------------------------- §5.2 hero */
+
+.uhs-hero { padding-block: var(--uhs-space-7) var(--uhs-space-8); }
+
+/* Two-column hero: copy on the left, summary panel on the right. Needs more
+   room than the §6 paliers give, so it splits at its own 900px breakpoint —
+   below that the panel drops under the copy. */
+.uhs-hero__grid {
+  display: grid;
+  gap: var(--uhs-space-6);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .uhs-hero__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); }
+}
+
+/* Recessed: the panel sits a step away from the page so the boxes inside it
+   can sit on --uhs-surface and read as raised. Three levels, both themes. */
+.uhs-hero__panel {
+  padding: var(--uhs-space-5);
+  background: var(--uhs-surface-2);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius);
+}
+
+.uhs-hero__panel > :first-child { margin-top: 0; }
+
+.uhs-hero__panel .uhs-hero__figure {
+  max-width: none;
+  margin: 0;
+}
+
+/* Compact: the panel has to stay close to the height of the copy beside it. */
+.uhs-hero__panel .uhs-diagram__box {
+  padding: var(--uhs-space-2) var(--uhs-space-3);
+  border-color: var(--uhs-border-strong);
+  font-size: .9rem;
+}
+
+.uhs-hero__panel .uhs-diagram__box span { margin-top: 0; }
+
+.uhs-hero__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--uhs-space-5);
+}
+
+.uhs-hero__logo {
+  flex: none;
+  width: 84px;
+  height: 84px;
+}
+
+/* align-items: flex-start above is what the row layout needs, but in the
+   stacked layout it sizes this block to max-content and the h1 overflows the
+   container. Stretch it back to the container width. */
+.uhs-hero__text {
+  align-self: stretch;
+  max-width: var(--uhs-measure);
+}
+
+/* The hero illustration is a portrait device photo: bounded so it does not
+   dominate the page the way a full-width figure would. */
+.uhs-hero__figure {
+  max-width: 300px;
+  margin: var(--uhs-space-7) 0 0;
+}
+
+.uhs-eyebrow {
+  margin: 0 0 var(--uhs-space-3);
+  font-family: var(--uhs-font-mono);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--uhs-green-ink);
+}
+
+.uhs-lede {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--uhs-text-muted);
+}
+
+/* Buttons — never more than two side by side. */
+
+.uhs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--uhs-space-3);
+  margin-top: var(--uhs-space-5);
+}
+
+.uhs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border: 1.5px solid var(--uhs-btn-bg);
+  border-radius: var(--uhs-radius-pill);
+  background: var(--uhs-btn-bg);
+  color: var(--uhs-btn-fg);
+  font-family: var(--uhs-font-sans);
+  font-size: .975rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  box-shadow: var(--uhs-shadow);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.uhs-btn svg {
+  flex: none;
+  transition: transform .15s ease;
+}
+
+.uhs-btn:hover {
+  background: var(--uhs-btn-bg-hover);
+  border-color: var(--uhs-btn-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--uhs-shadow-lift);
+}
+
+.uhs-btn:hover svg { transform: translateX(3px); }
+
+.uhs-btn--ghost {
+  background: var(--uhs-surface);
+  color: var(--uhs-text);
+  border-color: var(--uhs-border-strong);
+  box-shadow: none;
+}
+
+.uhs-btn--ghost:hover {
+  background: var(--uhs-surface-2);
+  border-color: var(--uhs-border-strong);
+  box-shadow: none;
+}
+
+.uhs-btn--ghost:hover svg { transform: translateY(2px); }
+
+/* Facts band */
+
+.uhs-facts {
+  display: grid;
+  gap: var(--uhs-space-5);
+  margin-top: var(--uhs-space-7);
+  padding-top: var(--uhs-space-5);
+  border-top: 1px solid var(--uhs-border);
+}
+
+.uhs-facts__label {
+  display: flex;
+  align-items: center;
+  gap: var(--uhs-space-2);
+  font-family: var(--uhs-font-mono);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--uhs-text-faint);
+}
+
+.uhs-facts__label::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--uhs-steel);
+}
+
+.uhs-facts > div:nth-child(3n+1) .uhs-facts__label::before { background: var(--uhs-green); }
+.uhs-facts > div:nth-child(3n+2) .uhs-facts__label::before { background: var(--uhs-amber); }
+.uhs-facts > div:nth-child(3n)   .uhs-facts__label::before { background: var(--uhs-steel); }
+
+.uhs-facts__value {
+  margin-top: var(--uhs-space-2);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------- §5.3 sticky anchor bar */
+
+.uhs-toc {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--uhs-surface);
+  border-top: 1px solid var(--uhs-border);
+  border-bottom: 1px solid var(--uhs-border);
+}
+
+.uhs-toc .wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--uhs-space-4);
+  min-height: 54px;
+}
+
+.uhs-toc__brand {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--uhs-space-2);
+  text-decoration: none;
+}
+
+.uhs-toc__brand svg { display: block; flex: none; }
+
+.uhs-toc__brand span {
+  display: none;
+  font-family: var(--uhs-font-sans);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.uhs-toc__sep {
+  flex: none;
+  align-self: stretch;
+  width: 1px;
+  margin-block: 12px;
+  background: var(--uhs-border);
+}
+
+.uhs-toc ul {
+  display: flex;
+  gap: var(--uhs-space-2);
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.uhs-toc ul::-webkit-scrollbar { display: none; }
+
+/* Scoped to the list: a bare `.uhs-toc a` also matches the brand link and,
+   being the more specific selector, would turn it into a pill. */
+.uhs-toc ul a {
+  display: block;
+  padding: 6px 12px;
+  /* Two deviations from styleguide 5.3, both on request: 2.5px rather than
+     1.5px, and neutral label text instead of the border's -ink variant.
+     Only the border carries the colour. */
+  border: 2.5px solid var(--uhs-steel);
+  border-radius: var(--uhs-radius-pill);
+  font-family: var(--uhs-font-mono);
+  font-size: .8rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--uhs-text);
+  transition: background .15s ease;
+}
+
+.uhs-toc li:nth-child(3n+1) a { border-color: var(--uhs-green); }
+.uhs-toc li:nth-child(3n+1) a:hover { background: var(--uhs-tint-green); }
+.uhs-toc li:nth-child(3n+2) a { border-color: var(--uhs-amber); }
+.uhs-toc li:nth-child(3n+2) a:hover { background: var(--uhs-tint-amber); }
+.uhs-toc li:nth-child(3n)   a { border-color: var(--uhs-steel); }
+.uhs-toc li:nth-child(3n)   a:hover { background: var(--uhs-tint-steel); }
+
+/* ----------------------------------------------------------- §5.4 sections */
+
+.uhs-section { padding-block: var(--uhs-space-8); }
+.uhs-section + .uhs-section { border-top: 1px solid var(--uhs-border); }
+
+.uhs-section__intro {
+  margin: 0;
+  color: var(--uhs-text-muted);
+}
+
+.uhs-subhead {
+  margin: var(--uhs-space-7) 0 var(--uhs-space-3);
+  font-size: 1.05rem;
+}
+
+/* ------------------------------------------------------------- §5.5 cards */
+
+.uhs-cards {
+  display: grid;
+  /* auto-fill, not auto-fit: auto-fit collapses the empty tracks, so a group
+     holding a single card stretches it across the full page width and its
+     photo becomes a letterbox. */
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--uhs-space-5);
+  margin-top: var(--uhs-space-6);
+}
+
+.uhs-card {
+  position: relative;
+  overflow: hidden;
+  padding: var(--uhs-space-5);
+  background: var(--uhs-surface);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius);
+}
+
+.uhs-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--uhs-steel);
+}
+
+.uhs-card:nth-child(3n+1)::before { background: var(--uhs-green); }
+.uhs-card:nth-child(3n+2)::before { background: var(--uhs-amber); }
+.uhs-card:nth-child(3n)::before   { background: var(--uhs-steel); }
+
+.uhs-card h3 { margin-bottom: var(--uhs-space-2); }
+
+.uhs-card p {
+  max-width: none;
+  margin-bottom: 0;
+  font-size: .95rem;
+  color: var(--uhs-text-muted);
+}
+
+.uhs-card p + p { margin-top: var(--uhs-space-3); }
+
+.uhs-cards + .uhs-note { margin-top: var(--uhs-space-6); }
+
+/* Part card — the shopping-list variant: product photo, copy, buy links.
+   Column layout so the buy links sit at the card foot however long the copy. */
+
+.uhs-card--part {
+  display: flex;
+  flex-direction: column;
+}
+
+.uhs-card--part .uhs-card__links { margin-top: auto; }
+
+.uhs-card__photo {
+  margin: 0 0 var(--uhs-space-4);
+  overflow: hidden;
+  background: var(--uhs-surface-2);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius-sm);
+}
+
+.uhs-card__photo img {
+  display: block;
+  width: 100%;
+  height: 168px;
+  object-fit: contain;
+}
+
+.uhs-card__links {
+  max-width: none;
+  margin: var(--uhs-space-4) 0 0;
+  padding-left: 1.15rem;
+  font-family: var(--uhs-font-mono);
+  font-size: .8rem;
+  line-height: 1.6;
+}
+
+.uhs-card__links li + li { margin-top: var(--uhs-space-1); }
+
+/* ------------------------------------------------------ §5.6 numbered steps */
+
+.uhs-steps {
+  counter-reset: uhs-step;
+  max-width: none;
+  margin: var(--uhs-space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.uhs-step {
+  counter-increment: uhs-step;
+  position: relative;
+  padding-bottom: var(--uhs-space-7);
+}
+
+.uhs-step:last-child { padding-bottom: 0; }
+
+.uhs-step::before {
+  content: counter(uhs-step);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: var(--uhs-space-4);
+  border: 3px solid var(--uhs-steel);
+  border-radius: 50%;
+  background: var(--uhs-ink);
+  color: #FFFFFF;
+  font-family: var(--uhs-font-mono);
+  font-size: .95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.uhs-step:nth-child(3n+1)::before { border-color: var(--uhs-green); }
+.uhs-step:nth-child(3n+2)::before { border-color: var(--uhs-amber); }
+.uhs-step:nth-child(3n)::before   { border-color: var(--uhs-steel); }
+
+.uhs-step h3 { margin-top: 0; }
+
+.uhs-step > ol,
+.uhs-step > ul {
+  max-width: var(--uhs-measure);
+  margin: 0 0 var(--uhs-space-4);
+  padding-left: 1.3rem;
+}
+
+.uhs-step > ol li + li,
+.uhs-step > ul li + li { margin-top: var(--uhs-space-2); }
+
+/* ------------------------------------------------------------ §5.7 figures */
+
+.uhs-figure { margin: 0 0 var(--uhs-space-5); }
+
+.uhs-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: var(--uhs-surface);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius);
+}
+
+.uhs-figure figcaption {
+  margin-top: var(--uhs-space-3);
+  font-family: var(--uhs-font-mono);
+  font-size: .8rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--uhs-text-muted);
+}
+
+/* Device and phone screenshots are tall portraits shot at sensor resolution;
+   left at container width they swamp the step they illustrate. Wiring
+   diagrams are deliberately excluded — those are drawings meant to be read. */
+.uhs-figure--portrait { max-width: 400px; }
+
+.uhs-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--uhs-space-5);
+  margin-bottom: var(--uhs-space-5);
+}
+
+.uhs-figures .uhs-figure { margin-bottom: 0; }
+
+/* ----------------------------------------------------------- §5.8 callouts */
+
+.uhs-note {
+  margin: 0 0 var(--uhs-space-5);
+  padding: var(--uhs-space-4);
+  background: var(--uhs-tint-steel);
+  border: 1px solid var(--uhs-border);
+  border-left: 3px solid var(--uhs-steel-ink);
+  border-radius: var(--uhs-radius-sm);
+  font-size: .975rem;
+}
+
+.uhs-note p { max-width: none; }
+.uhs-note > :last-child { margin-bottom: 0; }
+
+.uhs-note__label { font-weight: 700; color: var(--uhs-steel-ink); }
+
+.uhs-note--tip { background: var(--uhs-tint-green); border-left-color: var(--uhs-green); }
+.uhs-note--tip .uhs-note__label { color: var(--uhs-green-ink); }
+
+.uhs-note--warn { background: var(--uhs-tint-amber); border-left-color: var(--uhs-amber); }
+.uhs-note--warn .uhs-note__label { color: var(--uhs-amber-ink); }
+
+.uhs-note--info { background: var(--uhs-tint-steel); border-left-color: var(--uhs-steel-ink); }
+.uhs-note--info .uhs-note__label { color: var(--uhs-steel-ink); }
+
+/* ------------------------------------------------------------- §5.9 tables */
+
+.uhs-table-wrap {
+  margin: 0 0 var(--uhs-space-5);
+  overflow-x: auto;
+}
+
+.uhs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+
+.uhs-table th,
+.uhs-table td {
+  padding: var(--uhs-space-3) var(--uhs-space-4);
+  text-align: left;
+  vertical-align: top;
+}
+
+.uhs-table th:first-child,
+.uhs-table td:first-child { padding-left: 0; }
+
+.uhs-table th {
+  font-family: var(--uhs-font-mono);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--uhs-text-muted);
+  border-bottom: 2px solid var(--uhs-border-strong);
+  white-space: nowrap;
+}
+
+.uhs-table td { border-bottom: 1px solid var(--uhs-border); }
+.uhs-table tbody tr:last-child td { border-bottom: 0; }
+
+/* --------------------------------------------------------------- §5.10 code */
+
+code {
+  padding: 2px 6px;
+  background: var(--uhs-surface-2);
+  border: 1px solid var(--uhs-border);
+  border-radius: 6px;
+  font-family: var(--uhs-font-mono);
+  font-size: .9em;
+  /* SSIDs and portal addresses are long unbreakable tokens on a narrow screen. */
+  overflow-wrap: break-word;
+}
+
+pre {
+  margin: 0 0 var(--uhs-space-5);
+  padding: var(--uhs-space-5);
+  background: var(--uhs-code-bg);
+  color: var(--uhs-code-fg);
+  border-radius: var(--uhs-radius);
+  overflow-x: auto;
+  font-size: .875rem;
+  line-height: 1.55;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  border: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ---------------------------------------------------- §5.11 troubleshooting */
+
+.uhs-troubleshoot {
+  max-width: var(--uhs-measure);
+  margin: var(--uhs-space-6) 0 0;
+}
+
+.uhs-troubleshoot dt {
+  padding-top: var(--uhs-space-4);
+  font-weight: 600;
+}
+
+.uhs-troubleshoot dd {
+  margin: var(--uhs-space-1) 0 0;
+  padding-bottom: var(--uhs-space-4);
+  border-bottom: 1px solid var(--uhs-border);
+  color: var(--uhs-text-muted);
+}
+
+.uhs-troubleshoot dd:last-child { border-bottom: 0; }
+
+/* ------------------------------------------------------------ §5.12 footer */
+
+.uhs-footer {
+  background: var(--uhs-surface-2);
+  border-top: 1px solid var(--uhs-border);
+  font-family: var(--uhs-font-mono);
+  font-size: .8rem;
+  line-height: 1.6;
+  color: var(--uhs-text-muted);
+}
+
+.uhs-footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--uhs-space-3) var(--uhs-space-5);
+  padding-block: var(--uhs-space-5);
+}
+
+.uhs-footer svg {
+  flex: none;
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+/* The repository URL is one unbreakable token, wider than the container at
+   320px; without this it scrolls the whole document sideways. */
+.uhs-footer a { overflow-wrap: anywhere; }
+
+/* --------------------------------------------- hero flow diagram (hardware) */
+/* Not a styleguide component: the hardware hero illustration is a block
+   diagram rather than a photo. Kept in ink and grey, decorative only.
+   It is a tree, not a chain: both the weight reader (Port A) and the optional
+   relay (Port B) hang off the Dial. A stacked chain would wrongly read as the
+   VEVOR platform feeding the relay. */
+
+.uhs-diagram {
+  display: flex;
+  flex-direction: column;
+}
+
+.uhs-diagram__box {
+  padding: var(--uhs-space-4);
+  background: var(--uhs-surface);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius-sm);
+  font-size: .95rem;
+  font-weight: 600;
+}
+
+.uhs-diagram__box span {
+  display: block;
+  margin-top: var(--uhs-space-1);
+  font-family: var(--uhs-font-mono);
+  font-size: .72rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--uhs-text-muted);
+}
+
+/* The trunk: a rule descending from the root box, with one elbow per branch. */
+.uhs-diagram__branches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--uhs-space-4);
+  margin-left: var(--uhs-space-5);
+  padding: var(--uhs-space-4) 0 0 var(--uhs-space-4);
+  border-left: 2px solid var(--uhs-border-strong);
+}
+
+.uhs-diagram__branch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--uhs-space-1);
+}
+
+.uhs-diagram__branch::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: calc(-1 * var(--uhs-space-4));
+  width: var(--uhs-space-4);
+  height: 2px;
+  background: var(--uhs-border-strong);
+}
+
+/* The last branch ends the trunk: mask the rule below its elbow. */
+.uhs-diagram__branch:last-child::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  bottom: calc(-1 * var(--uhs-space-4));
+  left: calc(-1 * var(--uhs-space-4) - 2px);
+  width: 2px;
+  background: var(--uhs-surface-2);
+}
+
+.uhs-diagram__link {
+  display: flex;
+  justify-content: center;
+  color: var(--uhs-text-faint);
+}
+
+/* ------------------------------------------------- web installer (software) */
+/* esp-web-tools renders its own button; the slotted one inherits .uhs-btn. */
+
+.uhs-install {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--uhs-space-4);
+  margin: 0 0 var(--uhs-space-5);
+  padding: var(--uhs-space-5);
+  background: var(--uhs-surface);
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius);
+}
+
+/* -------------------------------------------------- home page card listing */
+
+.uhs-card--link { display: block; text-decoration: none; }
+
+.uhs-card--link:hover {
+  border-color: var(--uhs-border-strong);
+  box-shadow: var(--uhs-shadow);
+}
+
+.uhs-card__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--uhs-space-4);
+  font-family: var(--uhs-font-mono);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.uhs-card__more svg { transition: transform .15s ease; }
+.uhs-card--link:hover .uhs-card__more svg { transform: translateX(3px); }
+
+/* Redirect stub pages. */
+
+.uhs-redirect {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: var(--uhs-space-5);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------- §6 responsive */
+
+@media (min-width: 640px) {
+  .uhs-facts {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+
+  .uhs-facts > div { padding-right: var(--uhs-space-5); }
+
+  .uhs-facts > div + div {
+    padding-left: var(--uhs-space-5);
+    border-left: 1px solid var(--uhs-border);
+  }
+
+  .uhs-step { padding-left: 64px; }
+
+  .uhs-step::before {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin-bottom: 0;
+  }
+
+  /* The connecting rule runs from one badge to the next, and stops short. */
+  .uhs-step::after {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 48px;
+    bottom: var(--uhs-space-3);
+    width: 2px;
+    background: var(--uhs-border);
+  }
+
+  .uhs-step:last-child::after { display: none; }
+}
+
+@media (min-width: 720px) {
+  .uhs-hero__head { flex-direction: row; gap: var(--uhs-space-6); }
+  .uhs-hero__logo { width: 132px; height: 132px; }
+  .uhs-toc__brand span { display: block; }
+  .uhs-table th:first-child { width: 34%; }
+}
+
+/* --------------------------------------------------------- §7 accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -6,724 +6,207 @@
     <title>Guide d'installation logicielle Ultimate Homebrewing Scale</title>
     <meta
       name="description"
-      content="Guide pas à pas pour flasher le firmware, configurer le Wi-Fi, Brewfather et la calibration de l'Ultimate Homebrewing Scale sur M5Stack Dial."
+      content="Guide pas à pas du firmware, du Wi-Fi, de Brewfather et de la calibration de la balance Ultimate Homebrewing Scale sur M5Stack Dial."
     >
+    <link rel="stylesheet" href="../../assets/css/uhs-docs.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/logo/uhs-logo-dark-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/logo/uhs-logo-dark-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/logo/uhs-logo-dark-180.png">
+    <meta property="og:image" content="https://bnbbrewers.github.io/UltimateHomebrewingScale/assets/logo/uhs-logo-dark-1024.png">
     <script
       type="module"
       src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
     ></script>
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #101412;
-        --paper: #171d1a;
-        --paper-strong: #202823;
-        --ink: #f2f6f2;
-        --muted: #a6b4ad;
-        --line: #334139;
-        --accent: #28a977;
-        --accent-dark: #7ee0b3;
-        --amber: #d8903f;
-        --blue: #63a7e8;
-        --soft-green: #173428;
-        --soft-amber: #332617;
-        --soft-blue: #17293b;
-        --shadow: 0 22px 55px rgba(0, 0, 0, 0.38);
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        margin: 0;
-        background:
-          radial-gradient(circle at 18% 0%, rgba(40, 169, 119, 0.2), transparent 330px),
-          linear-gradient(180deg, rgba(19, 35, 29, 0.92), rgba(16, 20, 18, 0) 460px),
-          var(--bg);
-        color: var(--ink);
-        line-height: 1.58;
-      }
-
-      a {
-        color: var(--accent-dark);
-        font-weight: 650;
-        text-decoration-thickness: 0.08em;
-        text-underline-offset: 0.18em;
-      }
-
-      code {
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: #101714;
-        padding: 0.1rem 0.35rem;
-        color: #d9f7e9;
-        font-size: 0.92em;
-      }
-
-
-
-      .language-switch {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 20;
-        display: inline-flex;
-        gap: 4px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(18, 24, 21, 0.92);
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-        padding: 4px;
-        backdrop-filter: blur(12px);
-      }
-
-      .language-switch a {
-        display: inline-flex;
-        min-height: 34px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        color: var(--muted);
-        width: 38px;
-        padding: 0;
-        font-size: 0.9rem;
-        font-weight: 760;
-        text-decoration: none;
-      }
-
-      .language-switch a[aria-current="page"] {
-        background: var(--accent);
-        color: #fff;
-      }
-
-      .language-switch img {
-        width: 24px;
-        height: 16px;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32);
-        display: block;
-        flex: 0 0 auto;
-        object-fit: cover;
-      }
-
-      .site-header {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 40px 20px 18px;
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-        gap: 28px;
-        align-items: center;
-        min-height: 520px;
-      }
-
-      .eyebrow {
-        margin: 0 0 14px;
-        color: var(--accent-dark);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      h1,
-      h2,
-      h3 {
-        line-height: 1.12;
-      }
-
-      h1 {
-        max-width: 780px;
-        margin: 0;
-        font-size: clamp(2.35rem, 5vw, 5rem);
-        letter-spacing: 0;
-      }
-
-      .hero-copy {
-        max-width: 690px;
-        margin: 20px 0 0;
-        color: var(--muted);
-        font-size: 1.15rem;
-      }
-
-      .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-top: 28px;
-      }
-
-      .button-link {
-        display: inline-flex;
-        min-height: 44px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 7px;
-        border: 1px solid var(--accent);
-        background: var(--accent);
-        color: #fff;
-        padding: 0 18px;
-        font-weight: 760;
-        text-decoration: none;
-      }
-
-      .button-link.secondary {
-        background: transparent;
-        color: var(--accent-dark);
-        border-color: #3d6958;
-      }
-
-      .hero-panel {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(23, 29, 26, 0.88);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-
-      .hero-panel img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      .quick-list {
-        margin: 0;
-        padding: 20px 22px 22px;
-      }
-
-      .quick-list dt {
-        color: var(--muted);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-
-      .quick-list dd {
-        margin: 4px 0 16px;
-        font-weight: 720;
-      }
-
-      .quick-list dd:last-child {
-        margin-bottom: 0;
-      }
-
-      nav {
-        border-top: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-        background: rgba(18, 24, 21, 0.82);
-        backdrop-filter: blur(12px);
-      }
-
-      nav .inner {
-        display: flex;
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 0 20px;
-        gap: 8px;
-        overflow-x: auto;
-      }
-
-      nav a {
-        flex: 0 0 auto;
-        padding: 14px 12px;
-        color: var(--muted);
-        font-size: 0.92rem;
-        text-decoration: none;
-      }
-
-      nav a:hover {
-        color: var(--accent-dark);
-      }
-
-      main {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 36px 20px 72px;
-      }
-
-      .section {
-        margin-top: 46px;
-      }
-
-      .section:first-child {
-        margin-top: 0;
-      }
-
-      .section-head {
-        max-width: 760px;
-        margin-bottom: 22px;
-      }
-
-      .section-head h2 {
-        margin: 0;
-        font-size: clamp(1.7rem, 3vw, 2.35rem);
-      }
-
-      .section-head p {
-        margin: 12px 0 0;
-        color: var(--muted);
-      }
-
-      .requirements {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .tile,
-      .step {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-      }
-
-      .tile {
-        padding: 18px;
-      }
-
-      .tile h3,
-      .step h3 {
-        margin: 0;
-        font-size: 1.04rem;
-      }
-
-      .tile p,
-      .step p,
-      .step li {
-        color: var(--muted);
-      }
-
-      .tile p {
-        margin: 8px 0 0;
-        font-size: 0.95rem;
-      }
-
-      .guide-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 18px;
-      }
-
-      .step {
-        display: grid;
-        grid-template-columns: 110px minmax(0, 1fr);
-        gap: 22px;
-        padding: 22px;
-        scroll-margin-top: 24px;
-      }
-
-      .step-number {
-        display: grid;
-        width: 72px;
-        height: 72px;
-        place-items: center;
-        border-radius: 50%;
-        background: var(--soft-green);
-        color: var(--accent-dark);
-        font-size: 1.6rem;
-        font-weight: 850;
-      }
-
-      .step h3 {
-        font-size: clamp(1.24rem, 2vw, 1.52rem);
-      }
-
-      .step-body > p:first-of-type {
-        margin-top: 10px;
-      }
-
-      .step-body > p:last-child,
-      .step-body > ul:last-child,
-      .step-body > ol:last-child {
-        margin-bottom: 0;
-      }
-
-      .media-row {
-        display: grid;
-        grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1fr);
-        gap: 18px;
-        align-items: center;
-        margin-top: 16px;
-      }
-
-      .media-row img {
-        width: 100%;
-        height: auto;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #0f1412;
-      }
-
-      .photo-card {
-        margin: 0;
-      }
-
-      .photo-card img {
-        display: block;
-        width: 100%;
-        height: auto;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #0f1412;
-      }
-
-      .photo-card figcaption {
-        margin-top: 8px;
-        color: var(--muted);
-        font-size: 0.88rem;
-      }
-
-      .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 18px;
-      }
-
-      .callout {
-        border-left: 4px solid var(--accent);
-        border-radius: 0 8px 8px 0;
-        background: var(--soft-green);
-        margin: 16px 0;
-        padding: 14px 16px;
-      }
-
-      .callout.warning {
-        border-left-color: var(--amber);
-        background: var(--soft-amber);
-      }
-
-      .callout.info {
-        border-left-color: var(--blue);
-        background: var(--soft-blue);
-      }
-
-      .callout strong {
-        color: var(--ink);
-      }
-
-      .flash-box {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper-strong);
-        margin-top: 16px;
-        padding: 18px;
-      }
-
-      esp-web-install-button {
-        --esp-tools-button-color: #1f7a5b;
-        --esp-tools-button-text-color: #ffffff;
-        --esp-tools-button-border-radius: 7px;
-        --esp-tools-button-padding: 11px 18px;
-      }
-
-      .field-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 16px 0;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-      }
-
-      .field-table th,
-      .field-table td {
-        border-bottom: 1px solid var(--line);
-        padding: 12px 14px;
-        text-align: left;
-        vertical-align: top;
-      }
-
-      .field-table th {
-        background: #202823;
-        color: #d8eee4;
-        font-size: 0.88rem;
-      }
-
-      .field-table tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .field-table td:first-child {
-        width: 220px;
-        font-weight: 720;
-        color: var(--ink);
-      }
-
-      .checklist {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 18px;
-      }
-
-      .check {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-        padding: 16px;
-      }
-
-      .check strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .check span {
-        color: var(--muted);
-      }
-
-      .footer {
-        border-top: 1px solid var(--line);
-        background: #121815;
-      }
-
-      .footer-inner {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 22px 20px;
-        color: var(--muted);
-        font-size: 0.94rem;
-      }
-
-      .footer-project {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--accent-dark);
-        text-decoration: none;
-      }
-
-      .footer-project img {
-        width: 18px;
-        height: 18px;
-        flex: 0 0 auto;
-      }
-
-      @media (max-width: 860px) {
-        .hero,
-        .media-row,
-        .requirements,
-        .checklist,
-        .photo-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .hero {
-          min-height: auto;
-        }
-
-        .step {
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
-      }
-
-      @media (max-width: 560px) {
-        .site-header {
-          padding-top: 28px;
-        }
-
-        h1 {
-          font-size: 2.22rem;
-        }
-
-        .hero-copy {
-          font-size: 1.02rem;
-        }
-
-        .hero-actions {
-          align-items: stretch;
-          flex-direction: column;
-        }
-
-        .button-link {
-          width: 100%;
-        }
-
-        nav .inner {
-          padding-inline: 12px;
-        }
-
-        main {
-          padding-inline: 14px;
-        }
-
-        .step {
-          padding: 18px;
-        }
-
-        .field-table,
-        .field-table tbody,
-        .field-table tr,
-        .field-table td,
-        .field-table th {
-          display: block;
-          width: 100%;
-        }
-
-        .field-table thead {
-          display: none;
-        }
-
-        .field-table td:first-child {
-          width: 100%;
-          border-bottom: 0;
-          padding-bottom: 2px;
-        }
-      }
-    </style>
   </head>
   <body>
+    <a class="uhs-skip" href="#main">Aller au contenu</a>
 
-    <div class="language-switch" aria-label="Sélecteur de langue">
-      <a href="../en/" aria-label="English"><img src="../../assets/flags/en.svg" alt="" aria-hidden="true" title="English"></a>
-      <a href="./" aria-current="page" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" aria-hidden="true" title="Français"></a>
-    </div>
-    <header class="site-header">
-      <section class="hero" aria-labelledby="page-title">
-        <div>
-          <p class="eyebrow">Configuration M5Stack Dial</p>
-          <h1 id="page-title">Guide d'installation logicielle Ultimate Homebrewing Scale</h1>
-          <p class="hero-copy">
-            Flashez le firmware personnalisé, connectez le Dial au Wi-Fi, renseignez vos identifiants Brewfather
-            et calibrez la balance depuis l'assistant intégré.
-          </p>
-          <div class="hero-actions">
-            <a class="button-link" href="#flash">Commencer par le firmware</a>
-            <a class="button-link secondary" href="#calibrate">Aller à la calibration</a>
-          </div>
-        </div>
-
-        <aside class="hero-panel" aria-label="Résumé de l'installation">
-          <img src="../img/DialQRCode.jpg" alt="Écran de réglages du M5Stack Dial affichant un QR code vers le portail de configuration">
-          <dl class="quick-list">
-            <dt>Appareil</dt>
-            <dd>M5Stack Dial / ESP32-S3</dd>
-            <dt>Point d'accès de configuration</dt>
-            <dd><code>UHS-Setup</code></dd>
-            <dt>Adresse du portail</dt>
-            <dd><code>http://192.168.4.1:8080/</code></dd>
-          </dl>
-        </aside>
-      </section>
+    <header class="uhs-header">
+      <div class="wrap">
+        <nav class="uhs-lang" aria-label="Langue">
+          <a href="../en/" hreflang="en" lang="en" title="English" aria-label="English"><img src="../../assets/flags/en.svg" alt="" width="24" height="24"></a>
+          <a href="./" hreflang="fr" lang="fr" aria-current="true" title="Français" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" width="24" height="24"></a>
+        </nav>
+      </div>
     </header>
 
-    <nav aria-label="Étapes d'installation">
-      <div class="inner">
-        <a href="#requirements">Prérequis</a>
-        <a href="#flash">Flash</a>
-        <a href="#wifi">Configuration Wi-Fi</a>
-        <a href="#brewfather">Brewfather</a>
-        <a href="#calibrate">Calibration</a>
-        <a href="#done">Fin</a>
+    <section class="uhs-hero" aria-labelledby="page-title">
+      <div class="wrap">
+        <div class="uhs-hero__grid">
+          <div class="uhs-hero__head">
+            <svg class="uhs-hero__logo" viewBox="0 0 120 120" role="img" aria-label="Ultimate Homebrewing Scale">
+              <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+              <g fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round">
+                <path d="M46 38A16.5 16.5 0 0 1 46 18" stroke-opacity=".32"/>
+                <path d="M74 18A16.5 16.5 0 0 1 74 38" stroke-opacity=".32"/>
+                <path d="M52.5 34A10 10 0 0 1 52.5 22" stroke-opacity=".7"/>
+                <path d="M67.5 22A10 10 0 0 1 67.5 34" stroke-opacity=".7"/>
+              </g>
+              <circle cx="60" cy="28" r="5.5" fill="#FFFFFF"/>
+              <rect x="30" y="52" width="14" height="20" rx="7" fill="#13A923"/>
+              <rect x="53" y="42" width="14" height="30" rx="7" fill="#FBB500"/>
+              <rect x="76" y="48" width="14" height="24" rx="7" fill="#C9CED6"/>
+              <rect x="22" y="72" width="76" height="9" rx="4.5" fill="#FFFFFF"/>
+              <rect x="55.5" y="81" width="9" height="11" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+              <rect x="37" y="92" width="46" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+            </svg>
+
+            <div class="uhs-hero__text">
+              <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="uhs-eyebrow">Configuration M5Stack Dial</p>
+              <h1 id="page-title">Guide d'installation logicielle Ultimate Homebrewing Scale</h1>
+              <p class="uhs-lede">
+                Flashez le firmware personnalisé, connectez le Dial au Wi-Fi, renseignez vos identifiants Brewfather
+                et calibrez la balance depuis l'assistant intégré.
+              </p>
+              <div class="uhs-actions">
+                <a class="uhs-btn" href="#flash">
+                  Commencer par le firmware
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
+                <a class="uhs-btn uhs-btn--ghost" href="#calibrate">
+                  Aller à la calibration
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10"/><path d="M4 9l4 4 4-4"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <aside class="uhs-hero__panel" aria-label="Résumé de l'installation">
+            <figure class="uhs-figure uhs-hero__figure">
+              <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="Écran de réglages du M5Stack Dial affichant un QR code vers le portail de configuration">
+            </figure>
+          </aside>
+        </div>
+
+        <div class="uhs-facts">
+          <div>
+            <p class="uhs-facts__label">Appareil</p>
+            <p class="uhs-facts__value">M5Stack Dial / ESP32-S3</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Point d'accès de configuration</p>
+            <p class="uhs-facts__value"><code>UHS-Setup</code></p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Adresse du portail</p>
+            <p class="uhs-facts__value"><code>http://192.168.4.1:8080/</code></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="uhs-toc" aria-label="Sur cette page">
+      <div class="wrap">
+        <a class="uhs-toc__brand" href="/UltimateHomebrewingScale/" aria-label="Ultimate Homebrewing Scale — accueil de la documentation">
+          <svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true">
+            <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+            <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+            <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+            <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+            <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+            <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+            <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+          </svg>
+          <span>uhs</span>
+        </a>
+        <div class="uhs-toc__sep" aria-hidden="true"></div>
+        <ul>
+          <li><a href="#requirements">Prérequis</a></li>
+          <li><a href="#flash">Flash</a></li>
+          <li><a href="#wifi">Configuration Wi-Fi</a></li>
+          <li><a href="#brewfather">Brewfather</a></li>
+          <li><a href="#calibrate">Calibration</a></li>
+          <li><a href="#done">Fin</a></li>
+        </ul>
       </div>
     </nav>
 
-    <main>
-      <section id="requirements" class="section">
-        <div class="section-head">
+    <main id="main">
+      <section id="requirements" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Avant de commencer</h2>
-          <p>
+          <p class="uhs-section__intro">
             Préparez le Dial, le matériel de pesée et les identifiants que vous renseignerez après le premier démarrage.
           </p>
-        </div>
 
-        <div class="requirements">
-          <article class="tile">
-            <h3>M5Stack Dial</h3>
-            <p>Utilisez un câble USB-C data. Les câbles uniquement prévus pour la charge échouent souvent au flash.</p>
-          </article>
-          <article class="tile">
-            <h3>Navigateur ordinateur</h3>
-            <p>Le flash du firmware utilise Web Serial : utilisez Chrome ou Edge sur un ordinateur.</p>
-          </article>
-          <article class="tile">
-            <h3>Smartphone</h3>
-            <p>Utilisez-le après le flash pour rejoindre le Wi-Fi de configuration du Dial et scanner le QR code.</p>
-          </article>
-          <article class="tile">
-            <h3>Accès Brewfather</h3>
-            <p>Préparez sur votre téléphone votre user ID Brewfather et votre clé API pour pouvoir les coller dans le portail.</p>
-          </article>
-          <article class="tile">
-            <h3>Poids de calibration</h3>
-            <p>L'assistant utilise par défaut les points 0 g, 100 g, 500 g, 5000 g et 25000 g.</p>
-          </article>
+          <div class="uhs-cards">
+            <article class="uhs-card">
+              <h3>M5Stack Dial</h3>
+              <p>Utilisez un câble USB-C data. Les câbles uniquement prévus pour la charge échouent souvent au flash.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Navigateur ordinateur</h3>
+              <p>Le flash du firmware utilise Web Serial : utilisez Chrome ou Edge sur un ordinateur.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Smartphone</h3>
+              <p>Utilisez-le après le flash pour rejoindre le Wi-Fi de configuration du Dial et scanner le QR code.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Accès Brewfather</h3>
+              <p>Préparez sur votre téléphone votre user ID Brewfather et votre clé API pour pouvoir les coller dans le portail.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Poids de calibration</h3>
+              <p>L'assistant utilise par défaut les points 0 g, 100 g, 500 g, 5000 g et 25000 g.</p>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section class="section">
-        <div class="section-head">
+      <section id="steps" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Étapes d'installation</h2>
-          <p>
+          <p class="uhs-section__intro">
             Suivez les étapes dans l'ordre. Le Dial redémarrera plusieurs fois ; c'est normal.
           </p>
-        </div>
 
-        <div class="guide-grid">
-          <article id="flash" class="step">
-            <div class="step-number" aria-hidden="true">1</div>
-            <div class="step-body">
+          <ol class="uhs-steps">
+            <li id="flash" class="uhs-step">
               <h3>Mettre le Dial en mode flash firmware</h3>
               <p>
                 Débranchez l'USB-C. Maintenez le bouton arrière <strong>BOOT / G0</strong>, branchez le Dial à votre
                 ordinateur en gardant le bouton appuyé, puis relâchez-le une fois la connexion USB établie.
               </p>
-              <div class="media-row">
-                <figure class="photo-card">
-                  <img src="../img/HoldG0.jpg" alt="Arriere du M5Stack Dial avec le bouton G0 maintenu pendant la connexion USB-C">
-                  <figcaption>Maintenez le bouton arrière G0 pendant le branchement USB-C.</figcaption>
-                </figure>
-                <div>
-                  <div class="callout info">
-                    <strong>Astuce :</strong> si le navigateur ne trouve aucun port série à l'étape suivante,
-                    débranchez le Dial et répétez cette séquence de mode flash.
-                  </div>
-                  <p>
-                    Sur le M5Stack Dial, c'est la séquence de mode téléchargement de l'ESP32-S3 : maintenez G0
-                    avant la mise sous tension, puis relâchez après l'alimentation. M5Stack le documente dans les
-                    <a href="https://docs.m5stack.com/en/core/M5Dial#download-mode">notes du mode download du Dial</a>.
-                  </p>
-                </div>
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../img/HoldG0.jpg" width="2268" height="2892" alt="Arriere du M5Stack Dial avec le bouton G0 maintenu pendant la connexion USB-C">
+                <figcaption>Maintenez le bouton arrière G0 pendant le branchement USB-C.</figcaption>
+              </figure>
+              <div class="uhs-note uhs-note--tip">
+                <p><strong class="uhs-note__label">Astuce :</strong> si le navigateur ne trouve aucun port série à l'étape suivante,
+                débranchez le Dial et répétez cette séquence de mode flash.</p>
               </div>
-            </div>
-          </article>
+              <p>
+                Sur le M5Stack Dial, c'est la séquence de mode téléchargement de l'ESP32-S3 : maintenez G0
+                avant la mise sous tension, puis relâchez après l'alimentation. M5Stack le documente dans les
+                <a href="https://docs.m5stack.com/en/core/M5Dial#download-mode">notes du mode download du Dial</a>.
+              </p>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">2</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Flasher le firmware depuis cette page</h3>
               <p>
                 Cliquez sur le bouton d'installation, choisissez le port série du Dial et suivez les instructions du navigateur.
                 Si l'effacement de l'appareil est proposé, choisissez l'option d'effacement pour une première installation propre.
               </p>
-              <div class="flash-box">
-                <esp-web-install-button manifest="https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest/UHS-web-install-manifest.json"></esp-web-install-button>
+              <div class="uhs-install">
+                <esp-web-install-button manifest="https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest/UHS-web-install-manifest.json">
+                  <button slot="activate" type="button" class="uhs-btn">
+                    Installer le firmware
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                  </button>
+                </esp-web-install-button>
               </div>
-              <div class="callout warning">
-                <strong>Compatibilité navigateur :</strong> le flash web fonctionne depuis Chrome ou Edge sur ordinateur.
-                Les navigateurs mobiles et Safari n'exposént généralement pas la connexion série requise.
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Compatibilité navigateur :</strong> le flash web fonctionne depuis Chrome ou Edge sur ordinateur.
+                Les navigateurs mobiles et Safari n'exposént généralement pas la connexion série requise.</p>
               </div>
-            </div>
-          </article>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">3</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Redémarrer après le flash</h3>
               <p>
                 Quand le flash est terminé, débranchez et rebranchez l'USB-C, ou appuyez sur reset.
@@ -734,12 +217,9 @@
                 Comme aucun identifiant Wi-Fi n'est encore enregistré, le Dial démarre son propre point d'accès de configuration
                 et affiche un QR code sur l'écran rond.
               </p>
-            </div>
-          </article>
+            </li>
 
-          <article id="wifi" class="step">
-            <div class="step-number" aria-hidden="true">4</div>
-            <div class="step-body">
+            <li id="wifi" class="uhs-step">
               <h3>Connecter votre smartphone au Wi-Fi de configuration du Dial</h3>
               <p>
                 Sur votre smartphone, ouvrez les réglages Wi-Fi et rejoignez <code>UHS-Setup</code>. Le réseau de configuration
@@ -749,135 +229,126 @@
                 Restez connecté à ce Wi-Fi même si le téléphone indique qu'il n'a pas accès à Internet.
                 Le téléphone doit seulement joindre le Dial en local.
               </p>
-              <div class="callout warning">
-                <strong>Important :</strong> si la page de configuration ne s'ouvre pas, désactivez temporairement les
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Important :</strong> si la page de configuration ne s'ouvre pas, désactivez temporairement les
                 données mobiles/5G. Certains téléphones préfèrent la connexion mobile quand le Wi-Fi <code>UHS-Setup</code>
-                n'a pas d'accès Internet, ce qui empêche d'atteindre le Dial en local.
+                n'a pas d'accès Internet, ce qui empêche d'atteindre le Dial en local.</p>
               </div>
-            </div>
-          </article>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">5</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Scanner le QR code et ouvrir le portail de configuration</h3>
               <p>
                 Scannez le QR code affiché sur le Dial. Il ouvre la page de configuration intégrée, normalement à
                 <code>http://192.168.4.1:8080/</code>.
               </p>
-              <div class="media-row">
-                <figure class="photo-card">
-                  <img src="../img/DialQRCode.jpg" alt="Écran de réglages du Dial affichant le QR code à scanner">
-                  <figcaption>Le QR code apparaît sur l'écran de réglages du Dial.</figcaption>
-                </figure>
-                <p>
-                  Si l'application appareil photo n'ouvre pas la page, gardez le téléphone connecté à <code>UHS-Setup</code>
-                  et saisissez l'adresse manuellement dans le navigateur.
-                </p>
-              </div>
-            </div>
-          </article>
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="Écran de réglages du Dial affichant le QR code à scanner">
+                <figcaption>Le QR code apparaît sur l'écran de réglages du Dial.</figcaption>
+              </figure>
+              <p>
+                Si l'application appareil photo n'ouvre pas la page, gardez le téléphone connecté à <code>UHS-Setup</code>
+                et saisissez l'adresse manuellement dans le navigateur.
+              </p>
+            </li>
 
-          <article id="brewfather" class="step">
-            <div class="step-number" aria-hidden="true">6</div>
-            <div class="step-body">
+            <li id="brewfather" class="uhs-step">
               <h3>Renseigner le Wi-Fi, Brewfather et les réglages de l'app</h3>
               <p>
                 La page du portail est volontairement simple. Renseignez les valeurs ci-dessous, puis vérifiez-les avant de sauvegarder.
               </p>
 
-              <figure class="photo-card">
-                <img src="../img/PortalPage.png" alt="Navigateur smartphone affichant les champs du portail de configuration Ultimate Homebrewing Scale">
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../img/PortalPage.png" width="1020" height="2223" alt="Navigateur smartphone affichant les champs du portail de configuration Ultimate Homebrewing Scale">
                 <figcaption>Portail de configuration ouvert depuis le QR code en étant connecté à <code>UHS-Setup</code>.</figcaption>
               </figure>
 
-              <table class="field-table">
-                <thead>
-                  <tr>
-                    <th>Champ</th>
-                    <th>Valeur à saisir</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Language</td>
-                    <td>Choisissez <code>English</code> ou <code>French</code> pour l'interface du Dial.</td>
-                  </tr>
-                  <tr>
-                    <td>Wi-Fi SSID</td>
-                    <td>Saisissez le nom exact de votre réseau Wi-Fi 2,4 GHz.</td>
-                  </tr>
-                  <tr>
-                    <td>Wi-Fi password</td>
-                    <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
-                  </tr>
-                  <tr>
-                    <td>Brewing software</td>
-                    <td>Laissez <code>brewfather</code> sélectionné.</td>
-                  </tr>
-                  <tr>
-                    <td>Brewfather user id</td>
-                    <td>Collez votre user ID API Brewfather.</td>
-                  </tr>
-                  <tr>
-                    <td>Brewfather API key</td>
-                    <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
-                  </tr>
-                  <tr>
-                    <td>Grain tolerance (g)</td>
-                    <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée plus large ou plus stricte.</td>
-                  </tr>
-                  <tr>
-                    <td>Hop tolerance (g)</td>
-                    <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée houblon plus large ou plus stricte.</td>
-                  </tr>
-                  <tr>
-                    <td>Spunding valve inertia (ml)</td>
-                    <td>Gardez <code>200</code> ml par défaut ; ce paramètre servira au keg filler pour compenser l'inertie de fermeture.</td>
-                  </tr>
-                  <tr>
-                    <td>Standby after (min, 0 = off)</td>
-                    <td>
-                      Minutes sans activité avant la mise en veille du Dial. <strong>Saisissez <code>30</code></strong> :
-                      c'est la valeur recommandée sur secteur et une nécessité sur batterie. <code>0</code> désactive la veille.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Battery powered</td>
-                    <td>Cochez cette case <strong>uniquement si une batterie est installée</strong> dans le Dial. Laissez-la décochée sur secteur.</td>
-                  </tr>
-                  <tr>
-                    <td>Debug mode</td>
-                    <td>Laissez décoché. Ne cochez que pour relever des traces mémoire lors d'un signalement de problème.</td>
-                  </tr>
-                  <tr>
-                    <td>Release channel</td>
-                    <td>Gardez <code>stable</code> pour les installations normales. <code>prerelease</code> accepte la dernière pré-version.</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="callout">
-                <strong>Sauvegarder et redémarrer :</strong> appuyez sur <strong>Save and reboot</strong>. Le Dial enregistre
-                les identifiants Wi-Fi et les réglages de l'app, puis redémarre automatiquement.
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Champ</th>
+                      <th>Valeur à saisir</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Language</td>
+                      <td>Choisissez <code>English</code> ou <code>French</code> pour l'interface du Dial.</td>
+                    </tr>
+                    <tr>
+                      <td>Wi-Fi SSID</td>
+                      <td>Saisissez le nom exact de votre réseau Wi-Fi 2,4 GHz.</td>
+                    </tr>
+                    <tr>
+                      <td>Wi-Fi password</td>
+                      <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewing software</td>
+                      <td>Laissez <code>brewfather</code> sélectionné.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewfather user id</td>
+                      <td>Collez votre user ID API Brewfather.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewfather API key</td>
+                      <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
+                    </tr>
+                    <tr>
+                      <td>Grain tolerance (g)</td>
+                      <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée plus large ou plus stricte.</td>
+                    </tr>
+                    <tr>
+                      <td>Hop tolerance (g)</td>
+                      <td>Gardez la valeur par défaut sauf si vous voulez une tolérance de pesée houblon plus large ou plus stricte.</td>
+                    </tr>
+                    <tr>
+                      <td>Spunding valve inertia (ml)</td>
+                      <td>Gardez <code>200</code> ml par défaut ; ce paramètre servira au keg filler pour compenser l'inertie de fermeture.</td>
+                    </tr>
+                    <tr>
+                      <td>Standby after (min, 0 = off)</td>
+                      <td>
+                        Minutes sans activité avant la mise en veille du Dial. <strong>Saisissez <code>30</code></strong> :
+                        c'est la valeur recommandée sur secteur et une nécessité sur batterie. <code>0</code> désactive la veille.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Battery powered</td>
+                      <td>Cochez cette case <strong>uniquement si une batterie est installée</strong> dans le Dial. Laissez-la décochée sur secteur.</td>
+                    </tr>
+                    <tr>
+                      <td>Debug mode</td>
+                      <td>Laissez décoché. Ne cochez que pour relever des traces mémoire lors d'un signalement de problème.</td>
+                    </tr>
+                    <tr>
+                      <td>Release channel</td>
+                      <td>Gardez <code>stable</code> pour les installations normales. <code>prerelease</code> accepte la dernière pré-version.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
-              <div class="callout info">
-                <strong>Fonctionnement sur batterie :</strong> si vous avez installé la cellule LiPo optionnelle,
+              <div class="uhs-note uhs-note--tip">
+                <p><strong class="uhs-note__label">Sauvegarder et redémarrer :</strong> appuyez sur <strong>Save and reboot</strong>. Le Dial enregistre
+                les identifiants Wi-Fi et les réglages de l'app, puis redémarre automatiquement.</p>
+              </div>
+
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Fonctionnement sur batterie :</strong> si vous avez installé la cellule LiPo optionnelle,
                 ces deux réglages vont ensemble. <strong>Standby after</strong> à <code>30</code> minutes évite
                 qu'un écran resté allumé ne vide la charge, et <strong>Battery powered</strong> arme un watchdog
                 de 15 secondes qui redémarre le Dial si l'application se fige. Ce watchdog compte sur batterie
                 parce qu'il n'y a aucune prise à débrancher, alors qu'une installation sur secteur se récupère
                 toujours en coupant le courant. Le Dial sort de veille quand vous <strong>touchez l'écran</strong> —
                 le bouton rotatif ne peut pas le réveiller. Le réveil est un redémarrage complet : le Dial revient
-                sur le launcher et non sur l'écran quitté.
+                sur le launcher et non sur l'écran quitté.</p>
               </div>
-            </div>
-          </article>
+            </li>
 
-          <article id="calibrate" class="step">
-            <div class="step-number" aria-hidden="true">7</div>
-            <div class="step-body">
+            <li id="calibrate" class="uhs-step">
               <h3>Lancer l'assistant de calibration de la balance</h3>
               <p>
                 Apres redémarrage, l'app cherche <code>scale_calibration.json</code>. Lors d'une installation neuve,
@@ -890,30 +361,27 @@
                 <li>Appuyez sur le bouton du Dial pour lancer la mesure et gardez le poids immobile pendant le compte à rebours de 30 secondes.</li>
                 <li>Répétez l'opération pour tous les points de calibration.</li>
               </ol>
-              <div class="photo-grid">
-                <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-connect-scale.jpg" alt="Écran d'introduction de calibration demandant de connecter la balance">
+              <div class="uhs-figures">
+                <figure class="uhs-figure">
+                  <img src="../img/ScaleCalibration-connect-scale.jpg" width="2268" height="2194" alt="Écran d'introduction de calibration demandant de connecter la balance">
                   <figcaption>Connectez la balance et appuyez sur OK.</figcaption>
                 </figure>
-                <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-ajust-weight.jpg" alt="Écran de calibration du Dial pour ajuster le poids cible">
+                <figure class="uhs-figure">
+                  <img src="../img/ScaleCalibration-ajust-weight.jpg" width="2268" height="3004" alt="Écran de calibration du Dial pour ajuster le poids cible">
                   <figcaption>Tournez le Dial si le poids cible doit être ajusté.</figcaption>
                 </figure>
-                <figure class="photo-card">
-                  <img src="../img/ScaleCalibration-process-steo.jpg" alt="Écran de mesure de calibration avec barre de progression et compte à rebours">
+                <figure class="uhs-figure">
+                  <img src="../img/ScaleCalibration-process-steo.jpg" width="2268" height="2646" alt="Écran de mesure de calibration avec barre de progression et compte à rebours">
                   <figcaption>Gardez la balance immobile pendant chaque mesure de 30 secondes.</figcaption>
                 </figure>
               </div>
-              <div class="callout warning">
-                <strong>La stabilité compte :</strong> placez la balance sur une surface plane et évitez de toucher la
-                charge pendant chaque mesure de 30 secondes. De meilleures données de calibration donnent de meilleurs poids de brassage.
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">La stabilité compte :</strong> placez la balance sur une surface plane et évitez de toucher la
+                charge pendant chaque mesure de 30 secondes. De meilleures données de calibration donnent de meilleurs poids de brassage.</p>
               </div>
-            </div>
-          </article>
+            </li>
 
-          <article id="done" class="step">
-            <div class="step-number" aria-hidden="true">8</div>
-            <div class="step-body">
+            <li id="done" class="uhs-step">
               <h3>Redémarrer depuis la fin de l'assistant</h3>
               <p>
                 Quand le dernier point de calibration est terminé, le Dial enregistre le fichier de calibration et affiche
@@ -923,45 +391,47 @@
                 L'application effectue un redémarrage logiciel. Au démarrage suivant, le Wi-Fi et la calibration sont enregistrés,
                 le launcher s'ouvre normalement et la balance est prête à être utilisée avec les recettes Brewfather.
               </p>
-            </div>
-          </article>
+            </li>
+          </ol>
         </div>
       </section>
 
-      <section class="section">
-        <div class="section-head">
+      <section id="troubleshooting" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Dépannage rapide</h2>
-          <p>
+          <p class="uhs-section__intro">
             La plupart des problèmes de configuration viennent du câble USB, du mode flash, du basculement Wi-Fi du téléphone ou d'un mouvement pendant la calibration.
           </p>
-        </div>
 
-        <div class="checklist">
-          <div class="check">
-            <strong>Aucun port série n'apparaît</strong>
-            <span>Utilisez un câble USB-C compatible data et répétez la séquence de mode flash avec le bouton arrière BOOT / G0.</span>
-          </div>
-          <div class="check">
-            <strong>Le téléphone n'ouvre pas la page QR</strong>
-            <span>Reconnectez-vous à <code>UHS-Setup</code>, coupez temporairement les données mobiles/5G, puis ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</span>
-          </div>
-          <div class="check">
-            <strong>Le Wi-Fi ne se connecté pas après sauvegarde</strong>
-            <span>Rouvrez le portail de configuration depuis Settings, vérifiez l'orthographe du SSID et confirmez qu'il s'agit d'un réseau 2,4 GHz.</span>
-          </div>
-          <div class="check">
-            <strong>Les poids semblent incorrects</strong>
-            <span>Relancez l'assistant de calibration et laissez la balance vide pour le point 0 g.</span>
-          </div>
+          <dl class="uhs-troubleshoot">
+            <dt>Aucun port série n'apparaît</dt>
+            <dd>Utilisez un câble USB-C compatible data et répétez la séquence de mode flash avec le bouton arrière BOOT / G0.</dd>
+            <dt>Le téléphone n'ouvre pas la page QR</dt>
+            <dd>Reconnectez-vous à <code>UHS-Setup</code>, coupez temporairement les données mobiles/5G, puis ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</dd>
+            <dt>Le Wi-Fi ne se connecté pas après sauvegarde</dt>
+            <dd>Rouvrez le portail de configuration depuis Settings, vérifiez l'orthographe du SSID et confirmez qu'il s'agit d'un réseau 2,4 GHz.</dd>
+            <dt>Les poids semblent incorrects</dt>
+            <dd>Relancez l'assistant de calibration et laissez la balance vide pour le point 0 g.</dd>
+          </dl>
         </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        <a class="footer-project" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
-          Projet Git : https://github.com/bnbbrewers/UltimateHomebrewingScale
-        </a>
+    <footer class="uhs-footer">
+      <div class="wrap">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+          <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+          <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+          <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+          <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+          <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+          <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+        </svg>
+        <a href="https://github.com/bnbbrewers/UltimateHomebrewingScale">github.com/bnbbrewers/UltimateHomebrewingScale</a>
+        <span>GPL-3.0</span>
+        <a href="../en/" hreflang="en" lang="en">English</a>
       </div>
     </footer>
   </body>
