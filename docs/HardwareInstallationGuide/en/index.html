@@ -6,976 +6,376 @@
     <title>Ultimate Homebrewing Scale Hardware Installation Guide</title>
     <meta
       name="description"
-      content="Standalone hardware guide for sourcing, preparing, and assembling the Ultimate Homebrewing Scale."
+      content="Parts list, enclosure preparation, and wiring diagrams for building the Ultimate Homebrewing Scale around an M5Stack Dial."
     >
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #101412;
-        --paper: #171d1a;
-        --paper-strong: #202823;
-        --ink: #f2f6f2;
-        --muted: #a6b4ad;
-        --line: #334139;
-        --accent: #28a977;
-        --accent-dark: #7ee0b3;
-        --amber: #d8903f;
-        --blue: #63a7e8;
-        --soft-green: #173428;
-        --soft-amber: #332617;
-        --soft-blue: #17293b;
-        --shadow: 0 22px 55px rgba(0, 0, 0, 0.38);
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        margin: 0;
-        background:
-          radial-gradient(circle at 18% 0%, rgba(40, 169, 119, 0.2), transparent 330px),
-          linear-gradient(180deg, rgba(19, 35, 29, 0.92), rgba(16, 20, 18, 0) 460px),
-          var(--bg);
-        color: var(--ink);
-        line-height: 1.58;
-      }
-
-      a {
-        color: var(--accent-dark);
-        font-weight: 650;
-        text-decoration-thickness: 0.08em;
-        text-underline-offset: 0.18em;
-      }
-
-      code {
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: #101714;
-        padding: 0.1rem 0.35rem;
-        color: #d9f7e9;
-        font-size: 0.92em;
-      }
-
-
-
-      .language-switch {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 20;
-        display: inline-flex;
-        gap: 4px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(18, 24, 21, 0.92);
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-        padding: 4px;
-        backdrop-filter: blur(12px);
-      }
-
-      .language-switch a {
-        display: inline-flex;
-        min-height: 34px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        color: var(--muted);
-        width: 38px;
-        padding: 0;
-        font-size: 0.9rem;
-        font-weight: 760;
-        text-decoration: none;
-      }
-
-      .language-switch a[aria-current="page"] {
-        background: var(--accent);
-        color: #fff;
-      }
-
-      .language-switch img {
-        width: 24px;
-        height: 16px;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32);
-        display: block;
-        flex: 0 0 auto;
-        object-fit: cover;
-      }
-
-      .site-header {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 40px 20px 18px;
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-        gap: 28px;
-        align-items: center;
-        min-height: 520px;
-      }
-
-      .eyebrow {
-        margin: 0 0 14px;
-        color: var(--accent-dark);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      h1,
-      h2,
-      h3 {
-        line-height: 1.12;
-      }
-
-      h1 {
-        max-width: 820px;
-        margin: 0;
-        font-size: clamp(2.35rem, 5vw, 5rem);
-        letter-spacing: 0;
-      }
-
-      .hero-copy {
-        max-width: 690px;
-        margin: 20px 0 0;
-        color: var(--muted);
-        font-size: 1.15rem;
-      }
-
-      .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-top: 28px;
-      }
-
-      .button-link {
-        display: inline-flex;
-        min-height: 44px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 7px;
-        border: 1px solid var(--accent);
-        background: var(--accent);
-        color: #fff;
-        padding: 0 18px;
-        font-weight: 760;
-        text-decoration: none;
-      }
-
-      .button-link.secondary {
-        background: transparent;
-        color: var(--accent-dark);
-        border-color: #3d6958;
-      }
-
-      .hero-panel,
-      .product-photo {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(23, 29, 26, 0.88);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-
-      .diagram {
-        display: grid;
-        gap: 10px;
-        padding: 22px;
-        background:
-          linear-gradient(135deg, rgba(40, 169, 119, 0.12), rgba(99, 167, 232, 0.08)),
-          #101714;
-      }
-
-      .diagram-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
-        gap: 10px;
-        align-items: center;
-      }
-
-      .diagram-row.secondary {
-        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
-      }
-
-      .diagram-row.down-row {
-        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
-      }
-
-      .diagram-box {
-        min-height: 54px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(23, 29, 26, 0.92);
-        padding: 12px;
-        font-weight: 760;
-      }
-
-      .diagram-box span {
-        display: block;
-        margin-top: 2px;
-        color: var(--muted);
-        font-size: 0.84rem;
-        font-weight: 520;
-      }
-
-      .diagram-arrow {
-        color: var(--accent-dark);
-        font-weight: 850;
-        text-align: center;
-        white-space: nowrap;
-      }
-
-      .diagram-down {
-        color: var(--accent-dark);
-        font-weight: 850;
-        text-align: center;
-      }
-
-      .product-photo {
-        margin: 0;
-      }
-
-      .product-photo img {
-        display: block;
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        object-fit: contain;
-        background: #f7f8f7;
-      }
-
-      .quick-list {
-        margin: 0;
-        padding: 20px 22px 22px;
-      }
-
-      .quick-list dt {
-        color: var(--muted);
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-
-      .quick-list dd {
-        margin: 4px 0 16px;
-        font-weight: 720;
-      }
-
-      .quick-list dd:last-child {
-        margin-bottom: 0;
-      }
-
-      nav {
-        border-top: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-        background: rgba(18, 24, 21, 0.82);
-        backdrop-filter: blur(12px);
-      }
-
-      nav .inner {
-        display: flex;
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 0 20px;
-        gap: 8px;
-        overflow-x: auto;
-      }
-
-      nav a {
-        flex: 0 0 auto;
-        padding: 14px 12px;
-        color: var(--muted);
-        font-size: 0.92rem;
-        text-decoration: none;
-      }
-
-      nav a:hover {
-        color: var(--accent-dark);
-      }
-
-      main {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 36px 20px 72px;
-      }
-
-      .section {
-        margin-top: 46px;
-      }
-
-      .section:first-child {
-        margin-top: 0;
-      }
-
-      .section-head {
-        max-width: 780px;
-        margin-bottom: 22px;
-      }
-
-      .section-head h2 {
-        margin: 0;
-        font-size: clamp(1.7rem, 3vw, 2.35rem);
-      }
-
-      .section-head p {
-        margin: 12px 0 0;
-        color: var(--muted);
-      }
-
-      .parts-grid,
-      .checklist {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .parts-group-title {
-        grid-column: 1 / -1;
-        margin-top: 12px;
-        padding-top: 18px;
-        border-top: 1px solid var(--line);
-      }
-
-      .parts-group-title h3 {
-        margin: 0;
-        font-size: 1.08rem;
-      }
-
-      .parts-group-title p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-
-      .tile,
-      .part-card,
-      .step,
-      .check {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-      }
-
-      .tile,
-      .part-card,
-      .check {
-        padding: 18px;
-      }
-
-      .part-card {
-        display: grid;
-        grid-template-columns: 170px minmax(0, 1fr);
-        gap: 18px;
-        align-items: start;
-      }
-
-      .part-card.wide {
-        grid-template-columns: 1fr;
-      }
-
-      .part-card h3,
-      .step h3,
-      .tile h3 {
-        margin: 0;
-        font-size: 1.04rem;
-      }
-
-      .part-card p,
-      .step p,
-      .step li,
-      .tile p,
-      .check span {
-        color: var(--muted);
-      }
-
-      .part-card p,
-      .tile p {
-        margin: 8px 0 0;
-        font-size: 0.95rem;
-      }
-
-      .part-card ul {
-        margin: 14px 0 0;
-        padding-left: 1.15rem;
-      }
-
-      .part-card li {
-        margin: 7px 0;
-      }
-
-      .requirements {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .guide-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 18px;
-      }
-
-      .step {
-        display: grid;
-        grid-template-columns: 110px minmax(0, 1fr);
-        gap: 22px;
-        padding: 22px;
-        scroll-margin-top: 24px;
-      }
-
-      .step-number {
-        display: grid;
-        width: 72px;
-        height: 72px;
-        place-items: center;
-        border-radius: 50%;
-        background: var(--soft-green);
-        color: var(--accent-dark);
-        font-size: 1.6rem;
-        font-weight: 850;
-      }
-
-      .step h3 {
-        font-size: clamp(1.24rem, 2vw, 1.52rem);
-      }
-
-      .step-body > p:first-of-type {
-        margin-top: 10px;
-      }
-
-      .step-body > p:last-child,
-      .step-body > ul:last-child,
-      .step-body > ol:last-child {
-        margin-bottom: 0;
-      }
-
-      .callout {
-        border-left: 4px solid var(--accent);
-        border-radius: 0 8px 8px 0;
-        background: var(--soft-green);
-        margin: 16px 0;
-        padding: 14px 16px;
-      }
-
-      .callout.warning {
-        border-left-color: var(--amber);
-        background: var(--soft-amber);
-      }
-
-      .callout.info {
-        border-left-color: var(--blue);
-        background: var(--soft-blue);
-      }
-
-      .callout strong,
-      .check strong {
-        color: var(--ink);
-      }
-
-      .field-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 16px 0;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-      }
-
-      .field-table th,
-      .field-table td {
-        border-bottom: 1px solid var(--line);
-        padding: 12px 14px;
-        text-align: left;
-        vertical-align: top;
-      }
-
-      .field-table th {
-        background: var(--paper-strong);
-        color: #d8eee4;
-        font-size: 0.88rem;
-      }
-
-      .field-table tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .field-table td:first-child {
-        width: 240px;
-        font-weight: 720;
-        color: var(--ink);
-      }
-
-      .wiring-diagram {
-        margin: 18px 0;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        overflow: hidden;
-        background: #f7f8f7;
-      }
-
-      .wiring-diagram img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      .wiring-diagram figcaption {
-        padding: 12px 14px;
-        color: var(--muted);
-        font-size: 0.92rem;
-        border-top: 1px solid var(--line);
-        background: var(--paper-strong);
-      }
-
-
-      .check strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .footer {
-        border-top: 1px solid var(--line);
-        background: #121815;
-      }
-
-      .footer-inner {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 22px 20px;
-        color: var(--muted);
-        font-size: 0.94rem;
-      }
-
-      .footer-project {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--accent-dark);
-        text-decoration: none;
-      }
-
-      .footer-project img {
-        width: 18px;
-        height: 18px;
-        flex: 0 0 auto;
-      }
-
-      @media (max-width: 860px) {
-        .hero,
-        .requirements,
-        .parts-grid,
-        .checklist,
-        .part-card {
-          grid-template-columns: 1fr;
-        }
-
-        .hero {
-          min-height: auto;
-        }
-
-        .step {
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
-      }
-
-      @media (max-width: 560px) {
-        .site-header {
-          padding-top: 28px;
-        }
-
-        h1 {
-          font-size: 2.2rem;
-        }
-
-        main {
-          padding-inline: 14px;
-        }
-
-        .step,
-        .part-card,
-        .tile,
-        .check {
-          padding: 18px;
-        }
-
-        .field-table,
-        .field-table tbody,
-        .field-table tr,
-        .field-table td,
-        .field-table th {
-          display: block;
-          width: 100%;
-        }
-
-        .field-table thead {
-          display: none;
-        }
-
-        .field-table td:first-child {
-          width: 100%;
-          border-bottom: 0;
-          padding-bottom: 2px;
-        }
-
-      }
-    </style>
+    <link rel="stylesheet" href="../../assets/css/uhs-docs.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/logo/uhs-logo-dark-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/logo/uhs-logo-dark-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/logo/uhs-logo-dark-180.png">
+    <meta property="og:image" content="https://bnbbrewers.github.io/UltimateHomebrewingScale/assets/logo/uhs-logo-dark-1024.png">
   </head>
   <body>
+    <a class="uhs-skip" href="#main">Skip to content</a>
 
-    <div class="language-switch" aria-label="Language selector">
-      <a href="./" aria-current="page" aria-label="English"><img src="../../assets/flags/en.svg" alt="" aria-hidden="true" title="English"></a>
-      <a href="../fr/" aria-label="Francais"><img src="../../assets/flags/fr.svg" alt="" aria-hidden="true" title="Francais"></a>
-    </div>
-    <header class="site-header">
-      <section class="hero" aria-labelledby="page-title">
-        <div>
-          <p class="eyebrow">Hardware assembly</p>
-          <h1 id="page-title">Ultimate Homebrewing Scale Hardware Installation Guide</h1>
-          <p class="hero-copy">
-            Parts list and wiring diagrams
-          </p>
-          <div class="hero-actions">
-            <a class="button-link" href="#shopping-list">Open the shopping list</a>
-            <a class="button-link secondary" href="../../SoftwareInstallationGuide/en/">Software guide</a>
-          </div>
-        </div>
-
-        <aside class="hero-panel" aria-label="Hardware summary">
-          <div class="diagram" aria-hidden="true">
-            <div class="diagram-row">
-              <div class="diagram-box">M5Stack Dial<span>Display, Wi-Fi, control</span></div>
-              <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">Unit Weight I2C<span>Weight reading</span></div>
-              <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">VEVOR Platform<span>Load cells via RJ9</span></div>
-            </div>
-            <div class="diagram-row down-row">
-              <div class="diagram-down">v</div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-            </div>
-            <div class="diagram-row secondary">
-              <div class="diagram-box">Unit Relay<span>Optional 12V valve</span></div>
-              <div class="diagram-arrow">-&gt;</div>
-              <div class="diagram-box">Spunding valve<span>Mechanical pressure control</span></div>
-            </div>
-          </div>
-          <dl class="quick-list">
-            <dt>Calibration range</dt>
-            <dd>25 kg</dd>
-            <dt>Typical precision</dt>
-            <dd>1 to 4 g after calibration</dd>
-            <dt>Optional feature</dt>
-            <dd>Keg filler with spunding valve</dd>
-          </dl>
-        </aside>
-      </section>
+    <header class="uhs-header">
+      <div class="wrap">
+        <nav class="uhs-lang" aria-label="Language">
+          <a href="./" hreflang="en" lang="en" aria-current="true" title="English" aria-label="English"><img src="../../assets/flags/en.svg" alt="" width="24" height="24"></a>
+          <a href="../fr/" hreflang="fr" lang="fr" title="Français" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" width="24" height="24"></a>
+        </nav>
+      </div>
     </header>
 
-    <nav aria-label="Hardware guide sections">
-      <div class="inner">
-        <a href="#before">Before you start</a>
-        <a href="#shopping-list">Parts</a>
-        <a href="#assembly">Assembly</a>
-        <a href="#keg-filler">Keg filler</a>
-        <a href="#battery">Battery</a>
-        <a href="#software">Software</a>
+    <section class="uhs-hero" aria-labelledby="page-title">
+      <div class="wrap">
+        <div class="uhs-hero__grid">
+          <div class="uhs-hero__head">
+            <svg class="uhs-hero__logo" viewBox="0 0 120 120" role="img" aria-label="Ultimate Homebrewing Scale">
+              <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+              <g fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round">
+                <path d="M46 38A16.5 16.5 0 0 1 46 18" stroke-opacity=".32"/>
+                <path d="M74 18A16.5 16.5 0 0 1 74 38" stroke-opacity=".32"/>
+                <path d="M52.5 34A10 10 0 0 1 52.5 22" stroke-opacity=".7"/>
+                <path d="M67.5 22A10 10 0 0 1 67.5 34" stroke-opacity=".7"/>
+              </g>
+              <circle cx="60" cy="28" r="5.5" fill="#FFFFFF"/>
+              <rect x="30" y="52" width="14" height="20" rx="7" fill="#13A923"/>
+              <rect x="53" y="42" width="14" height="30" rx="7" fill="#FBB500"/>
+              <rect x="76" y="48" width="14" height="24" rx="7" fill="#C9CED6"/>
+              <rect x="22" y="72" width="76" height="9" rx="4.5" fill="#FFFFFF"/>
+              <rect x="55.5" y="81" width="9" height="11" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+              <rect x="37" y="92" width="46" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+            </svg>
+
+            <div class="uhs-hero__text">
+              <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="uhs-eyebrow">Hardware assembly</p>
+              <h1 id="page-title">Ultimate Homebrewing Scale Hardware Installation Guide</h1>
+              <p class="uhs-lede">
+                Parts list and wiring diagrams
+              </p>
+              <div class="uhs-actions">
+                <a class="uhs-btn" href="#shopping-list">
+                  Open the shopping list
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
+                <a class="uhs-btn uhs-btn--ghost" href="../../SoftwareInstallationGuide/en/">
+                  Software guide
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <aside class="uhs-hero__panel" aria-label="Hardware summary">
+            <div class="uhs-diagram" aria-hidden="true">
+              <div class="uhs-diagram__box">M5Stack Dial<span>Display, Wi-Fi, control</span></div>
+              <div class="uhs-diagram__branches">
+                <div class="uhs-diagram__branch">
+                  <div class="uhs-diagram__box">Unit Weight I2C<span>Port A — weight reading</span></div>
+                  <div class="uhs-diagram__link"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v11"/><path d="M4 9l4 4 4-4"/></svg></div>
+                  <div class="uhs-diagram__box">VEVOR Platform<span>Load cells via RJ9</span></div>
+                </div>
+                <div class="uhs-diagram__branch">
+                  <div class="uhs-diagram__box">Unit Relay<span>Port B — optional 12V valve</span></div>
+                  <div class="uhs-diagram__link"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v11"/><path d="M4 9l4 4 4-4"/></svg></div>
+                  <div class="uhs-diagram__box">Spunding valve<span>Mechanical pressure control</span></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="uhs-facts">
+          <div>
+            <p class="uhs-facts__label">Calibration range</p>
+            <p class="uhs-facts__value">25 kg</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Typical precision</p>
+            <p class="uhs-facts__value">1 to 4 g after calibration</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Optional feature</p>
+            <p class="uhs-facts__value">Keg filler with spunding valve</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="uhs-toc" aria-label="On this page">
+      <div class="wrap">
+        <a class="uhs-toc__brand" href="/UltimateHomebrewingScale/" aria-label="Ultimate Homebrewing Scale — documentation home">
+          <svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true">
+            <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+            <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+            <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+            <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+            <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+            <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+            <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+          </svg>
+          <span>uhs</span>
+        </a>
+        <div class="uhs-toc__sep" aria-hidden="true"></div>
+        <ul>
+          <li><a href="#before">Before you start</a></li>
+          <li><a href="#shopping-list">Parts</a></li>
+          <li><a href="#assembly">Assembly</a></li>
+          <li><a href="#keg-filler">Keg filler</a></li>
+          <li><a href="#battery">Battery</a></li>
+          <li><a href="#software">Software</a></li>
+        </ul>
       </div>
     </nav>
 
-    <main>
-      <section id="before" class="section">
-        <div class="section-head">
+    <main id="main">
+      <section id="before" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Before You Start</h2>
-          <p>
+          <p class="uhs-section__intro">
             The goal is a clean, robust scale with no exposed wiring, suited to brewing environments.
           </p>
-        </div>
 
-        <div class="requirements">
-          <article class="tile">
-            <h3>Tools</h3>
-            <p>Screwdrivers, drill, enclosure-safe drill bits, wire cutters, and a wire stripper.</p>
-          </article>
-          <article class="tile">
-            <h3>Wiring</h3>
-            <p>Flexible wire, jack connectors, PG7 cable glands, and an RJ9 cable for the platform.</p>
-          </article>
-          <article class="tile">
-            <h3>Safety</h3>
-            <p>Work with power disconnected. Check 12V polarity before connecting the Dial or the valve.</p>
-          </article>
-          <article class="tile">
-            <h3>Software</h3>
-            <p>After assembly, use the software guide to flash the firmware and calibrate the scale.</p>
-          </article>
-        </div>
+          <div class="uhs-cards">
+            <article class="uhs-card">
+              <h3>Tools</h3>
+              <p>Screwdrivers, drill, enclosure-safe drill bits, wire cutters, and a wire stripper.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Wiring</h3>
+              <p>Flexible wire, jack connectors, PG7 cable glands, and an RJ9 cable for the platform.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Safety</h3>
+              <p>Work with power disconnected. Check 12V polarity before connecting the Dial or the valve.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Software</h3>
+              <p>After assembly, use the software guide to flash the firmware and calibrate the scale.</p>
+            </article>
+          </div>
 
-        <div class="callout warning">
-          <strong>Wet environment:</strong> this project is intended for a garage brewery, but the electronics
-          still need protection. Close the enclosure, use cable glands, and prevent liquid ingress.
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Wet environment:</strong> this project is intended for a garage brewery, but the electronics
+            still need protection. Close the enclosure, use cable glands, and prevent liquid ingress.</p>
+          </div>
         </div>
       </section>
 
-      <section id="shopping-list" class="section">
-        <div class="section-head">
+      <section id="shopping-list" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Shopping List</h2>
-        </div>
 
-        <div class="parts-grid">
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/m5dial.jpg" alt="M5Dial product photo from AliExpress">
-            </figure>
-            <div>
+          <div class="uhs-cards">
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/m5dial.jpg" width="1600" height="1600" alt="M5Dial product photo from AliExpress">
+              </figure>
               <h3>M5Dial</h3>
               <p>
                 The M5Stack Dial provides the ESP32, Wi-Fi, round screen, and rotary encoder. It keeps wiring
                 low and gives the brewer a physical interface that remains usable with wet hands.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/unit-weight-i2c.jpg" alt="Unit Weight I2C product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/unit-weight-i2c.jpg" width="800" height="800" alt="Unit Weight I2C product photo from AliExpress">
+              </figure>
               <h3>Unit Weight I2C</h3>
               <p>
                 The Unit Weight I2C converts the load-cell signal into data the Dial can read. Keep the
                 wiring short and mechanically protected inside the enclosure.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c42It9IZ">Unit Weight I2C</a></li>
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3VIvQvL">Unit Weight I2C alternative link</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/vevor-scale.jpg" alt="VEVOR scale product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/vevor-scale.jpg" width="1600" height="1600" alt="VEVOR scale product photo from AliExpress">
+              </figure>
               <h3>VEVOR Postal Scale</h3>
               <p>
                 Compact, 25 kg max, with an RJ9 connector that makes integration easier.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3xr1w7n">VEVOR scale</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/rj9-cable.png" alt="RJ9 cable product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/rj9-cable.png" width="1000" height="1000" alt="RJ9 cable product photo from AliExpress">
+              </figure>
               <h3>RJ9 Cable</h3>
               <p>
                 The RJ9 cable avoids hard-wiring the scale load cells. It provides a simple connection between
                 the weighing platform and the Unit Weight I2C weight reader.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2u5O1C5">RJ9 cable</a></li>
               </ul>
-            </div>
-          </article>
-
-          <div class="parts-group-title">
-            <h3>Enclosure and Wiring</h3>
+            </article>
           </div>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/abs-enclosure.jpg" alt="Waterproof ABS enclosure product photo from AliExpress">
-            </figure>
-            <div>
+          <h3 class="uhs-subhead">Enclosure and Wiring</h3>
+
+          <div class="uhs-cards">
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/abs-enclosure.jpg" width="800" height="800" alt="Waterproof ABS enclosure product photo from AliExpress">
+              </figure>
               <h3>Waterproof ABS Enclosure</h3>
               <p>
                 The enclosure gathers the electronics, protects the connections, and leaves only the useful cables exposed.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c37dIrCf">Waterproof ABS enclosure — select the 100x68x40mm reference</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/cable-gland.jpg" alt="PG7 cable gland product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/cable-gland.jpg" width="800" height="800" alt="PG7 cable gland product photo from AliExpress">
+              </figure>
               <h3>PG7 Cable Gland</h3>
               <p>
                 The cable gland provides strain relief for the RJ9 cable and helps keep splashes away from the
                 electronics inside the enclosure.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c4UINtHd">Cable gland (REF: PG7 White)</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/jack-connectors.jpg" alt="Jack connectors product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/jack-connectors.jpg" width="820" height="820" alt="Jack connectors product photo from AliExpress">
+              </figure>
               <h3>Jack Connectors</h3>
               <p>
                 Jack connectors make power and optional valve wiring easier to disconnect for service or
                 transport.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Z0z0F5">Jack connectors</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/power-supply.jpg" alt="12V 3A power supply product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/power-supply.jpg" width="800" height="800" alt="12V 3A power supply product photo from AliExpress">
+              </figure>
               <h3>12V 3A Power Supply</h3>
               <p>
                 The 12V supply powers the build and shares the same voltage family as the solenoid valve
                 used by the keg-filler option.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c353g2MJ">Power supply (REF: EU plug, 12V 3A)</a></li>
               </ul>
-            </div>
-          </article>
-          <div class="parts-group-title">
-            <h3>Optional Spunding Valve</h3>
-            <p>Add these parts only if you use keg filling.</p>
+            </article>
           </div>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/unit-relay.png" alt="Unit Relay product photo from AliExpress">
-            </figure>
-            <div>
+          <h3 class="uhs-subhead">Optional Spunding Valve</h3>
+          <p class="uhs-section__intro">Add these parts only if you use keg filling.</p>
+
+          <div class="uhs-cards">
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/unit-relay.png" width="800" height="800" alt="Unit Relay product photo from AliExpress">
+              </figure>
               <h3>Unit Relay</h3>
               <p>
                 The Unit Relay switches the optional 12V solenoid valve for keg filling while keeping the
                 control signal separate from the valve power path.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3OikdVR">Unit Relay</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article id="keg-filler" class="part-card">
-            <figure class="product-photo">
-              <img src="../img/spunding-valve.jpg" alt="Spunding valve product photo from AliExpress">
-            </figure>
-            <div>
+            <article id="keg-filler" class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/spunding-valve.jpg" width="800" height="800" alt="Spunding valve product photo from AliExpress">
+              </figure>
               <h3>Spunding Valve</h3>
               <p>
                 The spunding valve is only required for keg filling. It remains the mechanical pressure
                 regulator while the scale controls the filling stop by weight.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3Ccjltr">Spunding valve</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/solenoid-valve.jpg" alt="Solenoid valve product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/solenoid-valve.jpg" width="800" height="800" alt="Solenoid valve product photo from AliExpress">
+              </figure>
               <h3>Solenoid Valve</h3>
               <p>
                 The normally closed solenoid valve gives the controller a safe way to stop filling. If power is
                 lost, the gas path closes.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c2Q1v85j">Solenoid valve</a></li>
               </ul>
-            </div>
-          </article>
+            </article>
 
-          <article class="part-card">
-            <figure class="product-photo">
-              <img src="../img/adapter-1-8.jpg" alt="1/4 adapter product photo from AliExpress">
-            </figure>
-            <div>
+            <article class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/adapter-1-8.jpg" width="1000" height="1000" alt="1/4 adapter product photo from AliExpress">
+              </figure>
               <h3>1/4 Adapter</h3>
               <p>
                 Connects the spunding valve to the solenoid valve.
               </p>
-              <ul>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3iy7LDR">1/4 Adapter</a></li>
               </ul>
-            </div>
-          </article>
-
-          <div class="parts-group-title">
-            <h3>Optional Battery</h3>
-            <p>Add this part only if you want to use the scale away from a power outlet.</p>
+            </article>
           </div>
 
-          <article id="battery" class="part-card">
-            <figure class="product-photo">
-              <img src="../img/battery.jpg" alt="Flat LiPo cell fitted with a JST 1.25mm 2-pin connector, product photo from AliExpress">
-            </figure>
-            <div>
+          <h3 class="uhs-subhead">Optional Battery</h3>
+          <p class="uhs-section__intro">Add this part only if you want to use the scale away from a power outlet.</p>
+
+          <div class="uhs-cards">
+            <article id="battery" class="uhs-card uhs-card--part">
+              <figure class="uhs-card__photo">
+                <img src="../img/battery.jpg" width="850" height="637" alt="Flat LiPo cell fitted with a JST 1.25mm 2-pin connector, product photo from AliExpress">
+              </figure>
               <h3>LiPo Battery</h3>
-              <p>
-                A flat 3.7 V LiPo cell fitted with a JST 1.25 mm 2-pin connector, thin enough to sit inside the
-                M5Stack Dial back cover. The Dial then runs without the 12 V supply and still powers the Unit
-                Weight I2C through Port A, so weighing works anywhere in the brewery. The Dial recharges the cell
-                over USB-C.
-              </p>
-              <ul>
+              <p>LiPo battery, 3.7 V, JST 1.25 mm 2-pin, 1500 mAh.</p>
+              <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3O6l6n3">LiPo battery</a></li>
               </ul>
-              <p>
-                The connector must be a <strong>JST 1.25 mm 2-pin</strong>: a cell sold with the larger JST-PH
-                2.0 mm connector does not fit the Dial socket. Keg filling is not covered by the battery, since
-                the solenoid valve needs the 12 V supply.
-              </p>
-            </div>
-          </article>
+            </article>
+          </div>
 
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Important:</strong> keg filling is not available on battery.
+            The cell cannot drive the 12 V solenoid valve.</p>
+          </div>
         </div>
       </section>
 
-      <section id="assembly" class="section">
-        <div class="section-head">
+      <section id="assembly" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Hardware Assembly</h2>
-        </div>
 
-        <div class="guide-grid">
-          <article class="step">
-            <div class="step-number" aria-hidden="true">1</div>
-            <div class="step-body">
+          <ol class="uhs-steps">
+            <li class="uhs-step">
               <h3>Prepare The Enclosure</h3>
               <p>
                 Position the M5Stack Dial so the screen and rotary encoder remain accessible. Then mark the
@@ -987,107 +387,102 @@
                 <li>Drill one 8 mm hole for the power jack, and another one for the spunding valve jack if needed.</li>
                 <li>Insert the Units inside the enclosure and secure them with double-sided tape.</li>
               </ol>
-              <div class="callout info">
-                <strong>Using the optional battery?</strong> Fit it now, before the Dial goes into the enclosure.
-                See <a href="#battery-assembly">Fit The Optional Battery</a> at the end of this section.
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Using the optional battery?</strong> Fit it now, before the Dial goes into the enclosure.
+                See <a href="#battery-assembly">Fit The Optional Battery</a> at the end of this section.</p>
               </div>
-            </div>
-          </article>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">2</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Scale Platform Wiring</h3>
               <p>
                 Route the RJ9 cable into the enclosure through a cable gland, then connect it to the Unit Weight I2C
                 weight reader.
               </p>
-              <figure class="wiring-diagram">
-                <img src="../img/unit-weight-rj9-wiring.svg" alt="Unit Weight to RJ9 cable wiring diagram: A+ green, A- red, E- black, E+ white">
+              <figure class="uhs-figure">
+                <img src="../img/unit-weight-rj9-wiring.svg" width="1200" height="680" alt="Unit Weight to RJ9 cable wiring diagram: A+ green, A- red, E- black, E+ white">
                 <figcaption>RJ9 scale cable wiring on the Unit Weight I2C terminal block.</figcaption>
               </figure>
-              <table class="field-table">
-                <thead>
-                  <tr>
-                    <th>Unit Weight Terminal</th>
-                    <th>RJ9 Cable Wire</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>A+</code></td>
-                    <td>Green</td>
-                  </tr>
-                  <tr>
-                    <td><code>A-</code></td>
-                    <td>Red</td>
-                  </tr>
-                  <tr>
-                    <td><code>E-</code></td>
-                    <td>Black</td>
-                  </tr>
-                  <tr>
-                    <td><code>E+</code></td>
-                    <td>White</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="callout info">
-                <strong>Simple integration:</strong> keep the RJ9 connector when possible. It lets you replace
-                or disconnect the platform without redesigning the mechanical assembly.
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Unit Weight Terminal</th>
+                      <th>RJ9 Cable Wire</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>A+</code></td>
+                      <td>Green</td>
+                    </tr>
+                    <tr>
+                      <td><code>A-</code></td>
+                      <td>Red</td>
+                    </tr>
+                    <tr>
+                      <td><code>E-</code></td>
+                      <td>Black</td>
+                    </tr>
+                    <tr>
+                      <td><code>E+</code></td>
+                      <td>White</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </article>
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Simple integration:</strong> keep the RJ9 connector when possible. It lets you replace
+                or disconnect the platform without redesigning the mechanical assembly.</p>
+              </div>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">3</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Connect The Unit Weight I2C To The Dial Port A</h3>
               <p>
                 Connect the red Port A on the M5Stack Dial to the Unit Weight I2C Grove connector with the HY2.0-4P
                 cable. This port provides the 5 V supply and the I2C bus required by the weight reader.
               </p>
-              <table class="field-table">
-                <thead>
-                  <tr>
-                    <th>Grove Wire</th>
-                    <th>M5Stack Dial Port A</th>
-                    <th>Unit Weight I2C</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Black</td>
-                    <td><code>GND</code></td>
-                    <td><code>GND</code></td>
-                  </tr>
-                  <tr>
-                    <td>Red</td>
-                    <td><code>5V</code></td>
-                    <td><code>5V</code></td>
-                  </tr>
-                  <tr>
-                    <td>Yellow</td>
-                    <td><code>G13</code> / <code>SDA</code></td>
-                    <td><code>SDA</code></td>
-                  </tr>
-                  <tr>
-                    <td>White</td>
-                    <td><code>G15</code> / <code>SCL</code></td>
-                    <td><code>SCL</code></td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="callout warning">
-                <strong>Before power-up:</strong> use the red Port A, not Port B. Check that the connector is fully
-                seated and that the Unit Weight I2C responds at I2C address <code>0x26</code>.
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Grove Wire</th>
+                      <th>M5Stack Dial Port A</th>
+                      <th>Unit Weight I2C</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Black</td>
+                      <td><code>GND</code></td>
+                      <td><code>GND</code></td>
+                    </tr>
+                    <tr>
+                      <td>Red</td>
+                      <td><code>5V</code></td>
+                      <td><code>5V</code></td>
+                    </tr>
+                    <tr>
+                      <td>Yellow</td>
+                      <td><code>G13</code> / <code>SDA</code></td>
+                      <td><code>SDA</code></td>
+                    </tr>
+                    <tr>
+                      <td>White</td>
+                      <td><code>G15</code> / <code>SCL</code></td>
+                      <td><code>SCL</code></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </article>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Before power-up:</strong> use the red Port A, not Port B. Check that the connector is fully
+                seated and that the Unit Weight I2C responds at I2C address <code>0x26</code>.</p>
+              </div>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">4</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Distribute The 12V Supply</h3>
               <p>
                 The 12V 3A power supply is the main input. Use jack connectors for a clean power entry, then
@@ -1098,12 +493,9 @@
                 <li>Keep a common ground for modules that communicate with each other.</li>
                 <li>Insulate connections with heat-shrink tubing or suitable terminal blocks.</li>
               </ol>
-            </div>
-          </article>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">5</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Add The Relay And Solenoid Valve</h3>
               <p>
                 For keg filling, the relay drives the normally closed 12V solenoid valve. If the system loses
@@ -1114,62 +506,58 @@
                 <li>Route the valve output through its own cable gland.</li>
                 <li>Install the valve on the gas path associated with the spunding valve, not on the beer line.</li>
               </ol>
-              <figure class="wiring-diagram">
-                <img src="../img/unit-relay-solenoid-wiring.svg" alt="Unit Relay to 12V solenoid valve wiring diagram: 12V positive to COM, NO to valve positive, valve negative to 12V negative, NC unused">
+              <figure class="uhs-figure">
+                <img src="../img/unit-relay-solenoid-wiring.svg" width="1400" height="860" alt="Unit Relay to 12V solenoid valve wiring diagram: 12V positive to COM, NO to valve positive, valve negative to 12V negative, NC unused">
                 <figcaption>Relay wiring that powers the valve only while filling is active.</figcaption>
               </figure>
-            </div>
-          </article>
+            </li>
 
-          <article class="step">
-            <div class="step-number" aria-hidden="true">6</div>
-            <div class="step-body">
+            <li class="uhs-step">
               <h3>Connect The Unit Relay To The Dial Port B</h3>
               <p>
                 Connect the black Port B on the M5Stack Dial to the Unit Relay Grove connector with the HY2.0-4P
                 cable. This port provides the 5 V supply and the relay control signal.
               </p>
-              <table class="field-table">
-                <thead>
-                  <tr>
-                    <th>Grove Wire</th>
-                    <th>M5Stack Dial Port B</th>
-                    <th>Unit Relay</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Black</td>
-                    <td><code>GND</code></td>
-                    <td><code>GND</code></td>
-                  </tr>
-                  <tr>
-                    <td>Red</td>
-                    <td><code>5V</code></td>
-                    <td><code>5V</code></td>
-                  </tr>
-                  <tr>
-                    <td>Yellow</td>
-                    <td><code>G2</code></td>
-                    <td><code>DIN</code></td>
-                  </tr>
-                  <tr>
-                    <td>White</td>
-                    <td><code>G1</code></td>
-                    <td><code>NC</code></td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="callout warning">
-                <strong>Before power-up:</strong> use the black Port B for the relay. The red Port A remains
-                reserved for the Unit Weight I2C.
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Grove Wire</th>
+                      <th>M5Stack Dial Port B</th>
+                      <th>Unit Relay</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Black</td>
+                      <td><code>GND</code></td>
+                      <td><code>GND</code></td>
+                    </tr>
+                    <tr>
+                      <td>Red</td>
+                      <td><code>5V</code></td>
+                      <td><code>5V</code></td>
+                    </tr>
+                    <tr>
+                      <td>Yellow</td>
+                      <td><code>G2</code></td>
+                      <td><code>DIN</code></td>
+                    </tr>
+                    <tr>
+                      <td>White</td>
+                      <td><code>G1</code></td>
+                      <td><code>NC</code></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </article>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Before power-up:</strong> use the black Port B for the relay. The red Port A remains
+                reserved for the Unit Weight I2C.</p>
+              </div>
+            </li>
 
-          <article id="battery-assembly" class="step">
-            <div class="step-number" aria-hidden="true">7</div>
-            <div class="step-body">
+            <li id="battery-assembly" class="uhs-step">
               <h3>Fit The Optional Battery</h3>
               <p>
                 Skip this step if the scale always stays connected to the 12 V supply. The battery is described
@@ -1177,8 +565,8 @@
                 is no longer practical once it is mounted in the enclosure. Read this step before starting step 1,
                 and carry it out then.
               </p>
-              <figure class="wiring-diagram">
-                <img src="../img/m5dial-battery-mount.png" alt="Three steps showing the M5Stack Dial back cover removed to expose the battery socket, a JST 1.25mm 2-pin connector">
+              <figure class="uhs-figure">
+                <img src="../img/m5dial-battery-mount.png" width="1920" height="1080" alt="Three steps showing the M5Stack Dial back cover removed to expose the battery socket, a JST 1.25mm 2-pin connector">
                 <figcaption>Opening the M5Stack Dial back cover to reach the battery socket. Source: M5Stack documentation.</figcaption>
               </figure>
               <ol>
@@ -1188,38 +576,49 @@
                 <li>Plug the LiPo connector in, red wire on <code>+</code>. It only goes in one way; never force it.</li>
                 <li>Lay the cell flat in the free space of the back cover so no wire is pinched, then refit the cover and its screws.</li>
               </ol>
-              <div class="callout">
-                <strong>Polarity:</strong> some cells are sold with the red and black wires swapped in the connector
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Polarity:</strong> some cells are sold with the red and black wires swapped in the connector
                 housing. Check them against the <code>+</code> and <code>-</code> markings on the board before
-                plugging in; a reversed cell destroys the Dial.
+                plugging in; a reversed cell destroys the Dial.</p>
               </div>
-              <div class="callout info">
-                <strong>Charging:</strong> the Dial charges the cell whenever USB-C is connected. Plug it in once
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Charging:</strong> the Dial charges the cell whenever USB-C is connected. Plug it in once
                 before first use, and set the standby delay in the setup portal so the charge is not drained by an
                 idle screen. See
                 <a href="../../SoftwareInstallationGuide/en/#brewfather">Fill in Wi-Fi, Brewfather, and app settings</a>
-                in the Software Installation Guide.
+                in the Software Installation Guide.</p>
               </div>
-            </div>
-          </article>
+            </li>
+          </ol>
         </div>
       </section>
 
-      <section id="software" class="section">
-        <div class="callout">
-          <strong>Next step:</strong> open the
-          <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a>, flash the M5Stack Dial,
-          configure Wi-Fi, and run calibration. Final weighing accuracy depends heavily on calibration quality
-          and on the mechanical stability of the platform.
+      <section id="software" class="uhs-section">
+        <div class="wrap">
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Next step:</strong> open the
+            <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a>, flash the M5Stack Dial,
+            configure Wi-Fi, and run calibration. Final weighing accuracy depends heavily on calibration quality
+            and on the mechanical stability of the platform.</p>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        <a class="footer-project" target="_blank" rel="noopener noreferrer" href="https://github.com/bnbbrewers/UltimateHomebrewingScale">
-          Projet Git : https://github.com/bnbbrewers/UltimateHomebrewingScale
-        </a>
+    <footer class="uhs-footer">
+      <div class="wrap">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+          <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+          <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+          <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+          <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+          <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+          <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+        </svg>
+        <a href="https://github.com/bnbbrewers/UltimateHomebrewingScale">github.com/bnbbrewers/UltimateHomebrewingScale</a>
+        <span>GPL-3.0</span>
+        <a href="../fr/" hreflang="fr" lang="fr">Français</a>
       </div>
     </footer>
   </body>
