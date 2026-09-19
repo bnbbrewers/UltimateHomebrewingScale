@@ -6,23 +6,12 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import UIHelper
-
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
+import runtime_debug
 
 
 class KegVolumeScreen:
     def __init__(self, i18n=None):
-        mem_snapshot("keg_volume.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("keg_volume.init.start", collect=True)
         self._i18n = i18n
         self.page = m5ui.M5Page(bg_c=0x000000)
 
@@ -59,7 +48,7 @@ class KegVolumeScreen:
         self._hint_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
         self._ok_bg, self._ok_label = UIHelper.create_action_button(self.page)
-        mem_snapshot("keg_volume.init.done", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("keg_volume.init.done", collect=True)
 
     def root(self):
         return self.page

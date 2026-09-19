@@ -155,7 +155,7 @@ def handle_request(service, client, method, target, body):
         send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
         try:
             import machine
-            portal.time.sleep_ms(200)
+            portal._sleep_ms(200)
             machine.reset()
         except Exception:
             pass
@@ -201,7 +201,7 @@ def handle_request(service, client, method, target, body):
         send(client, 200, "text/html; charset=utf-8", "Update requested. Rebooting...")
         try:
             import machine
-            portal.time.sleep_ms(200)
+            portal._sleep_ms(200)
             machine.reset()
         except Exception:
             pass

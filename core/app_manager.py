@@ -6,33 +6,15 @@ import gc
 import os
 import sys
 
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    try:
-        from memory_debug import snapshot as _debug_snapshot
-    except Exception:
-        _debug_snapshot = None
-else:
-    _debug_snapshot = None
-
+import app_registry
+import runtime_debug
 
 CALIBRATION_FILE = "scale_calibration.json"
-CALIBRATION_WIZARD_APP_ID = "scale_calibration_wizard_app"
-
-
-def _collect_runtime(cycles=1):
-    for _ in range(max(1, cycles)):
-        gc.collect()
-
-
-def _mem_snapshot(tag, enabled=True, collect=False):
-    if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=collect)
+CALIBRATION_WIZARD_APP_ID = app_registry.CALIBRATION_WIZARD
+# Imported by whichever recipe app runs, and by neither one afterwards. It is
+# evicted with them so the base class does not stay resident for a session
+# that never opens Malt or Hop again.
+_COMPANION_MODULES = ("apps.recipe_app",)
 
 
 def _evict_module(module_name):
@@ -67,14 +49,14 @@ def _initial_app_id(initial_app_id=None):
     if initial_app_id:
         return initial_app_id
     if _file_exists(CALIBRATION_FILE):
-        return "launcher"
+        return app_registry.LAUNCHER
     return CALIBRATION_WIZARD_APP_ID
 
 
 class AppManager:
     def __init__(self, screen_manager, hardware, apis, i18n=None, initial_app_id=None):
-        _collect_runtime()
-        _mem_snapshot("app.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("app.init.start", collect=True)
         self._screen_manager = screen_manager
         self._i18n = i18n
         self._apis = apis
@@ -84,111 +66,46 @@ class AppManager:
         # startup flow selects it. This keeps C/Python heap pressure low.
         self._active_app_id = _initial_app_id(initial_app_id=initial_app_id)
         self._ensure_app(self._active_app_id, screen_manager, hardware, apis, i18n)
-        _collect_runtime()
-        _mem_snapshot("app.after_initial_app", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("app.after_initial_app", collect=True)
         self._apps[self._active_app_id].on_enter()
-        _collect_runtime()
-        _mem_snapshot("app.after_on_enter", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("app.after_on_enter", collect=True)
 
     def active_app_id(self):
         """Read-only accessor used by standby to inhibit on specific apps."""
         return self._active_app_id
 
+    def standby_inhibited(self):
+        """True while the active app must not be interrupted by deep sleep.
+
+        Two reasons: the app is inherently uninterruptible (declared in the
+        registry), or it is in the middle of a physical operation and says so
+        through inhibits_standby(). The keg filler uses the second form, since
+        only the fill itself must hold the device awake.
+        """
+        app_id = self._active_app_id
+        if app_registry.inhibits_standby(app_id):
+            return True
+        app = self._apps.get(app_id)
+        asks = getattr(app, "inhibits_standby", None)
+        if asks is None:
+            return False
+        try:
+            return bool(asks())
+        except Exception:
+            return False
+
     def _ensure_app(self, app_id, screen_manager=None, hardware=None, apis=None, i18n=None):
         if app_id in self._apps:
             return True
-        if app_id == "launcher":
-            self._create_launcher(screen_manager, hardware, apis, i18n)
-            return True
-        if app_id == "scale_app":
-            self._create_scale(screen_manager, hardware, apis, i18n)
-            return True
-        if app_id == "malt_app":
-            self._create_malt(screen_manager, hardware, apis, i18n)
-            return True
-        if app_id == "hop_app":
-            self._create_hop(screen_manager, hardware, apis, i18n)
-            return True
-        if app_id == "keg_filler_app":
-            self._create_keg(screen_manager, hardware, apis, i18n)
-            return True
-        if app_id == "settings_app":
-            from apps.settings_app import SettingsApp
-
-            self._apps[app_id] = SettingsApp(
-                screen_manager,
-                hardware,
-                apis,
-                i18n=i18n,
-            )
-            _collect_runtime()
-            _mem_snapshot("app.lazy.settings_created", enabled=_DEBUG, collect=True)
-            return True
-        if app_id == CALIBRATION_WIZARD_APP_ID:
-            from apps.scale_calibration_wizard_app import ScaleCalibrationWizardApp
-
-            self._apps[app_id] = ScaleCalibrationWizardApp(
-                screen_manager,
-                hardware,
-                apis,
-                i18n=i18n,
-            )
-            _collect_runtime()
-            _mem_snapshot("app.lazy.calibration_created", enabled=_DEBUG, collect=True)
-            return True
-        if app_id == "updater_app":
-            from updater.update_app import UpdaterApp
-
-            self._apps[app_id] = UpdaterApp(
-                screen_manager,
-                hardware,
-                apis,
-                i18n=i18n,
-            )
-            _collect_runtime()
-            _mem_snapshot("app.lazy.updater_created", enabled=_DEBUG, collect=True)
-            return True
-        return False
-
-    def _create_launcher(self, screen_manager, hardware, apis, i18n):
-        from apps.launcher_app import LauncherApp
-
-        self._apps["launcher"] = LauncherApp(screen_manager, hardware, apis, i18n=i18n)
-        _collect_runtime()
-        _mem_snapshot("app.lazy.launcher_created", enabled=_DEBUG, collect=True)
-
-    def _create_scale(self, screen_manager, hardware, apis, i18n):
-        from apps.scale_app import ScaleApp
-
-        self._apps["scale_app"] = ScaleApp(screen_manager, hardware, apis, i18n=i18n)
-        _collect_runtime()
-        _mem_snapshot("app.lazy.scale_created", enabled=_DEBUG, collect=True)
-
-    def _create_malt(self, screen_manager, hardware, apis, i18n):
-        from apps.malt_app import GrainAssistantApp
-
-        self._apps["malt_app"] = GrainAssistantApp(screen_manager, hardware, apis, i18n=i18n)
-        _collect_runtime()
-        _mem_snapshot("app.lazy.malt_created", enabled=_DEBUG, collect=True)
-
-    def _create_hop(self, screen_manager, hardware, apis, i18n):
-        from apps.hop_app import HopAssistantApp
-
-        self._apps["hop_app"] = HopAssistantApp(
-            screen_manager,
-            hardware,
-            apis,
-            i18n=i18n,
-        )
-        _collect_runtime()
-        _mem_snapshot("app.lazy.hop_created", enabled=_DEBUG, collect=True)
-
-    def _create_keg(self, screen_manager, hardware, apis, i18n):
-        from apps.keg_filler_app import KegFillerApp
-
-        self._apps["keg_filler_app"] = KegFillerApp(screen_manager, hardware, apis, i18n=i18n)
-        _collect_runtime()
-        _mem_snapshot("app.lazy.keg_created", enabled=_DEBUG, collect=True)
+        app_class = app_registry.load_class(app_id)
+        if app_class is None:
+            return False
+        self._apps[app_id] = app_class(screen_manager, hardware, apis, i18n=i18n)
+        runtime_debug.collect()
+        runtime_debug.snapshot("app.lazy.{}_created".format(app_id), collect=True)
+        return True
 
     def _switch_to(self, app_id):
         if app_id == self._active_app_id:
@@ -200,18 +117,14 @@ class AppManager:
         current_i18n = current_app.i18n
         target_app_id = app_id
         target_exists = app_id in self._apps
-        if not target_exists and not self._is_known_app_id(app_id):
-            target_app_id = "launcher"
+        if not target_exists and not app_registry.is_known(app_id):
+            target_app_id = app_registry.LAUNCHER
             target_exists = target_app_id in self._apps
-        _mem_snapshot("switch.before_old_exit", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("switch.before_old_exit", collect=True)
         try:
             current_app.on_exit()
         except Exception as exc:
-            if _DEBUG:
-                try:
-                    print("[AppManager] app exit error: {}".format(exc))
-                except Exception:
-                    pass
+            runtime_debug.log("[AppManager] app exit error: {}", exc)
         finally:
             release_runtime_state = getattr(current_app, "release_runtime_state", None)
             if release_runtime_state:
@@ -219,18 +132,18 @@ class AppManager:
                     release_runtime_state()
                 except Exception:
                     pass
-        _collect_runtime()
-        _mem_snapshot("switch.after_old_exit", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("switch.after_old_exit", collect=True)
         self._release_app_screen_refs()
 
         self._evict_non_launcher_apps()
         current_app = None
-        _collect_runtime(cycles=2)
-        _mem_snapshot("switch.after_evict", enabled=_DEBUG, collect=False)
+        runtime_debug.collect(cycles=2)
+        runtime_debug.snapshot("switch.after_evict")
         target_exists = target_app_id in self._apps
         self._memory_cleanup_before_enter(target_app_id)
-        _collect_runtime()
-        _mem_snapshot("switch.after_gc", enabled=_DEBUG, collect=False)
+        runtime_debug.collect()
+        runtime_debug.snapshot("switch.after_gc")
         if not target_exists and not self._ensure_app(
             target_app_id,
             screen_manager,
@@ -238,7 +151,7 @@ class AppManager:
             self._apis,
             current_i18n,
         ):
-            target_app_id = "launcher"
+            target_app_id = app_registry.LAUNCHER
             if target_app_id not in self._apps:
                 self._ensure_app(
                     target_app_id,
@@ -247,16 +160,13 @@ class AppManager:
                     self._apis,
                     current_i18n,
                 )
-        _collect_runtime()
-        _mem_snapshot("switch.after_ensure", enabled=_DEBUG, collect=True)
-        try:
-            import config
-            if getattr(config, "DEBUG", False):
-                print("[MEM] switch {}->{} free={}".format(old, target_app_id, gc.mem_free()))
-        except Exception:
-            pass
+        runtime_debug.collect()
+        runtime_debug.snapshot("switch.after_ensure", collect=True)
+        runtime_debug.log(
+            "[MEM] switch {}->{} free={}", old, target_app_id, runtime_debug.mem_free()
+        )
         self._active_app_id = target_app_id
-        _mem_snapshot("switch.before_new_enter", enabled=_DEBUG, collect=False)
+        runtime_debug.snapshot("switch.before_new_enter")
         self._apps[self._active_app_id].on_enter()
         release_cleanup = getattr(self._screen_manager, "release_cleanup_screen", None)
         if release_cleanup:
@@ -266,20 +176,7 @@ class AppManager:
         # serviced, causing a native allocation failure in m5ui/port.py. The
         # transition cleanup above already collects before the new app enters;
         # the next loop iteration can service LVGL without this re-entrant GC.
-        _mem_snapshot("switch.after_new_enter", enabled=_DEBUG, collect=False)
-
-    @staticmethod
-    def _is_known_app_id(app_id):
-        return app_id in (
-            "launcher",
-            "scale_app",
-            "malt_app",
-            "hop_app",
-            "keg_filler_app",
-            "settings_app",
-            CALIBRATION_WIZARD_APP_ID,
-            "updater_app",
-        )
+        runtime_debug.snapshot("switch.after_new_enter")
 
     def _release_app_screen_refs(self):
         for app in self._apps.values():
@@ -292,11 +189,15 @@ class AppManager:
 
     def _evict_non_launcher_apps(self):
         for app_id in list(self._apps.keys()):
-            if app_id == "launcher":
+            if app_id == app_registry.LAUNCHER:
                 continue
             app = self._apps.pop(app_id, None)
             if app is None:
                 continue
+            # Read the module off the instance rather than off the registry:
+            # that is what makes the eviction work for an app the registry
+            # does not know, and it cannot drift from where the class came
+            # from.
             module_name = getattr(app.__class__, "__module__", None)
             if module_name and (
                 module_name.startswith("apps.")
@@ -304,6 +205,8 @@ class AppManager:
             ):
                 _evict_module(module_name)
             del app
+        for module_name in _COMPANION_MODULES:
+            _evict_module(module_name)
 
     def _memory_cleanup_before_enter(self, app_id):
         cleanup = getattr(self._screen_manager, "memory_cleanup", None)
@@ -313,58 +216,30 @@ class AppManager:
                 loading_color=self._loading_color_for(app_id),
             )
 
+    def _translate(self, key, *args):
+        if not self._i18n or not key:
+            return None
+        try:
+            return self._i18n.t(key, *args)
+        except Exception:
+            return None
+
     def _loading_message_for(self, app_id):
-        if app_id == "hop_app":
-            if self._i18n:
-                try:
-                    return self._i18n.t("recipe.loading_recipes")
-                except Exception:
-                    pass
-            return "Loading recipes..."
-        app_key_by_id = {
-            "scale_app": "launcher.scale",
-            "malt_app": "launcher.malt",
-            "hop_app": "launcher.hop",
-            "keg_filler_app": "launcher.keg",
-            "settings_app": "launcher.settings",
-            CALIBRATION_WIZARD_APP_ID: "scale_calibration.title",
-            "updater_app": "updater.title",
-        }
-        fallback_by_id = {
-            "launcher": "Launcher",
-            "scale_app": "Scale",
-            "malt_app": "Malt",
-            "hop_app": "Hop",
-            "keg_filler_app": "Keg",
-            "settings_app": "Settings",
-            CALIBRATION_WIZARD_APP_ID: "Calibration",
-            "updater_app": "Updater",
-        }
-        app_name = fallback_by_id.get(app_id, app_id)
-        key = app_key_by_id.get(app_id)
-        if self._i18n and key:
-            try:
-                app_name = self._i18n.t(key)
-            except Exception:
-                pass
-        if self._i18n:
-            try:
-                return self._i18n.t("common.loading_app", app_name)
-            except Exception:
-                pass
-        return "Loading {}".format(app_name)
+        spec = app_registry.spec(app_id) or {}
+        # An app whose wait is about something other than itself carries its
+        # own line: Hop downloads recipes before it can show anything.
+        override = self._translate(spec.get("loading_i18n"))
+        if override:
+            return override
+        if spec.get("loading_label"):
+            return spec["loading_label"]
+
+        app_name = self._translate(spec.get("i18n")) or spec.get("label", app_id)
+        return self._translate("common.loading_app", app_name) or "Loading {}".format(app_name)
 
     @staticmethod
     def _loading_color_for(app_id):
-        return {
-            "scale_app": 0x00A8E8,
-            "malt_app": 0xD4840A,
-            "hop_app": 0x388E3C,
-            "keg_filler_app": 0x607D8B,
-            "settings_app": 0x7E57C2,
-            CALIBRATION_WIZARD_APP_ID: 0x00897B,
-            "updater_app": 0x1565C0,
-        }.get(app_id, 0x333333)
+        return app_registry.color(app_id)
 
     def tick(self):
         next_app = self._apps[self._active_app_id].tick()

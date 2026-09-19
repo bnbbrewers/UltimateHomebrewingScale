@@ -7,15 +7,6 @@ import m5ui
 import lvgl as lv
 
 
-_LABEL_I18N_MAP = {
-    "Scale": "launcher.scale",
-    "Malt": "launcher.malt",
-    "Hop": "launcher.hop",
-    "Keg": "launcher.keg",
-    "Settings": "launcher.settings",
-}
-
-
 class LauncherScreen:
     _MAX_ITEMS = 5
     _SCREEN_W = 240
@@ -100,13 +91,21 @@ class LauncherScreen:
     def get_selected_index(self):
         return self._selected_index
 
-    def _label_text(self, raw):
-        if self._i18n is None:
+    def _label_text(self, item):
+        """Translate an item's label through the key the item carries.
+
+        The key travels with the item (app_registry fills it in) instead of
+        living in a label-to-key table here, which could not be kept in step
+        with the app list.
+        """
+        raw = item.get("label", "")
+        key = item.get("i18n")
+        if self._i18n is None or not key:
             return raw
-        key = _LABEL_I18N_MAP.get(raw)
-        if key is None:
+        try:
+            return self._i18n.t(key)
+        except Exception:
             return raw
-        return self._i18n.t(key)
 
     def handle_rotary_delta(self, delta):
         if not self._items:
@@ -142,7 +141,7 @@ class LauncherScreen:
             new_index = 0
         old_index = self._selected_index
         self._selected_index = new_index
-        center = self._label_text(self._items[self._selected_index].get("label", ""))
+        center = self._label_text(self._items[self._selected_index])
         self._center_label.set_text(center)
         self._move_indicator_to_selected()
         if old_index != new_index:

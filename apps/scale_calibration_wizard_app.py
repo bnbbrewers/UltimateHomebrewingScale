@@ -8,9 +8,10 @@ ui.scale_calibration_wizard_screen.
 import json
 import time
 
+import runtime_debug
+
 from .base_app import BaseApp
 from ui import screen_ids
-
 
 CALIBRATION_POINTS = [0, 100, 500, 5000, 25000]
 CALIBRATION_DURATION = 30
@@ -18,19 +19,6 @@ CALIBRATION_FILE = "scale_calibration.json"
 SAMPLE_INTERVAL_MS = 100
 MEM_SNAPSHOT_INTERVAL_MS = 5000
 INTRO_COLOR = 0x00897B
-
-try:
-    import config
-    DEBUG_MODE = getattr(config, "DEBUG", False)
-except Exception:
-    DEBUG_MODE = False
-
-if DEBUG_MODE:
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
-
 
 class ScaleCalibrationWizardApp(BaseApp):
     APP_ID = "scale_calibration_wizard_app"
@@ -66,7 +54,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._scale = self.hardware.scale
         self._reset_state()
         self._show_intro()
-        self._mem_snapshot("calibration.on_enter", collect=True)
+        runtime_debug.snapshot("calibration.on_enter", collect=True)
 
     def on_exit(self):
         super().on_exit()
@@ -213,7 +201,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._sample_sum = 0
         self._sample_count = 0
         self._screen.render_measuring(0, CALIBRATION_DURATION)
-        self._mem_snapshot("calibration.measurement.start", collect=True)
+        runtime_debug.snapshot("calibration.measurement.start", collect=True)
 
     def _tick_measurement(self):
         now = time.ticks_ms()
@@ -223,11 +211,10 @@ class ScaleCalibrationWizardApp(BaseApp):
             if adc_value is not None:
                 self._sample_sum += adc_value
                 self._sample_count += 1
-                if DEBUG_MODE:
-                    print("ADC: {}".format(adc_value))
+                runtime_debug.log("ADC: {}", adc_value)
 
         if time.ticks_diff(now, self._next_mem_snapshot_at) >= 0:
-            self._mem_snapshot("calibration.measurement.tick", collect=False)
+            runtime_debug.snapshot("calibration.measurement.tick", collect=False)
             self._next_mem_snapshot_at = time.ticks_add(now, MEM_SNAPSHOT_INTERVAL_MS)
 
         elapsed_ms = time.ticks_diff(now, self._measurement_started_at)
@@ -241,14 +228,14 @@ class ScaleCalibrationWizardApp(BaseApp):
 
     def _finish_measurement(self):
         self._measuring = False
-        self._mem_snapshot("calibration.measurement.finish.before_average", collect=True)
+        runtime_debug.snapshot("calibration.measurement.finish.before_average", collect=True)
         if self._sample_count:
             average = self._sample_sum / self._sample_count
         else:
             average = 0
         self._sample_sum = 0
         self._sample_count = 0
-        self._mem_snapshot("calibration.measurement.finish.after_clear", collect=True)
+        runtime_debug.snapshot("calibration.measurement.finish.after_clear", collect=True)
 
         weight = self._adjusted_weights[self._current_step]
         self._calibration_data[weight] = average
@@ -301,8 +288,7 @@ class ScaleCalibrationWizardApp(BaseApp):
                 )
 
             data = {"scale": {"CalibrationPoints": calibration_points}}
-            if DEBUG_MODE:
-                print("Saving calibration data: {}".format(data))
+            runtime_debug.log("Saving calibration data: {}", data)
 
             with open(CALIBRATION_FILE, "w") as f:
                 json.dump(data, f)
@@ -310,14 +296,12 @@ class ScaleCalibrationWizardApp(BaseApp):
             if self._scale and hasattr(self._scale, "_load_calibration"):
                 self._scale._load_calibration()
 
-            if DEBUG_MODE:
-                print("Calibration data saved to {}".format(CALIBRATION_FILE))
-            self._mem_snapshot("calibration.saved", collect=True)
+            runtime_debug.log("Calibration data saved to {}", CALIBRATION_FILE)
+            runtime_debug.snapshot("calibration.saved", collect=True)
             return True
         except Exception as exc:
             message = self._t("scale_calibration.save_error", exc)
-            if DEBUG_MODE:
-                print(message)
+            runtime_debug.log(message)
             return False
 
     def _reset_device(self):
@@ -347,9 +331,6 @@ class ScaleCalibrationWizardApp(BaseApp):
         if key == "scale_calibration.save_error":
             return "Save error: {}".format(*args)
         return key
-
-    def _mem_snapshot(self, tag, collect=False):
-        mem_snapshot(tag, enabled=DEBUG_MODE, collect=collect)
 
     def _lines(self, key1, key2):
         return self._t(key1) + "\n" + self._t(key2)

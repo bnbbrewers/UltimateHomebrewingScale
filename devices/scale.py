@@ -8,12 +8,9 @@ import time
 from unit import WeightI2CUnit
 from hardware import I2C, Pin
 
-# Import DEBUG mode from config
-try:
-    import config
-    DEBUG_MODE = getattr(config, 'DEBUG', False)
-except:
-    DEBUG_MODE = False
+import runtime_debug
+
+DEBUG_MODE = runtime_debug.DEBUG
 
 # Configuration
 CALIBRATION_FILE = "scale_calibration.json"

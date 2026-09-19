@@ -5,20 +5,12 @@ For UIFlow2.0 / MicroPython on M5Stack
 
 import gc
 import binascii
+
+import runtime_debug
 from .brewing_software_api import ApiBase, Batch, Malt, Hop, HopStep
 from netcore import http_transport
 
-try:
-    import config as _config
-    _DEBUG = getattr(_config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
+_DEBUG = runtime_debug.DEBUG
 
 
 class BrewfatherAPI(ApiBase):
@@ -52,10 +44,9 @@ class BrewfatherAPI(ApiBase):
         """GET returning (status_code, parsed_json|None) using plain requests."""
         self._last_error = None
         url = "https://{}{}".format(self._HOST, path)
-        if _DEBUG:
-            print("[API] GET {}".format(path))
+        runtime_debug.log("[API] GET {}", path)
         gc.collect()
-        mem_snapshot("api.http.pre", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("api.http.pre", collect=True)
         resp = None
         http_transport.remove_file(self._TMP_JSON_PATH)
         try:
@@ -64,7 +55,7 @@ class BrewfatherAPI(ApiBase):
             if status is None:
                 status = getattr(resp, "status", -1)
 
-            mem_snapshot("api.http.post", enabled=_DEBUG, collect=False)
+            runtime_debug.snapshot("api.http.post", collect=False)
             if status != 200:
                 if _DEBUG:
                     print("[API] HTTP {}".format(status))
@@ -82,12 +73,12 @@ class BrewfatherAPI(ApiBase):
             )
             if _DEBUG:
                 print("[API] body_spooled mode={}".format(spool_mode))
-            mem_snapshot("api.body.spooled", enabled=_DEBUG, collect=False)
+            runtime_debug.snapshot("api.body.spooled", collect=False)
             if resp is not None:
                 http_transport.close_response(resp)
                 resp = None
             gc.collect()
-            mem_snapshot("api.body.closed", enabled=_DEBUG, collect=False)
+            runtime_debug.snapshot("api.body.closed", collect=False)
             # Parse only after closing the response. This avoids holding
             # requests2/TLS buffers and the decoded JSON tree at the same time.
             data = http_transport.load_json_file(self._TMP_JSON_PATH)
@@ -102,7 +93,7 @@ class BrewfatherAPI(ApiBase):
                 except Exception:
                     pass
             gc.collect()
-            mem_snapshot("api.json.parsed", enabled=_DEBUG, collect=False)
+            runtime_debug.snapshot("api.json.parsed", collect=False)
             return status, data
         finally:
             if resp is not None:
@@ -137,7 +128,7 @@ class BrewfatherAPI(ApiBase):
 
         except Exception as e:
             self._last_error = e
-            print("Error: {}".format(e))
+            runtime_debug.log("[API] error: {}", e)
             return []
 
     def get_malts(self, batch_id):
@@ -170,7 +161,7 @@ class BrewfatherAPI(ApiBase):
 
         except Exception as e:
             self._last_error = e
-            print("Error: {}".format(e))
+            runtime_debug.log("[API] error: {}", e)
             return []
 
     def get_hops(self, batch_id):
@@ -185,7 +176,7 @@ class BrewfatherAPI(ApiBase):
             return hops
         except Exception as e:
             self._last_error = e
-            print("Error: {}".format(e))
+            runtime_debug.log("[API] error: {}", e)
             return []
 
     @staticmethod
@@ -223,7 +214,7 @@ class BrewfatherAPI(ApiBase):
                 print("[API] hops_source=batch")
         except Exception as e:
             self._last_error = e
-            print("Error: {}".format(e))
+            runtime_debug.log("[API] error: {}", e)
             return []
-        mem_snapshot("api.hops.compact", enabled=_DEBUG, collect=False)
+        runtime_debug.snapshot("api.hops.compact", collect=False)
         return hops_list

@@ -31,6 +31,15 @@ class BaseApp:
     def on_exit(self):
         self._active = False
 
+    def inhibits_standby(self):
+        """True while this app must not be interrupted by deep sleep.
+
+        Default False: idle detection is enough for an app the operator can
+        simply come back to. Override for a state that drives hardware or
+        would lose work on a reboot.
+        """
+        return False
+
     def release_screen_refs(self):
         for attr in (
             "_screen",
