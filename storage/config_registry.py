@@ -3,6 +3,7 @@
 import os
 import re
 
+import nvs_store
 from webportal.config_keys import EDITABLE_KEYS, EDITABLE_ORDER
 
 _ASSIGN_RE = re.compile(r"^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$")
@@ -19,88 +20,11 @@ _BATTERY_WATCHDOG_TIMEOUT_MS = 15000
 # Mirrors runtime_watchdog._MIN_TIMEOUT_MS: below this the watchdog ignores the
 # setting, so the checkbox must read back as unchecked.
 _MIN_WATCHDOG_TIMEOUT_MS = 5000
-_NVS_NAMESPACE = "uiflow"
-_NVS_WIFI_SSID_KEY = "ssid0"
-_NVS_WIFI_PASSWORD_KEY = "pswd0"
-_APP_NVS_NAMESPACE = "uhs"
-_NVS_UPDATE_KEY = "update"
+# Wi-Fi credentials and the update flag live in NVS; nvs_store owns the
+# namespaces, the key names and the get/set fallbacks.
 # Mirrors devices.scale.CALIBRATION_FILE; importing that module here would pull
 # the hardware layer into the portal.
 _CALIBRATION_FILE = "scale_calibration.json"
-
-
-def _nvs_get_text(nvs, key, max_len=128):
-    if hasattr(nvs, "get_str"):
-        try:
-            return nvs.get_str(key) or ""
-        except Exception:
-            pass
-
-    if hasattr(nvs, "get_blob"):
-        try:
-            buf = bytearray(max_len)
-            size = nvs.get_blob(key, buf)
-            if isinstance(size, int) and size >= 0:
-                raw = bytes(buf[:size])
-            else:
-                raw = bytes(buf).split(b"\x00", 1)[0]
-            try:
-                return raw.decode("utf-8")
-            except Exception:
-                return raw.decode("latin-1")
-        except Exception:
-            pass
-
-    return ""
-
-
-def _nvs_set_text(nvs, key, value):
-    text = str(value or "")
-    if hasattr(nvs, "set_str"):
-        nvs.set_str(key, text)
-        return
-    if hasattr(nvs, "set_blob"):
-        nvs.set_blob(key, text)
-        return
-    raise OSError("NVS string write API unavailable")
-
-
-def _nvs_get_int(nvs, key):
-    if hasattr(nvs, "get_i32"):
-        try:
-            return int(nvs.get_i32(key))
-        except Exception:
-            pass
-
-    if hasattr(nvs, "get_blob"):
-        try:
-            buf = bytearray(8)
-            size = nvs.get_blob(key, buf)
-            if isinstance(size, int) and size > 0:
-                raw = bytes(buf[:size])
-            else:
-                raw = bytes(buf).split(b"\x00", 1)[0]
-            if not raw:
-                return 0
-            try:
-                return int(raw.decode("utf-8"))
-            except Exception:
-                return int(raw[0])
-        except Exception:
-            pass
-
-    return 0
-
-
-def _nvs_set_int(nvs, key, value):
-    ivalue = int(value)
-    if hasattr(nvs, "set_i32"):
-        nvs.set_i32(key, ivalue)
-        return
-    if hasattr(nvs, "set_blob"):
-        nvs.set_blob(key, str(ivalue))
-        return
-    raise OSError("NVS integer write API unavailable")
 
 
 def resolve_config_path():
@@ -189,6 +113,14 @@ def _parse_literal(raw):
         return value
 
 
+def _has_control_characters(text):
+    """True when a value cannot be written as a single config.py line."""
+    for ch in text:
+        if ch in ("\n", "\r", "\x00"):
+            return True
+    return False
+
+
 def _format_literal(value, kind):
     if kind == "bool":
         return "True" if bool(value) else "False"
@@ -196,6 +128,10 @@ def _format_literal(value, kind):
         return str(int(value))
     text = str(value)
     text = text.replace("\\", "\\\\").replace('"', '\\"')
+    # A raw line break would end the assignment and turn the rest of the value
+    # into config.py source. validate_payload already refuses one; escaping it
+    # here means no other caller can corrupt the file either.
+    text = text.replace("\r", "\\r").replace("\n", "\\n")
     return '"{}"'.format(text)
 
 
@@ -234,15 +170,7 @@ def _apply_battery_to_text(src_text, on_battery):
 
 
 def _read_wifi_from_nvs():
-    try:
-        import esp32
-
-        nvs = esp32.NVS(_NVS_NAMESPACE)
-        ssid = _nvs_get_text(nvs, _NVS_WIFI_SSID_KEY, max_len=96)
-        password = _nvs_get_text(nvs, _NVS_WIFI_PASSWORD_KEY, max_len=128)
-        return ssid, password
-    except Exception:
-        return "", ""
+    return nvs_store.read_wifi_credentials()
 
 
 def wifi_credentials_ready():
@@ -282,35 +210,16 @@ def wifi_credentials_report():
 
 
 def _write_wifi_to_nvs(ssid, password):
-    try:
-        import esp32
-
-        nvs = esp32.NVS(_NVS_NAMESPACE)
-        _nvs_set_text(nvs, _NVS_WIFI_SSID_KEY, ssid)
-        _nvs_set_text(nvs, _NVS_WIFI_PASSWORD_KEY, password)
-        nvs.commit()
-        return True, ""
-    except Exception as e:
-        return False, str(e)
+    return nvs_store.write_wifi_credentials(ssid, password)
 
 
 def is_update_requested():
-    try:
-        import esp32
-
-        nvs = esp32.NVS(_APP_NVS_NAMESPACE)
-        return _nvs_get_int(nvs, _NVS_UPDATE_KEY) == 1
-    except Exception:
-        return False
+    return nvs_store.read_update_flag()
 
 
 def set_update_requested(requested):
     try:
-        import esp32
-
-        nvs = esp32.NVS(_APP_NVS_NAMESPACE)
-        _nvs_set_int(nvs, _NVS_UPDATE_KEY, 1 if requested else 0)
-        nvs.commit()
+        nvs_store.write_update_flag(requested)
         return True, ""
     except Exception as e:
         return False, str(e)
@@ -446,6 +355,13 @@ def validate_payload(payload):
             max_len = spec.get("max_len")
             if max_len and len(parsed) > max_len:
                 errors[key] = "too long"
+                continue
+            # A line break submitted through the portal, or carried by a
+            # restored backup, would land verbatim in config.py and leave a
+            # file that no longer imports: the device then boots without its
+            # settings and the portal itself becomes unreachable.
+            if _has_control_characters(parsed):
+                errors[key] = "invalid characters"
                 continue
             clean[key] = parsed
 

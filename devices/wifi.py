@@ -4,20 +4,12 @@ Wi-Fi device manager for UIFlow2 (non-blocking connect).
 
 import time
 
+import runtime_debug
 import runtime_watchdog
 
-try:
-    from memory_debug import snapshot as _debug_snapshot
-except Exception:
-    _debug_snapshot = None
-
-
-def _mem_snapshot(tag, enabled=True):
-    if enabled and _debug_snapshot:
-        try:
-            _debug_snapshot(tag, enabled=True, collect=False)
-        except Exception:
-            pass
+# memory_debug used to be imported here even in a production build; the shared
+# helper only loads it when DEBUG is set.
+_mem_snapshot = runtime_debug.snapshot
 
 
 def _wlan_state(wlan):
@@ -179,23 +171,18 @@ class WifiDevice:
 def _load_wifi_credentials():
     """
     Return (ssid, password, source) with priority:
-    1) UIFlow NVS namespace "uiflow" keys "ssid0"/"pswd0"
+    1) UIFlow NVS credentials (nvs_store owns the namespace and key names)
     2) config.py keys WIFI_SSID / WIFI_PASSWORD (or WIFI_PSWD alias)
     """
-    # 1) NVS credentials
-    try:
-        import esp32
-        nvs = esp32.NVS("uiflow")
-        ssid = nvs.get_str("ssid0")
-        pswd = nvs.get_str("pswd0")
-        if ssid:
-            return ssid, pswd or "", "nvs"
-    except Exception:
-        pass
+    import nvs_store
 
-    # 2) config.py fallback
+    ssid, pswd = nvs_store.read_wifi_credentials()
+    if ssid:
+        return ssid, pswd or "", "nvs"
+
     try:
         import config
+
         ssid = getattr(config, "WIFI_SSID", "") or ""
         pswd = (
             getattr(config, "WIFI_PASSWORD", "")

@@ -7,79 +7,22 @@ the update can run with the largest possible free heap.
 
 import time
 
-
-_NVS_NAMESPACE = "uhs"
-_NVS_UPDATE_KEY = "update"
-
-
-def _open_nvs():
-    import esp32
-
-    return esp32.NVS(_NVS_NAMESPACE)
-
-
-def _read_update_flag(nvs):
-    if hasattr(nvs, "get_i32"):
-        try:
-            return int(nvs.get_i32(_NVS_UPDATE_KEY))
-        except Exception:
-            pass
-
-    if hasattr(nvs, "get_blob"):
-        try:
-            buf = bytearray(8)
-            size = nvs.get_blob(_NVS_UPDATE_KEY, buf)
-            if isinstance(size, int) and size > 0:
-                raw = bytes(buf[:size])
-            else:
-                raw = bytes(buf).split(b"\x00", 1)[0]
-            if not raw:
-                return 0
-            try:
-                return int(raw.decode("utf-8"))
-            except Exception:
-                return int(raw[0])
-        except Exception:
-            pass
-
-    return 0
-
-
-def _write_update_flag(nvs, value):
-    if hasattr(nvs, "set_i32"):
-        nvs.set_i32(_NVS_UPDATE_KEY, int(value))
-        return
-    if hasattr(nvs, "set_blob"):
-        nvs.set_blob(_NVS_UPDATE_KEY, str(int(value)))
-        return
-    raise OSError("NVS integer write API unavailable")
+import nvs_store
 
 
 def is_update_requested(nvs=None):
-    try:
-        nvs = nvs or _open_nvs()
-        return _read_update_flag(nvs) == 1
-    except Exception:
-        return False
+    return nvs_store.read_update_flag(nvs=nvs)
 
 
 def set_update_requested(requested, nvs=None):
-    nvs = nvs or _open_nvs()
-    _write_update_flag(nvs, 1 if requested else 0)
-    nvs.commit()
+    nvs_store.write_update_flag(requested, nvs=nvs)
 
 
 def _load_wifi_credentials():
-    try:
-        import esp32
-
-        nvs = esp32.NVS("uiflow")
-        ssid = nvs.get_str("ssid0") or ""
-        password = nvs.get_str("pswd0") or ""
-        if ssid:
-            return ssid, password
-    except Exception:
-        pass
+    """NVS first, then config.py, exactly like devices.wifi does."""
+    ssid, password = nvs_store.read_wifi_credentials()
+    if ssid:
+        return ssid, password
 
     try:
         import config

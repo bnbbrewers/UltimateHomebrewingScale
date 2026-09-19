@@ -2,57 +2,33 @@
 API factory to instantiate API connectors once at boot.
 """
 
-import gc
+import runtime_debug
 
-try:
-    import config
-    _BREWING_SOFTWARE = getattr(config, "BREWING_SOFTWARE", "brewfather")
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _BREWING_SOFTWARE = "brewfather"
-    _DEBUG = False
-
-if _DEBUG:
-    try:
-        from memory_debug import snapshot as _debug_snapshot
-    except Exception:
-        _debug_snapshot = None
-else:
-    _debug_snapshot = None
-
-
-def _collect_runtime(cycles=1):
-    for _ in range(max(1, cycles)):
-        gc.collect()
-
-
-def _mem_snapshot(tag, enabled=True, collect=False):
-    if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=collect)
+_BREWING_SOFTWARE = runtime_debug.setting("BREWING_SOFTWARE", "brewfather")
 
 
 class ApiFactory:
     def __init__(self, wifi_device=None):
         self._wifi_device = wifi_device
-        _collect_runtime()
-        _mem_snapshot("api_factory.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("api_factory.init.start", collect=True)
         self._connectors = {}
         self._builders = {
             "brewing": self._build_brewing,
         }
-        _collect_runtime()
-        _mem_snapshot("api_factory.init.done", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("api_factory.init.done", collect=True)
 
     def _build_brewing(self):
         if _BREWING_SOFTWARE != "brewfather":
             return None
-        _collect_runtime()
-        _mem_snapshot("api_factory.brewfather.before_import", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("api_factory.brewfather.before_import", collect=True)
         from api.brewfather_api import BrewfatherAPI
 
         connector = BrewfatherAPI(wifi_device=self._wifi_device)
-        _collect_runtime()
-        _mem_snapshot("api_factory.brewfather.created", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("api_factory.brewfather.created", collect=True)
         return connector
 
     def get(self, name):

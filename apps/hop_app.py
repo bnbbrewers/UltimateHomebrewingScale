@@ -4,16 +4,10 @@ Memory-safe hop assistant app (business logic only).
 
 import gc
 
-import config
+import runtime_debug
 
-from .base_app import BaseApp
+from .recipe_app import RecipeApp
 from ui import screen_ids
-
-if getattr(config, "DEBUG", False):
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
 
 _STATE_RECIPE = 1
 _STATE_PREP_ACK = 2
@@ -28,7 +22,7 @@ _COLOR_HOP = 0x388E3C
 
 
 def _hop_weight_tolerance():
-    return getattr(config, "HOP_WEIGHT_TOLERANCE", 1)
+    return runtime_debug.setting("HOP_WEIGHT_TOLERANCE", 1)
 
 
 class _HopNameItems:
@@ -56,8 +50,11 @@ class _HopStepItems:
         return self._app._step_line(vessel_number, step_name, amount)
 
 
-class HopAssistantApp(BaseApp):
+class HopAssistantApp(RecipeApp):
     APP_ID = "hop_app"
+    COLOR = _COLOR_HOP
+    TITLE_KEY = "hop.title"
+    TRACE_PREFIX = "hop"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
@@ -80,16 +77,6 @@ class HopAssistantApp(BaseApp):
         self._target_g = 0
         self._last_in_range = None
 
-    def _select(self):
-        if self._select_screen is None:
-            self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
-        return self._select_screen
-
-    def _weight(self):
-        if self._weigh_screen is None:
-            self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
-        return self._weigh_screen
-
     def on_exit(self):
         super().on_exit()
         self._batches = []
@@ -102,7 +89,7 @@ class HopAssistantApp(BaseApp):
         self._select_screen = None
         self._weigh_screen = None
         gc.collect()
-        mem_snapshot("hop.on_exit.after_cleanup", enabled=config.DEBUG, collect=False)
+        runtime_debug.snapshot("hop.on_exit.after_cleanup", collect=False)
 
     def on_enter(self):
         super().on_enter()
@@ -177,9 +164,8 @@ class HopAssistantApp(BaseApp):
         self._show_hop_select()
         if self._rotary:
             self._rotary.reset()
-        if config.DEBUG:
-            print("[MEM] hop.sessions_ready hops={}".format(len(self._hops_list)))
-            mem_snapshot("hop.sessions_ready", enabled=True, collect=False)
+        runtime_debug.log("[MEM] hop.sessions_ready hops={}", len(self._hops_list))
+        runtime_debug.snapshot("hop.sessions_ready", collect=False)
 
     def _reload_hops_list(self):
         self._hops_list = self._fetch_hops_list()
@@ -265,15 +251,7 @@ class HopAssistantApp(BaseApp):
             self._show_place_recipient_prompt()
 
     def _tick_weight(self):
-        weight = self._read_and_update_weight(self._weight())
-        if weight is None:
-            return
-        remaining = self._target_g - weight
-        in_range = abs(remaining) <= _hop_weight_tolerance()
-        if in_range != self._last_in_range:
-            self._last_in_range = in_range
-            self._weight().set_status(self.t("common.ok") if in_range else "")
-        if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
+        if self._weighing_reached_target(_hop_weight_tolerance()):
             return self._complete_current_step()
         return None
 
@@ -295,32 +273,24 @@ class HopAssistantApp(BaseApp):
         hop = self._hops_list[self._current_hop_idx]
         step = hop["steps"][self._step_idx]
         vessel_number = self._vessel_number_for_step(step[0])
-        self._target_g = self._to_target_g(step[1])
-        weigh_screen = self._weight()
-        weigh_screen.configure(
-            title=self.t("hop.weigh_title", hop["name"], vessel_number),
-            mode="countdown_g", target=self._target_g,
-            title_bg_color=_COLOR_HOP, tolerance=_hop_weight_tolerance())
-        self.screen_manager.show(screen_ids.WEIGHT)
-        weigh_screen.set_status(self.t("scale.tare_ready"))
-        self._last_in_range = None
-        if self._scale:
-            self._scale.tare()
-        self._state = _STATE_WEIGHT
-        if config.DEBUG:
-            print("[MEM] hop.start_weigh hop={} target={}g".format(
-                hop["name"], self._target_g))
-            mem_snapshot("hop.start_weigh", enabled=True, collect=False)
+        self._begin_weighing(
+            self.t("hop.weigh_title", hop["name"], vessel_number),
+            self._to_target_g(step[1]),
+            _hop_weight_tolerance(),
+            _STATE_WEIGHT,
+        )
+        runtime_debug.log("[MEM] hop.start_weigh hop={} target={}g",
+            hop["name"], self._target_g)
+        runtime_debug.snapshot("hop.start_weigh", collect=False)
 
     def _complete_current_step(self):
         hop = self._hops_list[self._current_hop_idx]
         hop_name = hop["name"]
         hop["steps"].pop(self._step_idx)
         gc.collect()
-        if config.DEBUG:
-            print("[MEM] hop.step_done hop={} remaining={}".format(
-                hop_name, len(hop["steps"])))
-            mem_snapshot("hop.step_done", enabled=True, collect=False)
+        runtime_debug.log("[MEM] hop.step_done hop={} remaining={}",
+            hop_name, len(hop["steps"]))
+        runtime_debug.snapshot("hop.step_done", collect=False)
         if hop["steps"]:
             if self._step_idx >= len(hop["steps"]):
                 self._step_idx = len(hop["steps"]) - 1
@@ -339,26 +309,7 @@ class HopAssistantApp(BaseApp):
     # ── API loading ────────────────────────────────────────────────
 
     def _load_batches(self):
-        self._batches = self._api.get_batches() if self._api else []
-        if self._api and getattr(self._api, "last_error", None) is not None:
-            self._show_network_error()
-            return
-        names = [b.name for b in self._batches]
-        self._batch_idx = 0
-        if len(self._batches) == 1:
-            self._load_hops()
-            return
-        self._select().configure(
-            title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
-            items=names if names else [self.t("common.back")],
-            accent_color=_COLOR_HOP, selected_index=0)
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
-        if self._rotary:
-            self._rotary.reset()
-        self._state = _STATE_RECIPE
-        gc.collect()
-        if config.DEBUG:
-            mem_snapshot("hop.batches_loaded", enabled=True, collect=False)
+        super()._load_batches(self._load_hops, _STATE_RECIPE)
 
     def _fetch_hops_list(self):
         if not self._api:
@@ -398,9 +349,9 @@ class HopAssistantApp(BaseApp):
         self._batches = []
         self._release_screens_for_hops_loading()
         gc.collect()
-        mem_snapshot("hop.load_hops.pre_api", enabled=config.DEBUG, collect=False)
+        runtime_debug.snapshot("hop.load_hops.pre_api", collect=False)
         self._hops_list = self._fetch_hops_list()
-        if self._api and getattr(self._api, "last_error", None) is not None:
+        if self._api_failed():
             self._show_network_error()
             return
         self._finish_hops_load()
@@ -409,7 +360,7 @@ class HopAssistantApp(BaseApp):
         self._vessel_numbers_by_step = self._build_step_vessel_numbers(self._hops_list)
         recipient_count = len(self._vessel_numbers_by_step)
         gc.collect()
-        mem_snapshot("hop.load_hops.post_api", enabled=config.DEBUG, collect=False)
+        runtime_debug.snapshot("hop.load_hops.post_api", collect=False)
 
         if recipient_count > 0:
             self._show_msg(
@@ -427,28 +378,8 @@ class HopAssistantApp(BaseApp):
 
         if self._rotary:
             self._rotary.reset()
-        if config.DEBUG:
-            print("[MEM] hop.hops_loaded recipients={}".format(recipient_count))
-            mem_snapshot("hop.hops_loaded", enabled=True, collect=False)
+        runtime_debug.log("[MEM] hop.hops_loaded recipients={}", recipient_count)
+        runtime_debug.snapshot("hop.hops_loaded", collect=False)
 
     def _release_screens_for_hops_loading(self):
-        select_screen = self._select_screen
-        if select_screen:
-            try:
-                select_screen.set_items([])
-            except Exception:
-                pass
-        self._select_screen = None
-        self._weigh_screen = None
-        cleanup = getattr(self.screen_manager, "memory_cleanup", None)
-        if cleanup:
-            try:
-                cleanup(
-                    loading_message=self.t("hop.loading_hops"),
-                    loading_color=_COLOR_HOP,
-                )
-            except TypeError:
-                cleanup(loading_message=self.t("hop.loading_hops"))
-        else:
-            self._show_msg(
-                self.t("hop.title"), self.t("hop.loading_hops"), _COLOR_HOP)
+        self._release_screens_before_loading(self.t("hop.loading_hops"))

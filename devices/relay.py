@@ -2,18 +2,13 @@
 Relay control for the keg filler valve.
 """
 
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-    DEFAULT_RELAY_IO = getattr(config, "KEG_RELAY_IO", (1, 2))
-except Exception:
-    _DEBUG = False
-    DEFAULT_RELAY_IO = (1, 2)
+import runtime_debug
+
+DEFAULT_RELAY_IO = runtime_debug.setting("KEG_RELAY_IO", (1, 2))
 
 
 def _debug(message):
-    if _DEBUG:
-        print("[Relay] {}".format(message))
+    runtime_debug.log("[Relay] {}", message)
 
 
 class RelayDevice:
@@ -49,8 +44,7 @@ class RelayDevice:
             try:
                 self._relay.on()
             except Exception as e:
-                if _DEBUG:
-                    print("Relay on failed: {}".format(e))
+                runtime_debug.log("Relay on failed: {}", e)
 
     def set_off(self):
         self._state = False
@@ -59,8 +53,7 @@ class RelayDevice:
             try:
                 self._relay.off()
             except Exception as e:
-                if _DEBUG:
-                    print("Relay off failed: {}".format(e))
+                runtime_debug.log("Relay off failed: {}", e)
 
     def is_on(self):
         if self._relay and hasattr(self._relay, "get_status"):

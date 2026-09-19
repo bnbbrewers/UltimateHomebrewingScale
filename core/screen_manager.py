@@ -2,47 +2,18 @@
 Screen manager that lazy-loads screens to keep heap pressure low.
 """
 
-import gc
 import sys
 
+import runtime_debug
 from ui import screen_ids
-
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    try:
-        from memory_debug import snapshot as _debug_snapshot
-    except Exception:
-        _debug_snapshot = None
-else:
-    _debug_snapshot = None
-
-
-def _collect_runtime(cycles=1):
-    for _ in range(max(1, cycles)):
-        gc.collect()
-
-
-def _mem_snapshot(tag, enabled=True, collect=False):
-    if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=collect)
 
 
 def _trace(message):
-    if not _DEBUG:
-        return
-    try:
-        print("[TRACE] {}".format(message))
-    except Exception:
-        pass
+    runtime_debug.log("[TRACE] {}".format(message))
 
 
 def _trace_lvgl_state(label, cleanup=None, target=None):
-    if not _DEBUG:
+    if not runtime_debug.DEBUG:
         return
     try:
         import lvgl as lv
@@ -63,15 +34,28 @@ def _trace_lvgl_state(label, cleanup=None, target=None):
         pass
 
 
-_SCREEN_MODULES = {
-    screen_ids.SELECT_ITEM: "ui.select_item_screen",
-    screen_ids.WEIGHT: "ui.weight_screen",
-    screen_ids.KEG_VOLUME: "ui.keg_volume_screen",
-    screen_ids.SIMPLE_MESSAGE: "ui.simple_message_screen",
-    screen_ids.SETTINGS: "ui.settings_screen",
-    screen_ids.UPDATER: "ui.updater_screen",
-    screen_ids.CALIBRATION_WIZARD: "ui.scale_calibration_wizard_screen",
+# One table for both ends of a screen's life: what to import to build it, and
+# what to evict once it is deleted. They used to be an if-chain and a separate
+# dict, so a screen could be created but never evicted.
+#   screen id: (module, class, takes an i18n argument)
+_SCREEN_SPECS = {
+    screen_ids.LAUNCHER: ("ui.launcher_screen", "LauncherScreen", True),
+    screen_ids.SELECT_ITEM: ("ui.select_item_screen", "SelectItemScreen", False),
+    screen_ids.WEIGHT: ("ui.weight_screen", "WeightScreen", True),
+    screen_ids.KEG_VOLUME: ("ui.keg_volume_screen", "KegVolumeScreen", True),
+    screen_ids.SIMPLE_MESSAGE: ("ui.simple_message_screen", "SimpleMessageScreen", True),
+    screen_ids.SETTINGS: ("ui.settings_screen", "SettingsScreen", True),
+    screen_ids.UPDATER: ("ui.updater_screen", "UpdaterScreen", True),
+    screen_ids.CALIBRATION_WIZARD: (
+        "ui.scale_calibration_wizard_screen",
+        "ScaleCalibrationWizardScreen",
+        True,
+    ),
 }
+
+# The launcher screen is kept alive across transitions as the fallback root,
+# so its module must never be evicted.
+_PERMANENT_SCREEN_IDS = (screen_ids.LAUNCHER,)
 
 
 def _evict_module(module_name):
@@ -93,110 +77,51 @@ def _evict_module(module_name):
 
 class ScreenManager:
     def __init__(self, i18n=None, initial_screen_id=None):
-        _collect_runtime()
-        _mem_snapshot("screen.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.init.start", collect=True)
         self._i18n = i18n
         self._screens = {}
         if initial_screen_id == screen_ids.LAUNCHER:
             self._screens[screen_ids.LAUNCHER] = self._new_launcher_screen()
-            _collect_runtime()
-            _mem_snapshot("screen.after_launcher", enabled=_DEBUG, collect=True)
+            runtime_debug.collect()
+            runtime_debug.snapshot("screen.after_launcher", collect=True)
         self._active_id = None
         self._cleanup_screen = None
-        _collect_runtime()
-        _mem_snapshot("screen.init.done", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.init.done", collect=True)
 
     def _new_launcher_screen(self):
-        from ui.launcher_screen import LauncherScreen
+        return self._build_screen(screen_ids.LAUNCHER)
 
-        return LauncherScreen(i18n=self._i18n)
+    def _build_screen(self, screen_id):
+        """Import the screen module and construct it, tracing both steps.
+
+        The import and the constructor are traced separately on purpose: on
+        the Dial they fail for different reasons, the first on fragmented C
+        heap and the second on LVGL allocations.
+        """
+        spec = _SCREEN_SPECS.get(screen_id)
+        if spec is None:
+            return None
+        module_name, class_name, wants_i18n = spec
+        short = screen_id
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.lazy.{}.before_import".format(short), collect=True)
+        module = __import__(module_name, None, None, ("*",))
+        screen_class = getattr(module, class_name)
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.lazy.{}.before_ctor".format(short), collect=True)
+        screen = screen_class(i18n=self._i18n) if wants_i18n else screen_class()
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.lazy.{}".format(short), collect=True)
+        return screen
 
     def _create_lazy_screen(self, screen_id):
         if screen_id in self._screens:
             return
-        if screen_id == screen_ids.LAUNCHER:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.launcher.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = self._new_launcher_screen()
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.launcher", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.SELECT_ITEM:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.select.before_import", enabled=_DEBUG, collect=True)
-            from ui.select_item_screen import SelectItemScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.select.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = SelectItemScreen()
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.select", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.WEIGHT:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.weight.before_import", enabled=_DEBUG, collect=True)
-            from ui.weight_screen import WeightScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.weight.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = WeightScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.weight", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.KEG_VOLUME:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.keg_volume.before_import", enabled=_DEBUG, collect=True)
-            from ui.keg_volume_screen import KegVolumeScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.keg_volume.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = KegVolumeScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.keg_volume", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.SIMPLE_MESSAGE:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.simple.before_import", enabled=_DEBUG, collect=True)
-            from ui.simple_message_screen import SimpleMessageScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.simple.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = SimpleMessageScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.simple", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.SETTINGS:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.settings.before_import", enabled=_DEBUG, collect=True)
-            from ui.settings_screen import SettingsScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.settings.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = SettingsScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.settings", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.UPDATER:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.updater.before_import", enabled=_DEBUG, collect=True)
-            from ui.updater_screen import UpdaterScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.updater.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = UpdaterScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.updater", enabled=_DEBUG, collect=True)
-            return
-        if screen_id == screen_ids.CALIBRATION_WIZARD:
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.calibration.before_import", enabled=_DEBUG, collect=True)
-            from ui.scale_calibration_wizard_screen import ScaleCalibrationWizardScreen
-
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.calibration.before_ctor", enabled=_DEBUG, collect=True)
-            self._screens[screen_id] = ScaleCalibrationWizardScreen(i18n=self._i18n)
-            _collect_runtime()
-            _mem_snapshot("screen.lazy.calibration", enabled=_DEBUG, collect=True)
+        screen = self._build_screen(screen_id)
+        if screen is not None:
+            self._screens[screen_id] = screen
 
     def get(self, screen_id):
         self._create_lazy_screen(screen_id)
@@ -241,14 +166,15 @@ class ScreenManager:
     @staticmethod
     def _evict_screen_modules(screen_ids_to_release):
         for screen_id in screen_ids_to_release:
-            module_name = _SCREEN_MODULES.get(screen_id)
-            if module_name:
-                _evict_module(module_name)
+            if screen_id in _PERMANENT_SCREEN_IDS:
+                continue
+            spec = _SCREEN_SPECS.get(screen_id)
+            if spec:
+                _evict_module(spec[0])
 
     def release(self, screen_id):
-        _mem_snapshot(
+        runtime_debug.snapshot(
             "screen.release.before.{}".format(screen_id),
-            enabled=_DEBUG,
             collect=False,
         )
         screen = self._screens.pop(screen_id, None)
@@ -270,10 +196,9 @@ class ScreenManager:
         except Exception:
             pass
         self._evict_screen_modules((screen_id,))
-        _collect_runtime()
-        _mem_snapshot(
+        runtime_debug.collect()
+        runtime_debug.snapshot(
             "screen.release.after.{}".format(screen_id),
-            enabled=_DEBUG,
             collect=False,
         )
 
@@ -284,7 +209,7 @@ class ScreenManager:
         cleanup_color=0x333333,
     ):
         keep = set(keep_ids or ())
-        _mem_snapshot("screen.release_all.before", enabled=_DEBUG, collect=False)
+        runtime_debug.snapshot("screen.release_all.before", collect=False)
         # Keep the active screen valid while deleting the outgoing tree. LVGL
         # does not support deleting the currently active screen, so always
         # switch to the small persistent transition screen first.
@@ -309,8 +234,8 @@ class ScreenManager:
                 pass
             released_screen_ids.append(screen_id)
         self._evict_screen_modules(released_screen_ids)
-        _collect_runtime()
-        _mem_snapshot("screen.release_all.after", enabled=_DEBUG, collect=False)
+        runtime_debug.collect()
+        runtime_debug.snapshot("screen.release_all.after", collect=False)
         if self._active_id not in self._screens:
             self._active_id = None
 
@@ -383,7 +308,7 @@ class ScreenManager:
         loading_message=None,
         loading_color=0x333333,
     ):
-        _mem_snapshot("screen.memory_cleanup.before", enabled=_DEBUG, collect=False)
+        runtime_debug.snapshot("screen.memory_cleanup.before", collect=False)
         keep = list(keep_ids or ())
         if screen_ids.LAUNCHER not in keep:
             keep.append(screen_ids.LAUNCHER)
@@ -392,8 +317,8 @@ class ScreenManager:
             cleanup_message=loading_message,
             cleanup_color=loading_color,
         )
-        _collect_runtime(cycles=2)
-        _mem_snapshot("screen.memory_cleanup.after", enabled=_DEBUG, collect=False)
+        runtime_debug.collect(cycles=2)
+        runtime_debug.snapshot("screen.memory_cleanup.after", collect=False)
 
     def release_cleanup_screen(self):
         """Keep the lightweight transition screen for later reuse.

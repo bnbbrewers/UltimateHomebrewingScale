@@ -4,6 +4,8 @@ Settings app: QR-only entrypoint for smartphone setup portal.
 
 import os
 
+import runtime_debug
+
 from .base_app import BaseApp
 from ui import screen_ids
 
@@ -15,15 +17,9 @@ class SettingsApp(BaseApp):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
         self._screen = None
         self._portal = None
-        self._debug = False
+        self._debug = runtime_debug.DEBUG
         self._tick_error_logged = False
         self._portal_status_shown = False
-        try:
-            import config
-
-            self._debug = bool(getattr(config, "DEBUG", False))
-        except Exception:
-            self._debug = False
 
     @staticmethod
     def _print_exception(prefix, exc):

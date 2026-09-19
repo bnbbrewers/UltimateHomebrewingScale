@@ -6,6 +6,8 @@ All LVGL objects are created once in __init__.
 import m5ui
 import lvgl as lv
 
+import runtime_debug
+
 from .ui_helper import (
     ACTION_BUTTON_Y,
     TITLE_Y_ONE_LINE,
@@ -13,19 +15,6 @@ from .ui_helper import (
     UIHelper,
     format_title_text,
 )
-
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
-
 
 MESSAGE_LINE_HEIGHT = 18
 MESSAGE_MAX_CHARS_PER_LINE = 24
@@ -78,18 +67,18 @@ def centered_message_y(
 
 class SimpleMessageScreen:
     def __init__(self, i18n=None):
-        mem_snapshot("simple.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("simple.init.start", collect=True)
         self._i18n = i18n
         self._message_area_top = MESSAGE_AREA_TOP
         self.page = m5ui.M5Page(bg_c=0x000000)
-        mem_snapshot("simple.after_page", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("simple.after_page", collect=True)
 
         self._title_bar, self._title_label = UIHelper.create_title(
             self.page,
             "",
             0x333333,
         )
-        mem_snapshot("simple.after_title", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("simple.after_title", collect=True)
 
         self._message_label = m5ui.M5Label(
             "",
@@ -103,11 +92,11 @@ class SimpleMessageScreen:
         )
         self._message_label.set_width(200)
         self._message_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
-        mem_snapshot("simple.after_message", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("simple.after_message", collect=True)
 
         self._ok_bg, self._ok_label = UIHelper.create_action_button(self.page)
-        mem_snapshot("simple.after_ok_bg", enabled=_DEBUG, collect=True)
-        mem_snapshot("simple.init.done", enabled=_DEBUG, collect=True)
+        runtime_debug.snapshot("simple.after_ok_bg", collect=True)
+        runtime_debug.snapshot("simple.init.done", collect=True)
 
     def root(self):
         return self.page

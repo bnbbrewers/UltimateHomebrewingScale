@@ -17,7 +17,6 @@ _DEFAULT_WEIGHT_TOLERANCE_G = 5
 _WEIGHT_SAMPLE_MS = 1000
 _TOUCH_INT_PIN = 14
 _DEFAULT_RELAY_IO = (1, 2)
-_INHIBITING_APPS = ("updater_app", "scale_calibration_wizard_app")
 
 
 class StandbyManager:
@@ -83,13 +82,32 @@ class StandbyManager:
         return active
 
     def _inhibited(self, app_manager):
+        """Ask the app manager whether sleeping now would interrupt something.
+
+        Activity sampling alone is not enough: a keg filling slowly changes
+        weight by less than the tolerance between two samples, so the idle
+        countdown would run out mid-fill and reboot the device.
+
+        The manager answers for both reasons an app can refuse to sleep: it is
+        inherently uninterruptible, or it is in the middle of an operation.
+        The older active_app_id() path is kept as a fallback so this module
+        still works with a manager that only exposes that.
+        """
         if app_manager is None:
             return False
+        asks = getattr(app_manager, "standby_inhibited", None)
+        if asks is not None:
+            try:
+                return bool(asks())
+            except Exception:
+                return False
         getter = getattr(app_manager, "active_app_id", None)
         if getter is None:
             return False
         try:
-            return getter() in _INHIBITING_APPS
+            import app_registry
+
+            return app_registry.inhibits_standby(getter())
         except Exception:
             return False
 

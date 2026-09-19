@@ -7,6 +7,7 @@ import os
 import time
 
 import boot_safety
+import runtime_debug
 import runtime_watchdog
 import standby
 
@@ -22,18 +23,13 @@ def _file_exists(path):
             return False
 
 
+# main is the composition root: boot_safety, runtime_watchdog and standby are
+# each handed the config module, so the module object itself is needed here
+# and not just the debug flag runtime_debug exposes.
 try:
     import config
-    DEBUG = getattr(config, "DEBUG", False)
 except Exception:
     config = None
-    DEBUG = False
-
-if DEBUG:
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
 
 _RUNNING = True
 
@@ -73,52 +69,35 @@ def _run_boot_update_if_requested():
 
 def _startup_config_ready():
     config_exists = _file_exists("config.py")
-    if DEBUG:
-        try:
-            print(
-                "[BOOTCFG] cwd_config_exists={} config_imported={} config_file={}".format(
-                    config_exists,
-                    config is not None,
-                    getattr(config, "__file__", "?") if config is not None else "",
-                )
-            )
-        except Exception:
-            pass
+    runtime_debug.log(
+        "[BOOTCFG] cwd_config_exists={} config_imported={} config_file={}",
+        config_exists,
+        config is not None,
+        getattr(config, "__file__", "?") if config is not None else "",
+    )
     if not config_exists:
-        if DEBUG:
-            try:
-                print("[BOOTCFG] startup_ready=False reason=missing_relative_config")
-            except Exception:
-                pass
+        runtime_debug.log("[BOOTCFG] startup_ready=False reason=missing_relative_config")
         return False
     try:
         from storage import config_registry
 
         try:
             report = config_registry.wifi_credentials_report()
-            if DEBUG:
-                print(
-                    "[WIFICFG] nvs_ssid={} config_path={} config_exists={} config_ssid={} error={}".format(
-                        report.get("nvs_ssid"),
-                        report.get("config_path"),
-                        report.get("config_exists"),
-                        report.get("config_ssid"),
-                        report.get("error", ""),
-                    )
-                )
+            runtime_debug.log(
+                "[WIFICFG] nvs_ssid={} config_path={} config_exists={} config_ssid={} error={}",
+                report.get("nvs_ssid"),
+                report.get("config_path"),
+                report.get("config_exists"),
+                report.get("config_ssid"),
+                report.get("error", ""),
+            )
         except Exception as e:
-            if DEBUG:
-                print("[WIFICFG] report_error={}".format(e))
+            runtime_debug.log("[WIFICFG] report_error={}", e)
         ready = config_registry.wifi_credentials_ready()
-        if DEBUG:
-            print("[BOOTCFG] startup_ready={} reason=wifi_credentials_ready".format(ready))
+        runtime_debug.log("[BOOTCFG] startup_ready={} reason=wifi_credentials_ready", ready)
         return ready
     except Exception as e:
-        if DEBUG:
-            try:
-                print("[BOOTCFG] startup_ready=False reason=config_registry_error {}".format(e))
-            except Exception:
-                pass
+        runtime_debug.log("[BOOTCFG] startup_ready=False reason=config_registry_error {}", e)
         return False
 
 
@@ -172,18 +151,18 @@ def main():
     from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 
     M5.begin()
-    mem_snapshot("boot.after_m5_begin", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_m5_begin", collect=True)
     m5ui.init()
-    mem_snapshot("boot.after_m5ui_init", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_m5ui_init", collect=True)
     Speaker.begin()
-    mem_snapshot("boot.after_speaker", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_speaker", collect=True)
     gc.collect()
-    mem_snapshot("boot.start", enabled=DEBUG)
+    runtime_debug.snapshot("boot.start")
 
     i18n_instance = _load_i18n()
-    mem_snapshot("boot.after_i18n", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_i18n", collect=True)
     hardware = HardwareManager.get_instance()
-    mem_snapshot("boot.after_hardware", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_hardware", collect=True)
     api_factory = ApiFactory(wifi_device=hardware.wifi)
 
     initial_app_id = None
@@ -205,14 +184,10 @@ def main():
         # first Malt/Hop transition leaves too little contiguous heap for TLS.
         api_factory.get("brewing")
     apis = api_factory.as_dict()
-    mem_snapshot("boot.after_api_factory", enabled=DEBUG, collect=True)
-    if DEBUG:
-        try:
-            print("[BOOTCFG] initial_app_id={}".format(initial_app_id))
-        except Exception:
-            pass
+    runtime_debug.snapshot("boot.after_api_factory", collect=True)
+    runtime_debug.log("[BOOTCFG] initial_app_id={}", initial_app_id)
     screen_manager = ScreenManager(i18n=i18n_instance, initial_screen_id=initial_screen_id)
-    mem_snapshot("boot.after_screen_manager", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_screen_manager", collect=True)
     app_manager = AppManager(
         screen_manager=screen_manager,
         hardware=hardware,
@@ -220,9 +195,9 @@ def main():
         i18n=i18n_instance,
         initial_app_id=initial_app_id,
     )
-    mem_snapshot("boot.after_app_manager", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.after_app_manager", collect=True)
     standby_manager = standby.configure(config)
-    mem_snapshot("boot.ui_ready", enabled=DEBUG, collect=True)
+    runtime_debug.snapshot("boot.ui_ready", collect=True)
     watchdog.start(allow_start=initial_app_id != "updater_app")
     while _RUNNING:
         M5.update()
@@ -235,5 +210,4 @@ def main():
 try:
     main()
 except KeyboardInterrupt:
-    if DEBUG:
-        print("Stopped by user")
+    runtime_debug.log("Stopped by user")
