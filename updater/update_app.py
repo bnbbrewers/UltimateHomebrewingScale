@@ -7,30 +7,14 @@ initial app by firmware/startup code when an update has been requested.
 """
 
 from apps.base_app import BaseApp
+import runtime_debug
 from ui import screen_ids
 
-try:
-    import config as _config
-
-    _DEBUG = bool(getattr(_config, "DEBUG", False))
-except Exception:
-    _DEBUG = False
-
-try:
-    from memory_debug import snapshot as _debug_snapshot
-except Exception:
-    _debug_snapshot = None
-
+_DEBUG = runtime_debug.DEBUG
 
 UPDATE_COLOR = 0x1565C0
 
-
-def _mem_snapshot(tag):
-    if _DEBUG and _debug_snapshot:
-        try:
-            _debug_snapshot(tag, enabled=True, collect=False)
-        except Exception:
-            pass
+_mem_snapshot = runtime_debug.snapshot
 
 
 class UpdaterApp(BaseApp):

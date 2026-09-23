@@ -11,63 +11,40 @@ from devices.scale import CalibratedScale
 from devices.wifi import WifiDevice
 from devices.button import ButtonDevice
 from devices.rotary import RotaryDevice
-
-try:
-    import config
-    _DEBUG = getattr(config, "DEBUG", False)
-except Exception:
-    _DEBUG = False
-
-if _DEBUG:
-    try:
-        from memory_debug import snapshot as _debug_snapshot
-    except Exception:
-        _debug_snapshot = None
-else:
-    _debug_snapshot = None
-
-
-def _collect_runtime(cycles=1):
-    for _ in range(max(1, cycles)):
-        gc.collect()
-
-
-def _mem_snapshot(tag, enabled=True, collect=False):
-    if enabled and _debug_snapshot:
-        _debug_snapshot(tag, enabled=True, collect=collect)
+import runtime_debug
 
 
 class HardwareManager:
     _instance = None
 
     def __init__(self):
-        _collect_runtime()
-        _mem_snapshot("hardware.init.start", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("hardware.init.start", collect=True)
         self._relay = None
         self._relay_loaded = False
         self.button = ButtonDevice(M5.BtnA, button_id="A")
-        _collect_runtime()
-        _mem_snapshot("hardware.button", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("hardware.button", collect=True)
 
         self.rotary = RotaryDevice()
         if self.rotary:
             self.rotary.reset()
         else:
             self.rotary = None
-        _collect_runtime()
-        _mem_snapshot("hardware.rotary", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("hardware.rotary", collect=True)
 
         self.scale = None
         try:
             self.scale = CalibratedScale()
         except Exception:
             self.scale = None
-        _collect_runtime()
-        _mem_snapshot("hardware.scale", enabled=_DEBUG, collect=True)
+        runtime_debug.collect()
+        runtime_debug.snapshot("hardware.scale", collect=True)
 
-        self.wifi = WifiDevice(debug=_DEBUG)
-        _collect_runtime()
-        _mem_snapshot("hardware.wifi", enabled=_DEBUG, collect=True)
+        self.wifi = WifiDevice(debug=runtime_debug.DEBUG)
+        runtime_debug.collect()
+        runtime_debug.snapshot("hardware.wifi", collect=True)
 
     @property
     def relay(self):
@@ -77,17 +54,13 @@ class HardwareManager:
                 from devices.relay import RelayDevice
 
                 self._relay = RelayDevice()
-                _collect_runtime()
-                _mem_snapshot("hardware.relay", enabled=_DEBUG, collect=True)
+                runtime_debug.collect()
+                runtime_debug.snapshot("hardware.relay", collect=True)
             except Exception as e:
                 self._relay = None
-                _collect_runtime()
-                _mem_snapshot("hardware.relay.failed", enabled=_DEBUG, collect=True)
-                if _DEBUG:
-                    try:
-                        print("[Hardware] relay init failed: {}".format(e))
-                    except Exception:
-                        pass
+                runtime_debug.collect()
+                runtime_debug.snapshot("hardware.relay.failed", collect=True)
+                runtime_debug.log("[Hardware] relay init failed: {}", e)
         return self._relay
 
     @classmethod

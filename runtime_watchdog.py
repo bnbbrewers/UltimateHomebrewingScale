@@ -4,12 +4,18 @@ The watchdog stays completely disabled unless WATCHDOG_TIMEOUT_MS is present
 and valid in the private configuration module.
 """
 
+import nvs_store
+
 _MIN_TIMEOUT_MS = 5000
 _RESET_LIMIT = 3
 _HEALTHY_RUNTIME_MS = 300000
 _WATCHDOG_HTTP_TIMEOUT_S = 10
-_NVS_NAMESPACE = "uhs"
-_NVS_COUNT_KEY = "wdt_count"
+# Namespace and key come from nvs_store so every reader of this slot agrees on
+# it. The counter itself is read locally on purpose: an undecodable blob must
+# read back as zero here, never as a byte value that could lock the
+# application out, so nvs_store.get_int() is deliberately not used.
+_NVS_NAMESPACE = nvs_store.APP_NAMESPACE
+_NVS_COUNT_KEY = nvs_store.WATCHDOG_COUNT_KEY
 
 _active = None
 
@@ -188,8 +194,7 @@ def configure(config_module, machine_module=None, nvs=None,
             timeout_ms = None
     if timeout_ms is not None and nvs is None:
         try:
-            import esp32
-            nvs = esp32.NVS(_NVS_NAMESPACE)
+            nvs = nvs_store.open_nvs(_NVS_NAMESPACE)
         except Exception as error:
             log("Watchdog reset counter unavailable: %s" % error)
     _active = RuntimeWatchdog(
