@@ -2,46 +2,15 @@
 Launcher app controller (business logic only).
 """
 
+import app_registry
+import runtime_debug
+
 from .base_app import BaseApp
 from ui import screen_ids
 
-LAUNCHER_ITEMS = [
-    {
-        "label": "Scale",
-        "icon": "/flash/assets/icons/Scale.png",
-        "module": "scale_app",
-        "color": 0x00A8E8,
-        "order": 0,
-    },
-    {
-        "label": "Malt",
-        "icon": "/flash/assets/icons/Malt.png",
-        "module": "malt_app",
-        "color": 0xD4840A,
-        "order": 1,
-    },
-    {
-        "label": "Hop",
-        "icon": "/flash/assets/icons/Hop.png",
-        "module": "hop_app",
-        "color": 0x388E3C,
-        "order": 2,
-    },
-    {
-        "label": "Keg",
-        "icon": "/flash/assets/icons/Keg.png",
-        "module": "keg_filler_app",
-        "color": 0x607D8B,
-        "order": 3,
-    },
-    {
-        "label": "Settings",
-        "icon": "/flash/assets/icons/Parameters.png",
-        "module": "settings_app",
-        "color": 0x7E57C2,
-        "order": 4,
-    },
-]
+# Built from the registry so the wheel cannot list an app the manager cannot
+# open, or show a colour the loading screen does not share.
+LAUNCHER_ITEMS = app_registry.launcher_items()
 
 
 class LauncherApp(BaseApp):
@@ -61,14 +30,7 @@ class LauncherApp(BaseApp):
     def on_enter(self):
         super().on_enter()
         self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
-        try:
-            import gc
-            import config
-
-            if getattr(config, "DEBUG", False):
-                print("[MEM] launcher.on_enter free={}".format(gc.mem_free()))
-        except Exception:
-            pass
+        runtime_debug.log("[MEM] launcher.on_enter free={}", runtime_debug.mem_free())
         self.screen_manager.show(screen_ids.LAUNCHER)
         self._screen.set_items(self._items)
         self._selected = 0

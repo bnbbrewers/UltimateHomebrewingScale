@@ -5,9 +5,9 @@ Memory-safe grain assistant app (business logic only).
 import gc
 import time
 
-import config
+import runtime_debug
 
-from .base_app import BaseApp
+from .recipe_app import RecipeApp
 from ui import screen_ids
 
 _STATE_RECIPE = 1
@@ -21,8 +21,15 @@ _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
 
 
-class GrainAssistantApp(BaseApp):
+def _grain_weight_tolerance():
+    return runtime_debug.setting("GRAIN_WEIGHT_TOLERANCE", 10)
+
+
+class GrainAssistantApp(RecipeApp):
     APP_ID = "malt_app"
+    COLOR = _COLOR_MALT
+    TITLE_KEY = "grain.title"
+    TRACE_PREFIX = "grain"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
@@ -42,16 +49,6 @@ class GrainAssistantApp(BaseApp):
         self._done_at = 0
         self._last_in_range = None
 
-    def _select(self):
-        if self._select_screen is None:
-            self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
-        return self._select_screen
-
-    def _weight(self):
-        if self._weigh_screen is None:
-            self._weigh_screen = self.screen_manager.get(screen_ids.WEIGHT)
-        return self._weigh_screen
-
     def on_exit(self):
         super().on_exit()
         self._batches = []
@@ -59,8 +56,7 @@ class GrainAssistantApp(BaseApp):
         if self._select_screen:
             self._select_screen.set_items([])
         gc.collect()
-        if config.DEBUG:
-            print("[MEM] grain.on_exit after_cleanup free={}".format(gc.mem_free()))
+        runtime_debug.log("[MEM] grain.on_exit after_cleanup free={}", runtime_debug.mem_free())
 
     def on_enter(self):
         super().on_enter()
@@ -97,26 +93,7 @@ class GrainAssistantApp(BaseApp):
     # ── loading / display ──────────────────────────────────────────
 
     def _load_batches(self):
-        self._batches = self._api.get_batches() if self._api else []
-        if self._api and getattr(self._api, "last_error", None) is not None:
-            self._show_network_error()
-            return
-        names = [b.name for b in self._batches]
-        self._batch_idx = 0
-        if len(self._batches) == 1:
-            self._load_malts()
-            return
-        self._select().configure(
-            title=self.t("recipe.select_recipe") if names else self.t("recipe.no_recipe"),
-            items=names if names else [self.t("common.back")],
-            accent_color=_COLOR_RECIPE, selected_index=0)
-        self.screen_manager.show(screen_ids.SELECT_ITEM)
-        if self._rotary:
-            self._rotary.reset()
-        self._state = _STATE_RECIPE
-        gc.collect()
-        if config.DEBUG:
-            print("[MEM] grain.batches_loaded free={}".format(gc.mem_free()))
+        super()._load_batches(self._load_malts, _STATE_RECIPE)
 
     def _load_malts(self):
         batch_id = self._batches[self._batch_idx].batch_id
@@ -125,7 +102,7 @@ class GrainAssistantApp(BaseApp):
         gc.collect()
 
         self._malts = self._api.get_malts(batch_id) if self._api else []
-        if self._api and getattr(self._api, "last_error", None) is not None:
+        if self._api_failed():
             self._show_network_error()
             return
         gc.collect()
@@ -151,8 +128,7 @@ class GrainAssistantApp(BaseApp):
 
         if self._rotary:
             self._rotary.reset()
-        if config.DEBUG:
-            print("[MEM] grain.malts_loaded free={}".format(gc.mem_free()))
+        runtime_debug.log("[MEM] grain.malts_loaded free={}", runtime_debug.mem_free())
 
     def _show_network_error(self):
         if self._show_msg(
@@ -161,23 +137,7 @@ class GrainAssistantApp(BaseApp):
             self._state = _STATE_MESSAGE_ACK
 
     def _release_screens_for_malt_loading(self):
-        select_screen = self._select_screen
-        if select_screen:
-            try:
-                select_screen.set_items([])
-            except Exception:
-                pass
-        self._select_screen = None
-        self._weigh_screen = None
-        cleanup = getattr(self.screen_manager, "memory_cleanup", None)
-        if cleanup:
-            try:
-                cleanup(
-                    loading_message=self.t("grain.loading_grains"),
-                    loading_color=_COLOR_MALT,
-                )
-            except TypeError:
-                cleanup(loading_message=self.t("grain.loading_grains"))
+        self._release_screens_before_loading(self.t("grain.loading_grains"))
 
     # ── tick handlers ──────────────────────────────────────────────
 
@@ -208,20 +168,11 @@ class GrainAssistantApp(BaseApp):
             on_ok()
 
     def _tick_weigh(self):
-        weight = self._read_and_update_weight(self._weight())
-        if weight is None:
-            return
-        remaining = self._target_g - weight
-        in_range = abs(remaining) <= config.GRAIN_WEIGHT_TOLERANCE
-        if in_range != self._last_in_range:
-            self._last_in_range = in_range
-            self._weight().set_status(self.t("common.ok") if in_range else "")
-        if (in_range or config.DEBUG) and self.hardware.button.was_short_pressed():
+        if self._weighing_reached_target(_grain_weight_tolerance()):
             self._malts.pop(self._malt_idx)
             gc.collect()
-            if config.DEBUG:
-                print("[MEM] grain.malt_validated remaining={} free={}".format(
-                    len(self._malts), gc.mem_free()))
+            runtime_debug.log("[MEM] grain.malt_validated remaining={} free={}",
+                              len(self._malts), runtime_debug.mem_free())
             if self._malts:
                 if self._malt_idx >= len(self._malts):
                     self._malt_idx = len(self._malts) - 1
@@ -250,18 +201,12 @@ class GrainAssistantApp(BaseApp):
         self._state = _STATE_PLACE_RECIPIENT_ACK
 
     def _start_weighing(self):
-        weigh_screen = self._weight()
         malt = self._malts[self._malt_idx]
-        self._target_g = int(malt.amount * 1000)
-        weigh_screen.configure(
-            title=malt.name, mode="countdown_g", target=self._target_g,
-            title_bg_color=0xD4840A, tolerance=config.GRAIN_WEIGHT_TOLERANCE)
-        self.screen_manager.show(screen_ids.WEIGHT)
-        weigh_screen.set_status(self.t("scale.tare_ready"))
-        self._last_in_range = None
-        if self._scale:
-            self._scale.tare()
-        self._state = _STATE_WEIGHT
-        if config.DEBUG:
-            print("[MEM] grain.start_weigh '{}' target={}g free={}".format(
-                malt.name, self._target_g, gc.mem_free()))
+        self._begin_weighing(
+            malt.name,
+            int(malt.amount * 1000),
+            _grain_weight_tolerance(),
+            _STATE_WEIGHT,
+        )
+        runtime_debug.log("[MEM] grain.start_weigh '{}' target={}g free={}",
+                          malt.name, self._target_g, runtime_debug.mem_free())

@@ -3,7 +3,11 @@ Keg filler calibration flow.
 """
 
 import gc
-import time
+
+import runtime_debug
+# Aliased to the historical private names: they are this module's clock, and
+# the fill timing tests inject a fake through them.
+from ticks import ticks_add as _ticks_add, ticks_diff as _ticks_diff, ticks_ms as _ticks_ms
 
 from .base_app import BaseApp
 from storage.keg_registry import (
@@ -16,17 +20,6 @@ from storage.keg_registry import (
 )
 from ui import screen_ids
 from ui.units import volume_l_to_weight_g
-
-try:
-    import config
-except Exception:
-    config = None
-
-if getattr(config, "DEBUG", False):
-    from memory_debug import snapshot as mem_snapshot
-else:
-    def mem_snapshot(*args, **kwargs):
-        return None
 
 
 DEFAULT_VOLUME_L = 18.0
@@ -84,24 +77,6 @@ __all__ = (
     "_STATE_FILLING_DONE_SELECT",
     "DEFAULT_SPUNDING_VALVE_INERTIA_ML",
 )
-
-
-def _ticks_ms():
-    if hasattr(time, "ticks_ms"):
-        return time.ticks_ms()
-    return int(time.time() * 1000)
-
-
-def _ticks_add(ticks, delta):
-    if hasattr(time, "ticks_add"):
-        return time.ticks_add(ticks, delta)
-    return ticks + delta
-
-
-def _ticks_diff(left, right):
-    if hasattr(time, "ticks_diff"):
-        return time.ticks_diff(left, right)
-    return left - right
 
 
 class KegFillerApp(BaseApp):
@@ -175,7 +150,7 @@ class KegFillerApp(BaseApp):
         self._volume_screen = None
         self._weight_screen = None
         gc.collect()
-        mem_snapshot("keg.on_exit", enabled=True, collect=False)
+        runtime_debug.snapshot("keg.on_exit", collect=False)
 
     def on_enter(self):
         super().on_enter()
@@ -189,7 +164,18 @@ class KegFillerApp(BaseApp):
         self._kegs = load_kegs(self._keg_file)
         gc.collect()
         self._show_empty_platform()
-        mem_snapshot("keg.on_enter", enabled=True, collect=False)
+        runtime_debug.snapshot("keg.on_enter", collect=False)
+
+    def inhibits_standby(self):
+        """Hold the device awake from the moment the valve opens.
+
+        A slow fill moves the weight by less than the standby tolerance
+        between two samples, so idle detection would let the device deep
+        sleep mid-fill: the valve closes safely, but the fill is cut short
+        and its state is lost. The wait on the completion prompt is covered
+        too, since the weight is then perfectly stable by definition.
+        """
+        return self._state in (_STATE_FILLING, _STATE_FILLING_DONE_ACK)
 
     def tick(self):
         if self._check_return_to_launcher():
@@ -293,7 +279,7 @@ class KegFillerApp(BaseApp):
         # allocates WEIGHT and its 40pt binfont.
         self._volume_screen = None
         self._release_volume_screen()
-        mem_snapshot("keg.volume_screen_released", enabled=True, collect=False)
+        runtime_debug.snapshot("keg.volume_screen_released", collect=False)
         self._simple().configure(
             title=self.t("keg.calibrated_title"),
             message=self.t("keg.calibrated_message", self._pending_name),
@@ -436,7 +422,7 @@ class KegFillerApp(BaseApp):
         self._fill_reference_weight_g = None
         self._fill_reference_at = _ticks_ms()
         self._open_relay()
-        mem_snapshot("keg.filling_started", enabled=True, collect=False)
+        runtime_debug.snapshot("keg.filling_started", collect=False)
         self._state = _STATE_FILLING
 
     def _tick_filling(self):
@@ -588,10 +574,9 @@ class KegFillerApp(BaseApp):
 
 
 def _spunding_valve_inertia_ml():
-    if config is None:
-        return DEFAULT_SPUNDING_VALVE_INERTIA_ML
     try:
-        value = float(getattr(config, "KEG_SPUNDING_VALVE_INERTIA_ML", DEFAULT_SPUNDING_VALVE_INERTIA_ML))
+        value = float(runtime_debug.setting(
+            "KEG_SPUNDING_VALVE_INERTIA_ML", DEFAULT_SPUNDING_VALVE_INERTIA_ML))
     except Exception:
         return DEFAULT_SPUNDING_VALVE_INERTIA_ML
     if value < 0:
