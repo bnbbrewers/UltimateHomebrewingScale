@@ -156,6 +156,22 @@ class _DialProgress:
         except Exception:
             pass
 
+    def can_wait_ok(self):
+        return self._screen is not None
+
+    def wait_ok(self):
+        """Block until the physical button is pressed and released."""
+        button = self._m5.BtnA
+        pressed = False
+        while True:
+            self._m5.update()
+            self._lv.task_handler()
+            if button.isPressed():
+                pressed = True
+            elif pressed:
+                return
+            time.sleep_ms(20)
+
 
 def _reset():
     try:
@@ -178,8 +194,13 @@ def run_update_boot(
     wifi=None,
     channel=None,
     progress_callback=None,
+    wait_ok_fn=None,
 ):
     """Run the update and reset only after a successful installation.
+
+    On a failure, OK restarts the device. It drops the update request when the
+    failure came before the install, so the application boots; once files are
+    being replaced, the request stays set and the restart retries the update.
 
     Dependencies are injectable so the flag lifecycle can be tested on a host
     without importing MicroPython modules.
@@ -196,11 +217,20 @@ def run_update_boot(
     if progress_callback is None:
         display = _DialProgress()
         progress_callback = display.callback
+    if wait_ok_fn is None and display is not None and display.can_wait_ok():
+        wait_ok_fn = display.wait_ok
+
+    installing = [False]
+
+    def track_progress(event):
+        if event.get("stage") == "extract":
+            installing[0] = True
+        progress_callback(event)
 
     try:
         result = update_fn(
             channel=channel,
-            progress_callback=progress_callback,
+            progress_callback=track_progress,
             wifi_device=wifi,
             ensure_wifi=True,
         )
@@ -216,4 +246,9 @@ def run_update_boot(
             print("[updater] failed: {}".format(error))
         except Exception:
             pass
+        if wait_ok_fn is not None:
+            wait_ok_fn()
+            if not installing[0]:
+                set_update_requested(False, nvs=nvs)
+            reset_fn()
         return False
