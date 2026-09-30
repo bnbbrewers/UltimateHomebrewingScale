@@ -16,6 +16,10 @@ _MAX_TIMEOUT_MIN = 240
 _DEFAULT_WEIGHT_TOLERANCE_G = 5
 _WEIGHT_SAMPLE_MS = 1000
 _TOUCH_INT_PIN = 14
+# On the battery connector the supply latch stays closed only while this pad
+# is driven high; M5Unified raises it at boot but machine.deepsleep() lets it
+# float, which cuts the power and leaves nothing to wake.
+_POWER_HOLD_PIN = 46
 _DEFAULT_RELAY_IO = (1, 2)
 
 
@@ -56,7 +60,10 @@ class StandbyManager:
         rotary = getattr(hardware, "rotary", None)
         if rotary is not None:
             try:
-                value = rotary.get_rotary_value()
+                # The active app clears the raw value before this sample, so
+                # a turn is only visible through the device's own marker.
+                marker = getattr(rotary, "activity_marker", None)
+                value = marker() if marker else rotary.get_rotary_value()
             except Exception:
                 value = None
             if value is not None:
@@ -161,16 +168,23 @@ class StandbyManager:
         return False
 
     def sleep_now(self):
-        """Pin the relay line, arm the touch wake, and enter deep sleep."""
+        """Pin the relay line and the power latch, arm the touch wake, and
+        enter deep sleep."""
         if self._machine is None or self._esp32 is None:
             return self._abort_sleep("platform modules unavailable", None)
 
         try:
             self._machine.Pin(self.relay_pin, self._machine.Pin.OUT,
                               value=0, hold=True)
-            self._esp32.gpio_deep_sleep_hold(True)
         except Exception as error:
             return self._abort_sleep("relay line could not be pinned: %s" % error, None)
+        try:
+            self._machine.Pin(_POWER_HOLD_PIN, self._machine.Pin.OUT,
+                              value=1, hold=True)
+            self._esp32.gpio_deep_sleep_hold(True)
+        except Exception as error:
+            # Sleeping on the battery would cut the power for good.
+            return self._abort_sleep("power latch could not be held: %s" % error, None)
 
         previous_brightness = None
         if self._display is not None:

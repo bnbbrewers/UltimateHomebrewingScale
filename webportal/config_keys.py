@@ -28,6 +28,14 @@ EDITABLE_KEYS = {
         "default": 200,
         "label": "Spunding valve inertia (ml)",
     },
+    # Bounds mirror apps.keg_filler_app: the stall guard cannot be disabled.
+    "KEG_FILL_STALL_TIMEOUT_S": {
+        "type": "int",
+        "min": 3,
+        "max": 600,
+        "default": 10,
+        "label": "Fill stall safety (s)",
+    },
     "STANDBY_TIMEOUT_MIN": {
         "type": "int",
         "min": 0,
@@ -96,6 +104,7 @@ EDITABLE_ORDER = [
     "GRAIN_WEIGHT_TOLERANCE",
     "HOP_WEIGHT_TOLERANCE",
     "KEG_SPUNDING_VALVE_INERTIA_ML",
+    "KEG_FILL_STALL_TIMEOUT_S",
     "STANDBY_TIMEOUT_MIN",
     "BATTERY",
     "DEBUG",

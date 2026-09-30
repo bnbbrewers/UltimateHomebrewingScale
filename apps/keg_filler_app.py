@@ -33,9 +33,13 @@ SAMPLE_INTERVAL_MS = 200
 # The filling loop is the only loop in the project that drives an actuator.
 # read_weight_filtered() returns its cached value when the ADC read fails, so a
 # dead load cell would otherwise hold the valve open forever. No absolute
-# timeout: a legitimately slow fill must never be cut short.
+# timeout: a legitimately slow fill must never be cut short. The stall window
+# is KEG_FILL_STALL_TIMEOUT_S, clamped so the guard can never be switched off.
 FILL_STALL_TOLERANCE_G = 5
-FILL_STALL_TIMEOUT_MS = 30000
+DEFAULT_FILL_STALL_TIMEOUT_S = 10
+MIN_FILL_STALL_TIMEOUT_S = 3
+MAX_FILL_STALL_TIMEOUT_S = 600
+FILL_STALL_TIMEOUT_MS = DEFAULT_FILL_STALL_TIMEOUT_S * 1000
 
 _STATE_EMPTY_PLATFORM_ACK = 1
 _STATE_KEG_SELECT = 2
@@ -48,6 +52,30 @@ _STATE_ERROR_ACK = 8
 _STATE_FILLING = 9
 _STATE_FILLING_DONE_ACK = 10
 _STATE_FILLING_DONE_SELECT = 11
+_STATE_FILLING_STALLED_ACK = 12
+
+# States where the dial has no other role, so it carries the back gesture.
+# The fill and its two prompts are among them only so the dial is drained:
+# the gesture is ignored there, it must never lead to reopening the valve.
+_DIAL_FREE_STATES = (
+    _STATE_EMPTY_PLATFORM_ACK,
+    _STATE_CALIBRATION_1_ACK,
+    _STATE_CALIBRATING_WEIGHT,
+    _STATE_CALIBRATION_DONE_ACK,
+    _STATE_FILLING_SETUP_ACK,
+    _STATE_ERROR_ACK,
+    _STATE_FILLING,
+    _STATE_FILLING_DONE_ACK,
+    _STATE_FILLING_STALLED_ACK,
+)
+# Free-dial states where the gesture does nothing. They fall through to their
+# normal tick, so the fill loop never misses a stop or stall check.
+_BACK_IGNORED_STATES = (
+    _STATE_CALIBRATION_DONE_ACK,
+    _STATE_FILLING,
+    _STATE_FILLING_DONE_ACK,
+    _STATE_FILLING_STALLED_ACK,
+)
 
 DEFAULT_SPUNDING_VALVE_INERTIA_ML = 200
 
@@ -63,6 +91,9 @@ __all__ = (
     "CALIBRATION_DURATION_MS",
     "SAMPLE_INTERVAL_MS",
     "FILL_STALL_TOLERANCE_G",
+    "DEFAULT_FILL_STALL_TIMEOUT_S",
+    "MIN_FILL_STALL_TIMEOUT_S",
+    "MAX_FILL_STALL_TIMEOUT_S",
     "FILL_STALL_TIMEOUT_MS",
     "_STATE_EMPTY_PLATFORM_ACK",
     "_STATE_KEG_SELECT",
@@ -75,6 +106,7 @@ __all__ = (
     "_STATE_FILLING",
     "_STATE_FILLING_DONE_ACK",
     "_STATE_FILLING_DONE_SELECT",
+    "_STATE_FILLING_STALLED_ACK",
     "DEFAULT_SPUNDING_VALVE_INERTIA_ML",
 )
 
@@ -127,12 +159,12 @@ class KegFillerApp(BaseApp):
         self._filling_stop_weight_g = 0
         self._filling_done_items = []
         self._filling_done_selected_idx = 0
-        self._resume_without_setup = False
         self._samples = []
         self._calibration_started_at = 0
         self._next_sample_at = 0
         self._fill_reference_weight_g = None
         self._fill_reference_at = 0
+        self._fill_stall_timeout_s = DEFAULT_FILL_STALL_TIMEOUT_S
         self._error_return_state = _STATE_EMPTY_PLATFORM_ACK
 
     def on_exit(self):
@@ -172,14 +204,19 @@ class KegFillerApp(BaseApp):
         A slow fill moves the weight by less than the standby tolerance
         between two samples, so idle detection would let the device deep
         sleep mid-fill: the valve closes safely, but the fill is cut short
-        and its state is lost. The wait on the completion prompt is covered
-        too, since the weight is then perfectly stable by definition.
+        and its state is lost. The completion and stall prompts are covered
+        too, since the weight is then perfectly stable by definition, and a
+        stalled fill must still be resumable once the line is fixed.
         """
-        return self._state in (_STATE_FILLING, _STATE_FILLING_DONE_ACK)
+        return self._state in (
+            _STATE_FILLING, _STATE_FILLING_DONE_ACK, _STATE_FILLING_STALLED_ACK)
 
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if (self._state in _DIAL_FREE_STATES and self._check_back(self._state)
+                and self._state not in _BACK_IGNORED_STATES):
+            return self._on_back()
 
         if self._state == _STATE_EMPTY_PLATFORM_ACK:
             self._tick_empty_platform_ack()
@@ -201,6 +238,8 @@ class KegFillerApp(BaseApp):
             self._tick_filling()
         elif self._state == _STATE_FILLING_DONE_ACK:
             self._tick_filling_done_ack()
+        elif self._state == _STATE_FILLING_STALLED_ACK:
+            self._tick_filling_stalled_ack()
         elif self._state == _STATE_FILLING_DONE_SELECT:
             return self._tick_filling_done_select()
         return None
@@ -421,6 +460,7 @@ class KegFillerApp(BaseApp):
         self.screen_manager.show(screen_ids.WEIGHT)
         self._fill_reference_weight_g = None
         self._fill_reference_at = _ticks_ms()
+        self._fill_stall_timeout_s = _fill_stall_timeout_s()
         self._open_relay()
         runtime_debug.snapshot("keg.filling_started", collect=False)
         self._state = _STATE_FILLING
@@ -442,24 +482,26 @@ class KegFillerApp(BaseApp):
             self._fill_reference_weight_g = weight
             self._fill_reference_at = _ticks_ms()
             return
-        if _ticks_diff(_ticks_ms(), self._fill_reference_at) < FILL_STALL_TIMEOUT_MS:
+        elapsed_ms = _ticks_diff(_ticks_ms(), self._fill_reference_at)
+        if elapsed_ms < self._fill_stall_timeout_s * 1000:
             return
         self._close_relay()
-        self._show_filling_stalled_select()
+        self._show_filling_stalled()
 
-    def _show_post_fill_select(self, title, first_item_key, resume_without_setup):
+    def _show_filling_done_select(self):
+        # The keg is full and about to be swapped, so the next fill starts from
+        # the setup prompt like any other.
         keg_name = ""
         if self._selected_keg:
             keg_name = self._selected_keg.get("name", "")
         self._filling_done_items = [
-            self.t(first_item_key, keg_name),
+            self.t("keg.fill_same", keg_name),
             self.t("keg.fill_other"),
             self.t("keg.return_menu"),
         ]
         self._filling_done_selected_idx = 0
-        self._resume_without_setup = resume_without_setup
         self._select().configure(
-            title=title,
+            title=self.t("keg.filling_done_title"),
             items=self._filling_done_items,
             accent_color=_COLOR_KEG,
             selected_index=0,
@@ -469,24 +511,24 @@ class KegFillerApp(BaseApp):
             self._rotary.reset()
         self._state = _STATE_FILLING_DONE_SELECT
 
-    def _show_filling_done_select(self):
-        # The keg is full and about to be swapped, so the next fill starts from
-        # the setup prompt like any other.
-        self._show_post_fill_select(
-            self.t("keg.filling_done_title"),
-            "keg.fill_same",
-            resume_without_setup=False,
+    def _show_filling_stalled(self):
+        self._simple().configure(
+            title=self.t("keg.filling_stalled_title"),
+            message=self.t("keg.filling_stalled_message", self._fill_stall_timeout_s),
+            title_bg_color=_COLOR_KEG,
+            show_ok_button=True,
+            ok_label=self.t("keg.resume"),
         )
+        self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
+        self._state = _STATE_FILLING_STALLED_ACK
 
-    def _show_filling_stalled_select(self):
+    def _tick_filling_stalled_ack(self):
         # Recovery, not a new fill: the keg is still on the platform, still
         # holding the tare this fill was measured against. Resuming must not
         # prompt the operator to place the keg, and must not re-tare.
-        self._show_post_fill_select(
-            self.t("keg.filling_stalled_title"),
-            "keg.fill_resume",
-            resume_without_setup=True,
-        )
+        # _start_filling re-arms the stall window from scratch.
+        if self.hardware.button.was_short_pressed():
+            self._start_filling()
 
     def _tick_filling_done_ack(self):
         if self.hardware.button.was_short_pressed():
@@ -505,10 +547,7 @@ class KegFillerApp(BaseApp):
         if not self.hardware.button.was_short_pressed():
             return None
         if idx == 0:
-            if self._resume_without_setup:
-                self._start_filling()
-            else:
-                self._show_filling_setup()
+            self._show_filling_setup()
             return None
         if idx == 1:
             self._show_select()
@@ -516,14 +555,29 @@ class KegFillerApp(BaseApp):
         return "launcher"
 
     def _tick_error_ack(self):
-        if not self.hardware.button.was_short_pressed():
-            return
+        if self.hardware.button.was_short_pressed():
+            self._leave_error()
+
+    def _leave_error(self):
         if self._error_return_state == _STATE_CALIBRATION_1_ACK:
             self._show_calibration_step_1()
         elif self._error_return_state == _STATE_KEG_SELECT:
             self._show_select()
         else:
             self._show_empty_platform()
+
+    def _on_back(self):
+        state = self._state
+        if state == _STATE_EMPTY_PLATFORM_ACK:
+            return "launcher"
+        if state in (_STATE_CALIBRATION_1_ACK, _STATE_FILLING_SETUP_ACK):
+            self._show_select()
+        elif state == _STATE_CALIBRATING_WEIGHT:
+            self._samples = []
+            self._show_calibration_step_1()
+        elif state == _STATE_ERROR_ACK:
+            self._leave_error()
+        return None
 
     def _consume_rotary_delta(self):
         if not self._rotary:
@@ -581,4 +635,17 @@ def _spunding_valve_inertia_ml():
         return DEFAULT_SPUNDING_VALVE_INERTIA_ML
     if value < 0:
         return 0
+    return value
+
+
+def _fill_stall_timeout_s():
+    try:
+        value = int(runtime_debug.setting(
+            "KEG_FILL_STALL_TIMEOUT_S", DEFAULT_FILL_STALL_TIMEOUT_S))
+    except Exception:
+        return DEFAULT_FILL_STALL_TIMEOUT_S
+    if value < MIN_FILL_STALL_TIMEOUT_S:
+        return MIN_FILL_STALL_TIMEOUT_S
+    if value > MAX_FILL_STALL_TIMEOUT_S:
+        return MAX_FILL_STALL_TIMEOUT_S
     return value

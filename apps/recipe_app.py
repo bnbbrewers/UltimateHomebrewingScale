@@ -29,6 +29,12 @@ class RecipeApp(BaseApp):
     #: Tag prefix for the memory traces, e.g. "grain" or "hop".
     TRACE_PREFIX = "recipe"
 
+    def __init__(self, screen_manager, hardware, apis, i18n=None):
+        super().__init__(screen_manager, hardware, apis, i18n=i18n)
+        # False when a single batch skipped the recipe list: stepping back
+        # from the recipe then has no list to return to.
+        self._batch_picker_shown = False
+
     def _select(self):
         if self._select_screen is None:
             self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
@@ -55,6 +61,7 @@ class RecipeApp(BaseApp):
             return
         names = [b.name for b in self._batches]
         self._batch_idx = 0
+        self._batch_picker_shown = False
         if len(self._batches) == 1:
             on_single_batch()
             return
@@ -67,6 +74,7 @@ class RecipeApp(BaseApp):
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
+        self._batch_picker_shown = True
         self._state = recipe_state
         gc.collect()
         runtime_debug.snapshot("{}.batches_loaded".format(self.TRACE_PREFIX))
@@ -121,14 +129,16 @@ class RecipeApp(BaseApp):
     def _weighing_reached_target(self, tolerance):
         """True when the operator confirmed a weight inside the tolerance.
 
-        Updates the on-screen OK marker as a side effect. In debug mode the
-        button is accepted at any weight, so a flow can be walked without the
-        hardware.
+        Updates the on-screen OK marker as a side effect. Once the target has
+        been reached the marker stays up for the rest of the step, even if the
+        reading drifts back out of the tolerance: the operator has already
+        poured the right amount. In debug mode the button is accepted at any
+        weight, so a flow can be walked without the hardware.
         """
         weight = self._read_and_update_weight(self._weight())
         if weight is None:
             return False
-        in_range = abs(self._target_g - weight) <= tolerance
+        in_range = self._last_in_range or abs(self._target_g - weight) <= tolerance
         if in_range != self._last_in_range:
             self._last_in_range = in_range
             self._weight().set_status(self.t("common.ok") if in_range else "")
