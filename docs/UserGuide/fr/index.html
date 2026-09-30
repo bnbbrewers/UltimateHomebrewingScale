@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Guide d'utilisation Ultimate Homebrewing Scale</title>
+    <meta
+      name="description"
+      content="Utiliser Ultimate Homebrewing Scale sur le M5Stack Dial : commandes, mise en veille et réveil, et parcours détaillé des apps Balance, Malt, Houblon, Fût et Config."
+    >
+    <link rel="stylesheet" href="../../assets/css/uhs-docs.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/logo/uhs-logo-dark-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/logo/uhs-logo-dark-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/logo/uhs-logo-dark-180.png">
+    <meta property="og:image" content="https://bnbbrewers.github.io/UltimateHomebrewingScale/assets/logo/uhs-logo-dark-1024.png">
+  </head>
+  <body>
+    <a class="uhs-skip" href="#main">Aller au contenu</a>
+
+    <header class="uhs-header">
+      <div class="wrap">
+        <nav class="uhs-lang" aria-label="Langue">
+          <a href="../en/" hreflang="en" lang="en" title="English" aria-label="English"><img src="../../assets/flags/en.svg" alt="" width="24" height="24"></a>
+          <a href="./" hreflang="fr" lang="fr" aria-current="true" title="Français" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" width="24" height="24"></a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="uhs-hero" aria-labelledby="page-title">
+      <div class="wrap">
+        <div class="uhs-hero__grid">
+          <div class="uhs-hero__head">
+            <svg class="uhs-hero__logo" viewBox="0 0 120 120" role="img" aria-label="Ultimate Homebrewing Scale">
+              <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+              <g fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round">
+                <path d="M46 38A16.5 16.5 0 0 1 46 18" stroke-opacity=".32"/>
+                <path d="M74 18A16.5 16.5 0 0 1 74 38" stroke-opacity=".32"/>
+                <path d="M52.5 34A10 10 0 0 1 52.5 22" stroke-opacity=".7"/>
+                <path d="M67.5 22A10 10 0 0 1 67.5 34" stroke-opacity=".7"/>
+              </g>
+              <circle cx="60" cy="28" r="5.5" fill="#FFFFFF"/>
+              <rect x="30" y="52" width="14" height="20" rx="7" fill="#13A923"/>
+              <rect x="53" y="42" width="14" height="30" rx="7" fill="#FBB500"/>
+              <rect x="76" y="48" width="14" height="24" rx="7" fill="#C9CED6"/>
+              <rect x="22" y="72" width="76" height="9" rx="4.5" fill="#FFFFFF"/>
+              <rect x="55.5" y="81" width="9" height="11" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+              <rect x="37" y="92" width="46" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+            </svg>
+
+            <div class="uhs-hero__text">
+              <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="uhs-eyebrow">Étape 3 sur 3 · Brasser</p>
+              <h1 id="page-title">Guide d'utilisation Ultimate Homebrewing Scale</h1>
+              <p class="uhs-lede">
+                L'UHS est installé et calibré : place au brassage. Prenez en main ses trois commandes en une minute,
+                puis suivez chaque app pas à pas, de la pesée des malts et des houblons de votre recette au
+                remplissage d'un fût.
+              </p>
+              <div class="uhs-actions">
+                <a class="uhs-btn" href="#controls">
+                  Commencer par les commandes
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
+                <a class="uhs-btn uhs-btn--ghost" href="#scale">
+                  Aller aux apps
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10"/><path d="M4 9l4 4 4-4"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <aside class="uhs-hero__panel" aria-label="Apps du launcher">
+            <ul class="uhs-applist">
+              <li>
+                <a href="#scale">
+                  <img src="../img/Scale.png" width="38" height="38" alt="">
+                  <div><strong>Balance</strong><span>Peser n'importe quoi, tarer à la demande</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#malt">
+                  <img src="../img/Malt.png" width="38" height="38" alt="">
+                  <div><strong>Malt</strong><span>Peser les grains d'une recette</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#hop">
+                  <img src="../img/Hop.png" width="38" height="38" alt="">
+                  <div><strong>Houblon</strong><span>Peser chaque ajout de houblon, récipient par récipient</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#keg">
+                  <img src="../img/Keg.png" width="38" height="38" alt="">
+                  <div><strong>Fût</strong><span>Enregistrer ses fûts et les remplir automatiquement</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#settings">
+                  <img src="../img/Parameters.png" width="38" height="38" alt="">
+                  <div><strong>Config</strong><span>Portail de configuration et réglages</span></div>
+                </a>
+              </li>
+            </ul>
+          </aside>
+        </div>
+
+        <div class="uhs-facts">
+          <div>
+            <p class="uhs-facts__label">Retour au launcher</p>
+            <p class="uhs-facts__value">Bouton maintenu 3 s</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Écran précédent</p>
+            <p class="uhs-facts__value">¼ de tour à gauche</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Sortie de veille</p>
+            <p class="uhs-facts__value">Toucher l'écran</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="uhs-toc" aria-label="Sur cette page">
+      <div class="wrap">
+        <a class="uhs-toc__brand" href="/UltimateHomebrewingScale/" aria-label="Ultimate Homebrewing Scale — accueil de la documentation">
+          <svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true">
+            <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+            <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+            <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+            <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+            <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+            <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+            <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+          </svg>
+          <span>uhs</span>
+        </a>
+        <div class="uhs-toc__sep" aria-hidden="true"></div>
+        <ul>
+          <li><a href="#controls">Commandes</a></li>
+          <li><a href="#standby">Veille</a></li>
+          <li><a href="#scale">Balance</a></li>
+          <li><a href="#malt">Malt</a></li>
+          <li><a href="#hop">Houblon</a></li>
+          <li><a href="#keg">Fût</a></li>
+          <li><a href="#settings">Config</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section id="controls" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>Fonctionnement de l'UHS</h2>
+          <p class="uhs-section__intro">
+            Tout se pilote avec la molette et le bouton situé sous l'écran. L'écran tactile ne sert qu'à sortir
+            l'UHS de veille.
+          </p>
+
+          <div class="uhs-cards">
+            <article class="uhs-card">
+              <h3>Tourner la molette</h3>
+              <p>Déplace la sélection dans une liste ou sur le launcher, et règle une valeur comme le volume d'un fût.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Appui court</h3>
+              <p>Valide : ouvre l'app ou l'élément sélectionné, acquitte un message, tare la balance, valide une pesée.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Appui de 3 secondes</h3>
+              <p>Quitte l'app en cours et revient au launcher, depuis n'importe quel écran. Pendant un remplissage, la vanne se ferme d'abord.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Un quart de tour à gauche</h3>
+              <p>Revient à l'écran précédent. Fonctionne sur les écrans de message et de pesée, où la molette n'a pas d'autre rôle.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Toucher l'écran</h3>
+              <p>Sort l'UHS de veille. Le tactile n'a aucun autre rôle quand l'UHS est éveillé.</p>
+            </article>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Revenir en arrière :</strong> dans une liste, la molette déplace la sélection, le
+            quart de tour ne peut donc pas y signifier « retour » : maintenez le bouton 3 secondes. Le geste est
+            aussi ignoré pendant le remplissage d'un fût et sur les écrans qui annoncent une pesée terminée, pour
+            qu'un choc sur la molette n'annule jamais un résultat ni ne rouvre la vanne.</p>
+          </div>
+
+          <h3 class="uhs-subhead">À la mise sous tension</h3>
+          <p>
+            L'UHS s'ouvre directement sur le launcher et se connecte seul à votre Wi-Fi. S'il s'ouvre plutôt sur un
+            QR code ou sur l'assistant de calibration, son installation n'est pas terminée : reprenez-la là où vous
+            l'aviez laissée dans le <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>.
+          </p>
+
+          <h3 class="uhs-subhead">Le launcher</h3>
+          <p>
+            Les cinq apps sont disposées en arc de cercle sur l'écran rond. Tournez la molette pour déplacer le
+            repère blanc d'une icône à l'autre : l'UHS émet un bip et affiche au centre le nom de l'app
+            sélectionnée. La sélection boucle de la dernière app à la première. Appuyez sur le bouton pour ouvrir
+            l'app ; un écran de chargement à sa couleur s'affiche pendant son démarrage.
+          </p>
+
+          <h3 class="uhs-subhead" id="weighing-screen">L'écran de pesée</h3>
+          <p>
+            Malt et Houblon partagent le même écran de pesée. Il compte à rebours : vous lisez toujours ce qu'il
+            reste à verser.
+          </p>
+          <div class="uhs-table-wrap">
+            <table class="uhs-table">
+              <thead>
+                <tr>
+                  <th>À l'écran</th>
+                  <th>Signification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Barre de titre</td>
+                  <td>L'ingrédient en cours de pesée et, pour les houblons, le numéro du récipient.</td>
+                </tr>
+                <tr>
+                  <td>Grand nombre</td>
+                  <td>Le poids qu'il reste à ajouter. En grammes sous 1 kg, en kilogrammes à deux décimales au-delà.</td>
+                </tr>
+                <tr>
+                  <td>Barre de progression et pourcentage</td>
+                  <td>La part de la cible déjà posée sur la balance.</td>
+                </tr>
+                <tr>
+                  <td><code>+</code> devant le nombre, barre rouge</td>
+                  <td>Vous avez trop versé : le nombre est l'excédent à retirer.</td>
+                </tr>
+                <tr>
+                  <td>Repère <strong>OK</strong></td>
+                  <td>
+                    Le poids est dans la tolérance réglée dans le portail (10 g pour les malts et 1 g pour les houblons
+                    par défaut). Appuyez sur le bouton pour valider. Une fois affiché, le repère reste même si la
+                    lecture dérive un peu.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            La balance se tare d'elle-même au début de chaque pesée, récipient vide déjà posé sur le plateau : son
+            poids n'est jamais compté.
+          </p>
+        </div>
+      </section>
+
+      <section id="standby" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>Mise en veille et réveil</h2>
+          <p class="uhs-section__intro">
+            L'UHS peut s'éteindre seul après une période sans activité. La veille est désactivée par défaut et se
+            règle dans le portail avec <strong>Veille après (min, 0 = désactivé)</strong> ; 30 minutes est la valeur
+            recommandée, et indispensable sur batterie.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>L'UHS surveille l'activité</h3>
+              <p>
+                Un appui sur le bouton, un tour de molette ou une variation de poids sur le plateau comptent comme
+                de l'activité et relancent le décompte. Laisser un récipient sur la balance ne garde pas l'UHS
+                éveillé ; verser dedans, si.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Il se met en veille à la fin du délai</h3>
+              <p>
+                L'écran devient noir. Si une vanne de fût est branchée, elle reste fermée pendant la veille.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Touchez l'écran pour le réveiller</h3>
+              <p>
+                L'UHS redémarre sur le launcher, pas sur l'écran que vous aviez quitté.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Le bouton ne réveille pas l'UHS :</strong> le matériel du M5Stack Dial ne le
+            permet pas. Seul un toucher sur l'écran le réveille.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Quand l'UHS ne se met jamais en veille :</strong> pendant l'assistant de
+            calibration de la balance, pendant une mise à jour du logiciel, et dans l'app Fût dès l'ouverture de la
+            vanne jusqu'à ce que vous quittiez l'écran de fin de remplissage ou d'absence de débit. Une veille à ce
+            moment ferait perdre la calibration, casserait l'installation ou interromprait le remplissage.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scale" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Scale.png" width="38" height="38" alt="Icône de l'app Balance : une balance à plateaux sur un disque bleu">
+            <h2>Balance</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Une simple balance de cuisine, pour tout ce qui ne fait pas partie d'une recette : sels de brassage,
+            sucre, levure, un échantillon.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Ouvrez l'app plateau vide ou avec votre récipient posé</h3>
+              <p>
+                La balance se tare dès l'ouverture de l'app : <strong>Tarage...</strong>, puis <strong>Tarage effectué !</strong>.
+                Ce qui est posé sur le plateau à ce moment-là vaut 0 g.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pesez</h3>
+              <p>
+                Le poids s'affiche en direct, en grammes sous 1 kg et en kilogrammes au-delà. La ligne d'état
+                indique <strong>Appuyer pour tarer</strong>.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Tarez à nouveau quand vous le souhaitez</h3>
+              <p>
+                Appuyez sur le bouton pour remettre la balance à zéro, par exemple pour peser un second ingrédient
+                dans le même récipient. <strong>Erreur de tarage</strong> signifie que l'unité de pesée n'a pas
+                répondu : vérifiez son câble, puis appuyez à nouveau.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Quittez</h3>
+              <p>Tournez la molette d'un quart de tour vers la gauche, ou maintenez le bouton 3 secondes.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="malt" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Malt.png" width="38" height="38" alt="Icône de l'app Malt : un épi d'orge sur un disque ambre">
+            <h2>Malt</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Pèse les grains d'un brassin Brewfather, un malt après l'autre, directement depuis la recette.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Choisissez la recette</h3>
+              <p>
+                L'UHS affiche <strong>Chargement des recettes...</strong> et liste vos brassins Brewfather dont le
+                statut est <code>Brewing</code>. Tournez la molette pour en choisir un et appuyez. Avec un seul
+                brassin en cours, la liste est sautée.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Choisissez un malt</h3>
+              <p>
+                Après <strong>Chargement des grains...</strong>, la liste <strong>Sélectionner un malt</strong> présente les
+                grains et malts de la recette. Choisissez celui à peser et appuyez. L'ordre est libre.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Posez le récipient sur la balance</h3>
+              <p>
+                Posez le récipient vide sur le plateau, puis appuyez sur <strong>OK</strong>. La balance se tare avec
+                le récipient posé.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Versez jusqu'à l'apparition de OK</h3>
+              <p>
+                La barre de titre affiche le nom du malt et le grand nombre décompte jusqu'à 0 g, comme décrit dans
+                <a href="#weighing-screen">l'écran de pesée</a>. Quand <strong>OK</strong> apparaît, appuyez sur le bouton
+                pour valider.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Passez au malt suivant</h3>
+              <p>
+                Le malt pesé disparaît de la liste et vous revenez sur <strong>Sélectionner un malt</strong>. Après le
+                dernier, l'UHS affiche <strong>Tous les malts pesés !</strong> : appuyez pour revenir au launcher.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Revenir en arrière :</strong> sur l'écran de pesée, un quart de tour vers la
+            gauche ramène l'invite « poser le récipient » ; depuis cette invite, il revient à la liste des malts.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Ce qui est listé :</strong> seulement les fermentescibles de type
+            <code>Grain</code> ou <code>Malt</code> dans Brewfather. Sucres, extraits et adjuvants n'apparaissent pas :
+            pesez-les avec l'app Balance.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="hop" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Hop.png" width="38" height="38" alt="Icône de l'app Houblon : un cône de houblon sur un disque vert">
+            <h2>Houblon</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Pèse chaque ajout de houblon d'un brassin Brewfather et les répartit dans des récipients numérotés, un
+            par moment d'ajout, pour que tout soit prêt avant l'ébullition.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Choisissez la recette</h3>
+              <p>
+                Comme dans Malt, l'UHS liste vos brassins au statut <code>Brewing</code> et saute la liste s'il n'y
+                en a qu'un.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Préparez les récipients</h3>
+              <p>
+                Après <strong>Chargement des houblons...</strong>, l'UHS vous demande de <strong>préparer N récipient(s)
+                pour les ajouts de houblon</strong>. Il y a un récipient par ajout distinct, par exemple ébullition à
+                60 min, ébullition à 10 min et dry hop de 3 jours. Numérotez-les, puis appuyez sur <strong>OK</strong>.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Choisissez un houblon</h3>
+              <p>Sur <strong>Sélectionner un houblon</strong>, choisissez une variété et appuyez.</p>
+            </li>
+            <li class="uhs-step">
+              <h3>Choisissez l'ajout</h3>
+              <p>
+                La liste présente chaque utilisation de ce houblon dans la recette, sous la forme
+                <code>récipient : usage - durée (quantité)</code>, par exemple <code>1 : Boil - 60min (25g)</code>.
+                Les usages et durées sont ceux de Brewfather. Choisissez-en un et appuyez.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Posez le bon récipient sur la balance</h3>
+              <p>
+                L'UHS demande de <strong>placer le récipient N sur la balance</strong>. Posez ce récipient sur le
+                plateau, même s'il contient déjà un autre houblon, puis appuyez sur <strong>OK</strong> : la balance se
+                tare avec lui.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Versez jusqu'à l'apparition de OK</h3>
+              <p>
+                La barre de titre affiche le houblon et le numéro du récipient. Quand <strong>OK</strong> apparaît,
+                appuyez sur le bouton pour valider.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Terminez le houblon, puis la recette</h3>
+              <p>
+                L'ajout disparaît de la liste. Quand un houblon n'a plus d'ajout, l'UHS affiche
+                <strong>&lt;houblon&gt; : terminé</strong> ; appuyez pour revenir à la liste des houblons. Après le
+                dernier, <strong>Tous les houblons pesés !</strong> s'affiche : appuyez pour revenir au launcher.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Revenir en arrière :</strong> un quart de tour vers la gauche mène de l'écran
+            de pesée à l'invite « placer le récipient », puis à la liste des ajouts. Depuis l'invite « préparez les
+            récipients », il revient à la liste des recettes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="keg" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Keg.png" width="38" height="38" alt="Icône de l'app Fût : un fût sur un disque gris">
+            <h2>Fût</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Remplit un fût au poids et ferme seul l'électrovanne quand le fût est plein. Chaque fût est enregistré
+            une fois, puis choisi dans une liste. Le remplissage nécessite le relais et la vanne optionnels décrits
+            dans le <a href="../../HardwareInstallationGuide/fr/">Guide d'installation matérielle</a>.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Videz le plateau</h3>
+              <p>
+                L'app s'ouvre sur <strong>Vider le plateau de la balance</strong>. Dégagez-le et appuyez sur
+                <strong>OK</strong> : la balance se tare.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Choisissez un fût</h3>
+              <p>
+                La liste <strong>Choisir un keg</strong> présente vos fûts enregistrés, suivis de <strong>Ajouter</strong>.
+                Choisissez <strong>Ajouter</strong> pour enregistrer un nouveau fût, ou le nom d'un fût pour le remplir.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Enregistrer un fût</h3>
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Pesez l'ensemble à vide</h3>
+              <p>
+                <strong>Calibration (1/2)</strong> demande de poser sur le plateau le fût vide, la spunding valve et le
+                tuyau branché : tout ce qui reposera sur la balance pendant un remplissage. Appuyez sur
+                <strong>OK</strong>, puis ne touchez à rien pendant la mesure de 10 secondes.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Réglez le volume à remplir</h3>
+              <p>
+                Sur <strong>Calibration 2/2</strong>, tournez la molette pour régler le volume de bière que le fût doit
+                recevoir, de 0,5 à 60 L par pas de 0,5 L (18 L au départ). Appuyez pour enregistrer.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Notez son nom</h3>
+              <p>
+                <strong>Keg Calibré</strong> affiche le nom qui lui est donné : <code>keg0</code>, <code>keg1</code>, etc.
+                Appuyez sur <strong>OK</strong> : vous revenez à la liste des fûts, le nouveau fût sélectionné. Le nom se
+                modifie ensuite dans le portail de configuration, depuis l'app <a href="#settings">Config</a>.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Remplir un fût</h3>
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Branchez tout</h3>
+              <p>
+                Après avoir choisi le fût, suivez la liste affichée : poser le fût sur la balance, brancher la
+                spunding valve, brancher la bière. Appuyez sur <strong>OK</strong> pour démarrer : la vanne s'ouvre.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Suivez le remplissage</h3>
+              <p>
+                L'écran affiche le volume versé en litres et une barre de progression. L'UHS s'arrête un peu avant
+                le volume réglé, de la valeur d'inertie de la spunding valve fixée dans le portail (200 ml par défaut),
+                pour que la bière restée dans le tuyau complète le fût sans débordement.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>La vanne se ferme seule</h3>
+              <p>
+                Quand le poids d'arrêt est atteint, la vanne se ferme et <strong>OK</strong> apparaît. Appuyez pour
+                afficher <strong>Remplissage terminé</strong>, puis choisissez <strong>Un autre &lt;fût&gt;</strong> pour
+                remplir à nouveau le même modèle, <strong>Un autre Keg</strong> pour revenir à la liste des fûts, ou
+                <strong>Launcher</strong>.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Aucun débit :</strong> si le poids ne bouge plus pendant 10 secondes (la
+            <strong>Sécurité débit nul</strong> réglée dans le portail), l'UHS ferme la vanne et indique depuis combien
+            de temps le volume n'a pas changé. Corrigez la ligne, puis appuyez sur <strong>Reprendre</strong> pour rouvrir
+            la vanne et poursuivre le même remplissage, ou maintenez le bouton 3 secondes pour revenir au launcher.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Arrêter un remplissage :</strong> maintenez le bouton 3 secondes à tout moment. La
+            vanne se ferme avant le retour au launcher. Le geste du quart de tour est ignoré pendant le
+            remplissage.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Parameters.png" width="38" height="38" alt="Icône de l'app Config : un engrenage sur un disque violet">
+            <h2>Config</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Ouvre le portail de configuration, une page que vous ouvrez sur votre smartphone pour modifier tous les
+            réglages, éditer vos fûts, sauvegarder la configuration et mettre à jour l'application. C'est la page
+            utilisée pendant l'installation.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Ouvrez l'app : l'UHS affiche un QR code</h3>
+              <p>
+                La suite dépend de la connexion de l'UHS à votre Wi-Fi :
+              </p>
+              <ul>
+                <li>
+                  <strong>Connecté à votre Wi-Fi</strong>, l'écran affiche le QR code seul. Gardez votre téléphone sur
+                  ce même réseau.
+                </li>
+                <li>
+                  <strong>Non connecté</strong>, lors d'une première configuration ou quand votre Wi-Fi est hors de
+                  portée, l'UHS démarre son propre réseau Wi-Fi et affiche son nom sous le QR code :
+                  <strong>Wi-Fi : UHS-Setup</strong>.
+                </li>
+              </ul>
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../../SoftwareInstallationGuide/img/DialQRCode.jpg" width="2268" height="2479" alt="Écran de réglages de l'UHS affichant le QR code à scanner">
+                <figcaption>Le QR code apparaît sur l'écran de réglages.</figcaption>
+              </figure>
+            </li>
+
+            <li id="portal-wifi" class="uhs-step">
+              <h3>Connectez votre smartphone à <code>UHS-Setup</code></h3>
+              <p>
+                Passez cette étape si l'UHS est sur votre Wi-Fi. Sinon, ouvrez les réglages Wi-Fi de votre smartphone
+                et rejoignez <code>UHS-Setup</code>. Le réseau de configuration n'a pas de mot de passe.
+              </p>
+              <p>
+                Restez connecté à ce Wi-Fi même si le téléphone indique qu'il n'a pas accès à Internet. Le téléphone
+                doit seulement joindre l'UHS en local.
+              </p>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Important :</strong> si la page de configuration ne s'ouvre pas, désactivez temporairement les
+                données mobiles/5G. Certains téléphones préfèrent la connexion mobile quand le Wi-Fi <code>UHS-Setup</code>
+                n'a pas d'accès Internet, ce qui empêche d'atteindre l'UHS en local.</p>
+              </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Scannez le QR code pour ouvrir le portail</h3>
+              <p>
+                Scannez le QR code affiché par l'UHS. Sur <code>UHS-Setup</code>, il ouvre <code>http://192.168.4.1:8080/</code>.
+                Si l'application appareil photo n'ouvre pas la page, restez sur le même Wi-Fi et saisissez l'adresse dans le navigateur.
+              </p>
+              <p>
+                Dès que la page se charge, le QR code laisse place à <strong>Paramétrage en cours...</strong> sur l'UHS.
+              </p>
+            </li>
+
+            <li id="portal-fields" class="uhs-step">
+              <h3>Renseignez les champs</h3>
+              <p>
+                La page du portail est volontairement simple. Renseignez les valeurs ci-dessous, puis vérifiez-les
+                avant de sauvegarder. Lors d'une première configuration, le portail est en anglais : le libellé anglais
+                de chaque champ est indiqué entre parenthèses.
+              </p>
+
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../../SoftwareInstallationGuide/img/PortalPage.png" width="1020" height="2223" alt="Navigateur smartphone affichant les champs du portail de configuration Ultimate Homebrewing Scale">
+                <figcaption>Portail de configuration ouvert depuis le QR code en étant connecté à <code>UHS-Setup</code>.</figcaption>
+              </figure>
+
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Champ</th>
+                      <th>Valeur à saisir</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Langue (Language)</td>
+                      <td>Choisissez <code>Anglais</code> ou <code>Français</code> pour l'interface de l'UHS et du portail.</td>
+                    </tr>
+                    <tr>
+                      <td>SSID Wi-Fi (Wi-Fi SSID)</td>
+                      <td>Saisissez le nom exact de votre réseau Wi-Fi 2,4 GHz.</td>
+                    </tr>
+                    <tr>
+                      <td>Mot de passe Wi-Fi (Wi-Fi password)</td>
+                      <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
+                    </tr>
+                    <tr>
+                      <td>Logiciel de brassage (Brewing software)</td>
+                      <td>Laissez <code>brewfather</code> sélectionné.</td>
+                    </tr>
+                    <tr>
+                      <td>Identifiant Brewfather (Brewfather user id)</td>
+                      <td>Collez votre user ID API Brewfather.</td>
+                    </tr>
+                    <tr>
+                      <td>Clé API Brewfather (Brewfather API key)</td>
+                      <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
+                    </tr>
+                    <tr>
+                      <td>Tolérance malt (g) (Grain tolerance)</td>
+                      <td>L'écart à la cible accepté pour qu'un malt affiche <strong>OK</strong>. Par défaut <code>10</code>.</td>
+                    </tr>
+                    <tr>
+                      <td>Tolérance houblon (g) (Hop tolerance)</td>
+                      <td>La même chose pour les houblons. Par défaut <code>1</code>.</td>
+                    </tr>
+                    <tr>
+                      <td>Inertie spunding valve (ml) (Spunding valve inertia)</td>
+                      <td>
+                        La marge avant le volume réglé à laquelle le remplisseur ferme la vanne, pour laisser la place à
+                        la bière restée dans le tuyau. Gardez <code>200</code> ml par défaut ; augmentez-la si vos fûts
+                        débordent, diminuez-la s'ils ne sont pas assez remplis.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Sécurité débit nul (s) (Fill stall safety)</td>
+                      <td>
+                        Secondes sans variation de poids avant que le remplisseur ferme l'électrovanne. Gardez
+                        <code>10</code> par défaut (plage acceptée : <code>3</code> à <code>600</code>). L'UHS indique
+                        alors depuis combien de temps le volume n'a pas changé : appuyez sur <strong>Reprendre</strong>
+                        pour rouvrir la vanne et relancer le décompte, ou maintenez le bouton pour revenir au launcher.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Veille après (min, 0 = désactivé) (Standby after)</td>
+                      <td>
+                        Minutes sans activité avant la mise en veille de l'UHS (voir <a href="#standby">Mise en veille et réveil</a>).
+                        <strong>Saisissez <code>30</code></strong> : c'est la valeur recommandée sur secteur et une
+                        nécessité sur batterie. <code>0</code> désactive la veille.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Alimentation sur batterie (Battery powered)</td>
+                      <td>Cochez cette case <strong>uniquement si une batterie est installée</strong> dans l'UHS. Laissez-la décochée sur secteur.</td>
+                    </tr>
+                    <tr>
+                      <td>Mode debug (Debug mode)</td>
+                      <td>Laissez décoché. Il ne sert que pour signaler un problème.</td>
+                    </tr>
+                    <tr>
+                      <td>Canal de mise à jour (Release channel)</td>
+                      <td>Gardez <code>Stable</code>. <code>Pre-release</code> reçoit les nouvelles versions avant tout le monde, pour les tester.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Fonctionnement sur batterie :</strong> si vous avez installé la cellule LiPo optionnelle,
+                ces deux réglages vont ensemble. <strong>Veille après</strong> à <code>30</code> minutes évite
+                qu'un écran resté allumé ne vide la charge, et <strong>Alimentation sur batterie</strong> permet à l'UHS
+                de redémarrer seul s'il se fige : sur batterie, il n'y a pas de prise à débrancher.</p>
+              </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Enregistrez et redémarrez</h3>
+              <p>
+                Appuyez sur <strong>Enregistrer et redémarrer</strong> (Save and reboot). L'UHS enregistre
+                les identifiants Wi-Fi et les réglages, puis redémarre seul. Si une valeur est refusée, la page affiche
+                <strong>Champs invalides</strong> et rien n'est enregistré.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Fûts</h3>
+          <p>
+            Chaque fût enregistré depuis l'app <a href="#keg">Fût</a> apparaît sous <strong>Kegs</strong>, avec son
+            <strong>Nom du keg</strong>, son <strong>Poids vide</strong> en grammes et son <strong>Volume max</strong> en
+            litres. Modifiez-les, puis appuyez sur <strong>Enregistrer et redémarrer</strong>. Le bouton
+            <strong>Supprimer</strong> à côté d'un fût le retire immédiatement, sans redémarrer l'UHS.
+          </p>
+
+          <h3 class="uhs-subhead">Sauvegarder et restaurer</h3>
+          <p>
+            <strong>Sauvegarder</strong> télécharge <code>uhs-backup.txt</code>, un fichier texte qui contient les
+            réglages, les identifiants Wi-Fi, les fûts et la calibration de la balance. Pour les remettre en place,
+            par exemple après une réinstallation de l'application, choisissez ce fichier sous <strong>Fichier de sauvegarde</strong>
+            et appuyez sur <strong>Restaurer</strong> : l'UHS l'écrit et redémarre.
+          </p>
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Gardez la sauvegarde pour vous :</strong> elle contient votre mot de passe
+            Wi-Fi et votre clé API Brewfather en clair.</p>
+          </div>
+
+          <h3 class="uhs-subhead">Mettre à jour l'application</h3>
+          <p>
+            <strong>UPDATE APP</strong> redémarre l'UHS, qui télécharge et installe la dernière version du
+            <strong>Canal de mise à jour</strong> choisi, puis affiche
+            <strong>Installation terminée, OK pour redémarrer</strong> : appuyez sur le bouton. L'UHS ne se met jamais
+            en veille pendant une mise à jour ; ne le débranchez pas non plus.
+          </p>
+
+          <h3 class="uhs-subhead">Quitter</h3>
+          <p>
+            Tournez la molette d'un quart de tour vers la gauche, ou maintenez le bouton 3 secondes. Le portail se
+            ferme, ainsi que le réseau <code>UHS-Setup</code>.
+          </p>
+        </div>
+      </section>
+
+      <section id="troubleshooting" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>Dépannage rapide</h2>
+          <p class="uhs-section__intro">
+            Les messages que vous risquez le plus de croiser un jour de brassage, et comment y répondre.
+          </p>
+
+          <dl class="uhs-troubleshoot">
+            <dt>Pas de recette trouvée</dt>
+            <dd>Seuls les brassins Brewfather au statut <code>Brewing</code> sont listés. Changez le statut du brassin dans Brewfather, puis rouvrez l'app. Si un brassin est bien en cours, vérifiez l'identifiant et la clé API Brewfather dans le portail de configuration.</dd>
+            <dt>Erreur réseau, veuillez réessayer</dt>
+            <dd>L'UHS n'a pas pu joindre Brewfather. Vérifiez que votre Wi-Fi fonctionne et qu'il est à portée, puis rouvrez l'app.</dd>
+            <dt>Aucun malt trouvé</dt>
+            <dd>Malt ne liste que les fermentescibles de type <code>Grain</code> ou <code>Malt</code>. Pesez les autres avec l'app Balance.</dd>
+            <dt>Erreur Keg : Relais introuvable</dt>
+            <dd>L'UHS ne voit pas le relais qui commande la vanne. Vérifiez son câble dans le boîtier, comme indiqué dans le <a href="../../HardwareInstallationGuide/fr/#assembly">guide d'installation matérielle</a>.</dd>
+            <dt>Le téléphone n'ouvre pas la page du QR code</dt>
+            <dd>Reconnectez-vous à <code>UHS-Setup</code>, coupez temporairement les données mobiles/5G, puis ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</dd>
+            <dt>Le Wi-Fi ne se connecte pas après l'enregistrement</dt>
+            <dd>Rouvrez l'app Config : faute de Wi-Fi, l'UHS relance <code>UHS-Setup</code>. Vérifiez l'orthographe du SSID et qu'il s'agit bien d'un réseau 2,4 GHz.</dd>
+            <dt>L'UHS ne se réveille pas avec le bouton</dt>
+            <dd>C'est normal : touchez l'écran pour le réveiller.</dd>
+          </dl>
+        </div>
+      </section>
+    </main>
+
+    <footer class="uhs-footer">
+      <div class="wrap">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+          <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+          <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+          <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+          <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+          <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+          <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+        </svg>
+        <a href="https://github.com/bnbbrewers/UltimateHomebrewingScale">github.com/bnbbrewers/UltimateHomebrewingScale</a>
+        <span>GPL-3.0</span>
+        <a href="../en/" hreflang="en" lang="en">English</a>
+      </div>
+    </footer>
+  </body>
+</html>

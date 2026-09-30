@@ -115,10 +115,14 @@ class SettingsApp(BaseApp):
             if self._screen is None:
                 self._screen = self.screen_manager.get(screen_ids.SETTINGS)
             mode = info.get("mode", "sta")
-            if mode == "ap":
-                status = self.t("settings.portal_connect_ap")
+            # On the home Wi-Fi the phone is already on the right network, so
+            # the QR code is enough. On UHS's own network the operator has to
+            # join it first, and cannot guess its name from the QR code.
+            ap_ssid = info.get("ap_ssid", "")
+            if mode == "ap" and ap_ssid:
+                status = self.t("settings.portal_ap_ssid", ap_ssid)
             else:
-                status = self.t("settings.portal_connect_sta")
+                status = ""
             self.screen_manager.show(screen_ids.SETTINGS)
             self._screen.configure(
                 title=self.t("settings.title"),

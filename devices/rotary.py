@@ -8,8 +8,9 @@ from ticks import ticks_diff, ticks_ms
 # Sign of a left (counter-clockwise) turn in the raw count. Checked on the
 # M5Dial by turning the dial left, not taken from the launcher comment.
 LEFT_DIRECTION = -1
-# An eighth of a turn, in raw counts. Measured on the M5Dial.
-BACK_GESTURE_COUNTS = 8
+# An eighth of a turn, in raw counts. Measured on the M5Dial: the driver
+# decodes full steps, one count per click, and two clicks make the gesture.
+BACK_GESTURE_COUNTS = 2
 # Left counts further apart than this are not one gesture: knocks spread over
 # time must never add up to a step back.
 BACK_GESTURE_IDLE_MS = 800

@@ -5,6 +5,10 @@ import lvgl as lv
 
 from .ui_helper import UIHelper
 
+# Under the 132 px QR code, which spans y 62 to 194. At this height the round
+# screen is still about 140 px wide, enough for "Wi-Fi : UHS-Setup" in 14 pt.
+HINT_Y = 204
+
 
 class SettingsScreen:
     def __init__(self, i18n=None):
@@ -21,14 +25,39 @@ class SettingsScreen:
         self._qr_widget = None
         self._qr_ok = False
         self._qr_diag_printed = False
+        # Created on first use: on the home Wi-Fi the screen carries no text,
+        # and the portal is started while the heap is at its tightest.
+        self._hint = None
 
     def root(self):
         return self.page
 
     def configure(self, title, status, url, mode="sta", ap_ssid="", ap_password=""):
-        # UX request: keep only the title text on screen.
+        # The title and the QR code, plus one line only when the app has
+        # something to say: the name of the Wi-Fi to join.
         UIHelper.set_title(self._title, title or self._t("settings.title", "Settings"))
         self._qr_ok = self._render_qr(url)
+        self._set_hint(status)
+
+    def _set_hint(self, text):
+        text = text or ""
+        if self._hint is None:
+            if not text:
+                return
+            self._hint = m5ui.M5Label(
+                text,
+                x=0,
+                y=HINT_Y,
+                text_c=0xE5E7EB,
+                bg_c=0x000000,
+                bg_opa=0,
+                font=lv.font_montserrat_14,
+                parent=self.page,
+            )
+            self._hint.set_width(240)
+            self._hint.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+            return
+        self._hint.set_text(text)
 
     def _render_qr(self, payload):
         data = payload or ""
