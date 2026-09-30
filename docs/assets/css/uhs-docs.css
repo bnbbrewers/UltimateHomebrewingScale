@@ -991,6 +991,65 @@ pre code {
 .uhs-card__more svg { transition: transform .15s ease; }
 .uhs-card--link:hover .uhs-card__more svg { transform: translateX(3px); }
 
+/* -------------------------------------------------- user guide app entries */
+
+/* The launcher icons are the Dial's own artwork, shown as they appear on the
+   device: content, like a screenshot, not decoration. They are 38 px sources,
+   so they stay close to that size rather than being blown up. Their corners
+   are opaque black, drawn for the Dial's black screen: the round crop keeps
+   the disc and drops the square in the light theme. */
+
+.uhs-applist img,
+.uhs-app-head img { border-radius: 50%; }
+
+/* Steps are followed by a callout at section level here, not inside a step. */
+.uhs-steps + .uhs-note { margin-top: var(--uhs-space-6); }
+
+.uhs-applist {
+  display: grid;
+  gap: var(--uhs-space-2);
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.uhs-applist a {
+  display: flex;
+  align-items: center;
+  gap: var(--uhs-space-3);
+  padding: var(--uhs-space-2) var(--uhs-space-3);
+  background: var(--uhs-surface);
+  border: 1px solid var(--uhs-border-strong);
+  border-radius: var(--uhs-radius-sm);
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.uhs-applist a:hover { box-shadow: var(--uhs-shadow); }
+
+.uhs-applist img { flex: none; width: 38px; height: 38px; }
+
+.uhs-applist strong { display: block; font-size: .975rem; }
+
+.uhs-applist span {
+  display: block;
+  font-size: .85rem;
+  line-height: 1.4;
+  color: var(--uhs-text-muted);
+}
+
+.uhs-app-head {
+  display: flex;
+  align-items: center;
+  gap: var(--uhs-space-4);
+  margin-bottom: var(--uhs-space-3);
+}
+
+.uhs-app-head h2 { margin: 0; }
+
+.uhs-app-head img { flex: none; width: 48px; height: 48px; }
+
 /* Redirect stub pages. */
 
 .uhs-redirect {

@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ultimate Homebrewing Scale User Guide</title>
+    <meta
+      name="description"
+      content="How to use Ultimate Homebrewing Scale on the M5Stack Dial: controls, standby and wake-up, and a walkthrough of the Scale, Malt, Hop, Keg and Settings apps."
+    >
+    <link rel="stylesheet" href="../../assets/css/uhs-docs.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/logo/uhs-logo-dark-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/logo/uhs-logo-dark-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/logo/uhs-logo-dark-180.png">
+    <meta property="og:image" content="https://bnbbrewers.github.io/UltimateHomebrewingScale/assets/logo/uhs-logo-dark-1024.png">
+  </head>
+  <body>
+    <a class="uhs-skip" href="#main">Skip to content</a>
+
+    <header class="uhs-header">
+      <div class="wrap">
+        <nav class="uhs-lang" aria-label="Language">
+          <a href="./" hreflang="en" lang="en" aria-current="true" title="English" aria-label="English"><img src="../../assets/flags/en.svg" alt="" width="24" height="24"></a>
+          <a href="../fr/" hreflang="fr" lang="fr" title="Français" aria-label="Français"><img src="../../assets/flags/fr.svg" alt="" width="24" height="24"></a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="uhs-hero" aria-labelledby="page-title">
+      <div class="wrap">
+        <div class="uhs-hero__grid">
+          <div class="uhs-hero__head">
+            <svg class="uhs-hero__logo" viewBox="0 0 120 120" role="img" aria-label="Ultimate Homebrewing Scale">
+              <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+              <g fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round">
+                <path d="M46 38A16.5 16.5 0 0 1 46 18" stroke-opacity=".32"/>
+                <path d="M74 18A16.5 16.5 0 0 1 74 38" stroke-opacity=".32"/>
+                <path d="M52.5 34A10 10 0 0 1 52.5 22" stroke-opacity=".7"/>
+                <path d="M67.5 22A10 10 0 0 1 67.5 34" stroke-opacity=".7"/>
+              </g>
+              <circle cx="60" cy="28" r="5.5" fill="#FFFFFF"/>
+              <rect x="30" y="52" width="14" height="20" rx="7" fill="#13A923"/>
+              <rect x="53" y="42" width="14" height="30" rx="7" fill="#FBB500"/>
+              <rect x="76" y="48" width="14" height="24" rx="7" fill="#C9CED6"/>
+              <rect x="22" y="72" width="76" height="9" rx="4.5" fill="#FFFFFF"/>
+              <rect x="55.5" y="81" width="9" height="11" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+              <rect x="37" y="92" width="46" height="9" rx="4.5" fill="#FFFFFF" fill-opacity=".72"/>
+            </svg>
+
+            <div class="uhs-hero__text">
+              <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="uhs-eyebrow">Step 3 of 3 · Brew</p>
+              <h1 id="page-title">Ultimate Homebrewing Scale User Guide</h1>
+              <p class="uhs-lede">
+                UHS is installed and calibrated: time to brew. Learn its three controls in a minute, then follow
+                each app step by step, from weighing your recipe's malts and hops to filling a keg.
+              </p>
+              <div class="uhs-actions">
+                <a class="uhs-btn" href="#controls">
+                  Start with the controls
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
+                <a class="uhs-btn uhs-btn--ghost" href="#scale">
+                  Jump to the apps
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10"/><path d="M4 9l4 4 4-4"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <aside class="uhs-hero__panel" aria-label="Apps on the launcher">
+            <ul class="uhs-applist">
+              <li>
+                <a href="#scale">
+                  <img src="../img/Scale.png" width="38" height="38" alt="">
+                  <div><strong>Scale</strong><span>Weigh anything, tare on demand</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#malt">
+                  <img src="../img/Malt.png" width="38" height="38" alt="">
+                  <div><strong>Malt</strong><span>Weigh the grain bill of a recipe</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#hop">
+                  <img src="../img/Hop.png" width="38" height="38" alt="">
+                  <div><strong>Hop</strong><span>Weigh every hop addition, container by container</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#keg">
+                  <img src="../img/Keg.png" width="38" height="38" alt="">
+                  <div><strong>Keg</strong><span>Register kegs and fill them automatically</span></div>
+                </a>
+              </li>
+              <li>
+                <a href="#settings">
+                  <img src="../img/Parameters.png" width="38" height="38" alt="">
+                  <div><strong>Settings</strong><span>Setup portal and device settings</span></div>
+                </a>
+              </li>
+            </ul>
+          </aside>
+        </div>
+
+        <div class="uhs-facts">
+          <div>
+            <p class="uhs-facts__label">Back to the launcher</p>
+            <p class="uhs-facts__value">Hold the button 3 s</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Back one screen</p>
+            <p class="uhs-facts__value">¼ turn to the left</p>
+          </div>
+          <div>
+            <p class="uhs-facts__label">Wake from standby</p>
+            <p class="uhs-facts__value">Touch the screen</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="uhs-toc" aria-label="On this page">
+      <div class="wrap">
+        <a class="uhs-toc__brand" href="/UltimateHomebrewingScale/" aria-label="Ultimate Homebrewing Scale — documentation home">
+          <svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true">
+            <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+            <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+            <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+            <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+            <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+            <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+            <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+          </svg>
+          <span>uhs</span>
+        </a>
+        <div class="uhs-toc__sep" aria-hidden="true"></div>
+        <ul>
+          <li><a href="#controls">Controls</a></li>
+          <li><a href="#standby">Standby</a></li>
+          <li><a href="#scale">Scale</a></li>
+          <li><a href="#malt">Malt</a></li>
+          <li><a href="#hop">Hop</a></li>
+          <li><a href="#keg">Keg</a></li>
+          <li><a href="#settings">Settings</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section id="controls" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>How UHS Works</h2>
+          <p class="uhs-section__intro">
+            Everything is driven from the rotary dial and the button under the screen. The touch screen is
+            only used to wake UHS from standby.
+          </p>
+
+          <div class="uhs-cards">
+            <article class="uhs-card">
+              <h3>Turn the dial</h3>
+              <p>Moves the selection in a list or on the launcher, and adjusts a value such as a keg volume.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Short press</h3>
+              <p>Confirms: opens the selected app or item, acknowledges a message, tares the scale, validates a weighing.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Hold 3 seconds</h3>
+              <p>Leaves the current app and goes back to the launcher, from any screen. During a keg fill, the valve closes first.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>A quarter turn left</h3>
+              <p>Steps back one screen. It works on message and weighing screens, where the dial has nothing else to do.</p>
+            </article>
+            <article class="uhs-card">
+              <h3>Touch the screen</h3>
+              <p>Wakes UHS when it is in standby. Touch has no other role while UHS is awake.</p>
+            </article>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Stepping back:</strong> on a list, turning the dial moves the selection, so the
+            quarter turn cannot mean "back" there: hold the button 3 seconds instead. The gesture is also
+            ignored while a keg is filling and on the screens that report a finished weighing, so a knock on the
+            dial never undoes a result or reopens the valve.</p>
+          </div>
+
+          <h3 class="uhs-subhead">At power-on</h3>
+          <p>
+            UHS opens straight on the launcher and connects to your Wi-Fi by itself. If it opens on a QR code or
+            on the calibration wizard instead, its installation is not finished: pick it up where you left it in
+            the <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a>.
+          </p>
+
+          <h3 class="uhs-subhead">The launcher</h3>
+          <p>
+            The five apps sit on an arc around the round screen. Turn the dial to move the white marker from one
+            icon to the next: UHS beeps and shows the name of the selected app in the centre. The selection
+            wraps around from the last app to the first. Press the button to open the app; a loading screen in
+            the app's colour appears while it starts.
+          </p>
+
+          <h3 class="uhs-subhead" id="weighing-screen">The weighing screen</h3>
+          <p>
+            Malt and Hop share the same weighing screen. It counts down instead of up, so you always read what
+            is left to pour:
+          </p>
+          <div class="uhs-table-wrap">
+            <table class="uhs-table">
+              <thead>
+                <tr>
+                  <th>On screen</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Title bar</td>
+                  <td>The ingredient being weighed and, for hops, the container number.</td>
+                </tr>
+                <tr>
+                  <td>Large number</td>
+                  <td>The weight still to add. It shows grams below 1 kg and kilograms with two decimals above.</td>
+                </tr>
+                <tr>
+                  <td>Progress bar and percentage</td>
+                  <td>How much of the target is already on the scale.</td>
+                </tr>
+                <tr>
+                  <td><code>+</code> in front of the number, red bar</td>
+                  <td>You poured too much: the number is the excess to take back out.</td>
+                </tr>
+                <tr>
+                  <td><strong>OK</strong> marker</td>
+                  <td>
+                    The weight is within the tolerance set in the portal (10 g for malts and 1 g for hops by default).
+                    Press the button to validate. Once shown, the marker stays even if the reading drifts a little.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The scale tares itself when a weighing starts, with the empty container already on the platform, so
+            its weight never counts.
+          </p>
+        </div>
+      </section>
+
+      <section id="standby" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>Standby and Wake-up</h2>
+          <p class="uhs-section__intro">
+            UHS can switch itself off after a period without activity. It is off by default and set in the
+            setup portal with <strong>Standby after (min, 0 = off)</strong>; 30 minutes is recommended, and
+            required on battery.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>UHS watches for activity</h3>
+              <p>
+                A press on the button, a turn of the dial or a change of weight on the platform all count as
+                activity and restart the countdown. Leaving a container on the scale does not keep UHS
+                awake; pouring into it does.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>It goes to sleep when the time runs out</h3>
+              <p>
+                The screen turns black. If a keg valve is connected, it stays closed while UHS sleeps.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Touch the screen to wake it</h3>
+              <p>
+                UHS starts up again on the launcher, not on the screen you left.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">The button cannot wake UHS:</strong> the M5Stack Dial hardware does not allow
+            it. Only a touch on the screen wakes it up.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">When UHS never sleeps:</strong> during the scale calibration wizard, during a
+            software update, and in the Keg app from the moment the valve opens until you leave the end-of-fill or
+            no-flow screen. Sleeping then would lose the calibration, break the installation or cut a fill short.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scale" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Scale.png" width="38" height="38" alt="Scale app icon: a pair of scales on a blue disc">
+            <h2>Scale</h2>
+          </div>
+          <p class="uhs-section__intro">
+            A plain kitchen scale, for anything that is not part of a recipe: water salts, sugar, yeast, a
+            sample.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Open the app with the platform empty or with your container on it</h3>
+              <p>
+                The scale tares as soon as the app opens: <strong>Taring...</strong>, then <strong>Tare done!</strong>.
+                Whatever is on the platform at that moment reads as 0 g.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Weigh</h3>
+              <p>
+                The weight is shown live, in grams below 1 kg and in kilograms above. The status line reads
+                <strong>Press to tare</strong>.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Tare again whenever you need to</h3>
+              <p>
+                Press the button to zero the scale, for example to weigh a second ingredient in the same
+                container. <strong>Tare error</strong> means the weight unit did not answer: check its cable, then
+                press again.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Leave</h3>
+              <p>Turn the dial a quarter turn to the left, or hold the button 3 seconds.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="malt" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Malt.png" width="38" height="38" alt="Malt app icon: an ear of barley on an amber disc">
+            <h2>Malt</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Weighs the grain bill of a Brewfather batch, one malt after the other, straight from the recipe.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Pick the recipe</h3>
+              <p>
+                UHS shows <strong>Loading recipes...</strong> and lists your Brewfather batches whose status is
+                <code>Brewing</code>. Turn the dial to choose one and press. With a single batch in progress, the
+                list is skipped.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pick a malt</h3>
+              <p>
+                After <strong>Loading grains...</strong>, the list <strong>Select a malt</strong> shows the grains and malts
+                of the recipe. Choose the one you want to weigh and press. You can weigh them in any order.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Place the container on the scale</h3>
+              <p>
+                Put the empty container on the platform, then press <strong>OK</strong>. The scale tares with the
+                container on it.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pour until OK appears</h3>
+              <p>
+                The title bar shows the malt name and the large number counts down to 0 g, as described in
+                <a href="#weighing-screen">the weighing screen</a>. When <strong>OK</strong> appears, press the button
+                to validate.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Carry on with the next malt</h3>
+              <p>
+                The weighed malt leaves the list and you are back on <strong>Select a malt</strong>. When the last one
+                is validated, UHS shows <strong>All malts weighed!</strong>: press to go back to the launcher.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Stepping back:</strong> on the weighing screen, a quarter turn to the left
+            brings back the "place the container" prompt; from that prompt, it goes back to the malt list.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">What is listed:</strong> only fermentables of type <code>Grain</code> or
+            <code>Malt</code> in Brewfather. Sugars, extracts and adjuncts are left out, so weigh them with the
+            Scale app.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="hop" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Hop.png" width="38" height="38" alt="Hop app icon: a hop cone on a green disc">
+            <h2>Hop</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Weighs every hop addition of a Brewfather batch and sorts them into numbered containers, one per
+            addition time, so the brew day is ready before the boil starts.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Pick the recipe</h3>
+              <p>
+                As in Malt, UHS lists your batches in <code>Brewing</code> status and skips the list when there
+                is only one.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Prepare the containers</h3>
+              <p>
+                After <strong>Loading hops...</strong>, UHS asks you to <strong>Prepare N container(s) for hop
+                additions</strong>. There is one container per distinct addition, for example boil at 60 min, boil
+                at 10 min and a 3-day dry hop. Number them, then press <strong>OK</strong>.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pick a hop</h3>
+              <p>On <strong>Select a hop</strong>, choose a variety and press.</p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pick the addition</h3>
+              <p>
+                The list shows every use of that hop in the recipe, as
+                <code>container : use - time (amount)</code>, for example <code>1 : Boil - 60min (25g)</code>.
+                Choose one and press.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Place the right container on the scale</h3>
+              <p>
+                UHS asks you to <strong>Place recipient N on the scale</strong>. Put that container on the
+                platform, even if it already holds another hop, then press <strong>OK</strong>: the scale tares with
+                it.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Pour until OK appears</h3>
+              <p>
+                The title bar shows the hop and the container number. When <strong>OK</strong> appears, press the
+                button to validate.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Finish the hop, then the recipe</h3>
+              <p>
+                The addition leaves the list. When a hop has no addition left, UHS shows
+                <strong>&lt;hop&gt; weighed</strong>; press to return to the hop list. After the last one,
+                <strong>All hops weighed!</strong> appears: press to go back to the launcher.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Stepping back:</strong> a quarter turn to the left takes you from the weighing
+            screen to the "place recipient" prompt, then to the list of additions. From the "prepare containers"
+            prompt it goes back to the recipe list.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="keg" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Keg.png" width="38" height="38" alt="Keg app icon: a keg on a grey disc">
+            <h2>Keg</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Fills a keg by weight and closes the solenoid valve by itself when the keg is full. Each keg is
+            registered once, then chosen from a list. Filling needs the optional relay and valve described in the
+            <a href="../../HardwareInstallationGuide/en/">Hardware Installation Guide</a>.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Empty the platform</h3>
+              <p>
+                The app opens on <strong>Empty the scale platform</strong>. Clear it and press <strong>OK</strong>: the
+                scale tares.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Choose a keg</h3>
+              <p>
+                The list <strong>Choose a keg</strong> shows your registered kegs, followed by <strong>Add</strong>. Pick
+                <strong>Add</strong> to register a new keg, or a keg name to fill it.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Register a keg</h3>
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Weigh the empty set-up</h3>
+              <p>
+                <strong>Calibration (1/2)</strong> asks you to place on the platform the empty keg, the spunding valve
+                and the connected tube: everything that will sit on the scale during a fill. Press
+                <strong>OK</strong>, then do not touch anything during the 10-second measurement.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Set the volume to fill</h3>
+              <p>
+                On <strong>Calibration 2/2</strong>, turn the dial to set the volume of beer the keg should receive,
+                from 0.5 to 60 L in 0.5 L steps (18 L to start with). Press to save.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Note its name</h3>
+              <p>
+                <strong>Keg Calibrated</strong> shows the name given to it: <code>keg0</code>, <code>keg1</code> and so on.
+                Press <strong>OK</strong>: you are back on the keg list with the new keg selected. The name can be
+                changed later in the setup portal, from the <a href="#settings">Settings</a> app.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Fill a keg</h3>
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Connect everything</h3>
+              <p>
+                After choosing the keg, follow the checklist on screen: put the keg on the scale, connect the
+                spunding valve, connect the beer line. Press <strong>OK</strong> to start: the valve opens.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>Watch the fill</h3>
+              <p>
+                The screen shows the volume poured in litres and a progress bar. UHS stops a little before
+                the set volume, by the spunding valve inertia set in the portal (200 ml by default), so the beer
+                still in the line tops the keg up without overflowing.
+              </p>
+            </li>
+            <li class="uhs-step">
+              <h3>The valve closes by itself</h3>
+              <p>
+                When the stop weight is reached, the valve closes and <strong>OK</strong> appears. Press it to reach
+                <strong>Filling complete</strong>, then choose <strong>Another &lt;keg&gt;</strong> to fill the same model
+                again, <strong>Another Keg</strong> to go back to the keg list, or <strong>Launcher</strong>.
+              </p>
+            </li>
+          </ol>
+
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">No flow:</strong> if the weight does not move for 10 seconds (the
+            <strong>Fill stall safety</strong> set in the portal), UHS closes the valve and shows how long the
+            volume has been unchanged. Fix the line, then press <strong>Resume</strong> to reopen the valve and carry
+            on with the same fill, or hold the button 3 seconds to go back to the launcher.</p>
+          </div>
+
+          <div class="uhs-note uhs-note--info">
+            <p><strong class="uhs-note__label">Stopping a fill:</strong> hold the button 3 seconds at any time. The valve closes
+            before UHS returns to the launcher. The quarter-turn gesture is ignored during a fill.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="uhs-app-head">
+            <img src="../img/Parameters.png" width="38" height="38" alt="Settings app icon: a gear on a purple disc">
+            <h2>Settings</h2>
+          </div>
+          <p class="uhs-section__intro">
+            Opens the setup portal, a page you open on your smartphone to change every setting, edit your kegs,
+            back up the configuration and update the application. It is the page you used during the installation.
+          </p>
+
+          <ol class="uhs-steps">
+            <li class="uhs-step">
+              <h3>Open the app: UHS shows a QR code</h3>
+              <p>
+                What happens next depends on whether UHS is connected to your Wi-Fi:
+              </p>
+              <ul>
+                <li>
+                  <strong>Connected to your Wi-Fi</strong>, the screen shows the QR code alone. Keep your phone on
+                  that same network.
+                </li>
+                <li>
+                  <strong>Not connected</strong>, on a first setup or when your Wi-Fi is out of reach, UHS starts its
+                  own Wi-Fi network and shows its name under the QR code: <strong>Wi-Fi: UHS-Setup</strong>.
+                </li>
+              </ul>
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../../SoftwareInstallationGuide/img/DialQRCode.jpg" width="2268" height="2479" alt="UHS settings screen displaying the QR code to scan">
+                <figcaption>The QR code appears on the settings screen.</figcaption>
+              </figure>
+            </li>
+
+            <li id="portal-wifi" class="uhs-step">
+              <h3>Connect your smartphone to <code>UHS-Setup</code></h3>
+              <p>
+                Skip this step if UHS is on your Wi-Fi. Otherwise, open the Wi-Fi settings of your smartphone and
+                join <code>UHS-Setup</code>. The setup network has no password.
+              </p>
+              <p>
+                Stay connected to that Wi-Fi even if the phone warns that it has no internet access. The phone
+                only needs to reach UHS locally.
+              </p>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Important:</strong> If the setup page does not open, temporarily turn off mobile data/5G.
+                Some phones prefer mobile data when the <code>UHS-Setup</code> Wi-Fi has no internet access, which
+                prevents the browser from reaching UHS locally.</p>
+              </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Scan the QR code to open the portal</h3>
+              <p>
+                Scan the QR code shown by UHS. On <code>UHS-Setup</code>, it opens <code>http://192.168.4.1:8080/</code>.
+                If your camera app does not open the page, stay on the same Wi-Fi and type the address in the browser.
+              </p>
+              <p>
+                As soon as the page loads, the QR code gives way to <strong>Setup in progress...</strong> on UHS.
+              </p>
+            </li>
+
+            <li id="portal-fields" class="uhs-step">
+              <h3>Fill in the fields</h3>
+              <p>
+                The portal page is intentionally simple. Enter the values below, then review them before saving.
+              </p>
+
+              <figure class="uhs-figure uhs-figure--portrait">
+                <img src="../../SoftwareInstallationGuide/img/PortalPage.png" width="1020" height="2223" alt="Smartphone browser showing the Ultimate Homebrewing Scale setup portal fields">
+                <figcaption>Setup portal opened from the QR code while connected to <code>UHS-Setup</code>.</figcaption>
+              </figure>
+
+              <div class="uhs-table-wrap">
+                <table class="uhs-table">
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>What to enter</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Language</td>
+                      <td>Choose <code>English</code> or <code>French</code> for the interface of UHS and of the portal.</td>
+                    </tr>
+                    <tr>
+                      <td>Wi-Fi SSID</td>
+                      <td>Enter the exact name of your 2.4 GHz Wi-Fi network.</td>
+                    </tr>
+                    <tr>
+                      <td>Wi-Fi password</td>
+                      <td>Enter the password for that Wi-Fi network.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewing software</td>
+                      <td>Leave <code>brewfather</code> selected.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewfather user id</td>
+                      <td>Paste your Brewfather API user ID.</td>
+                    </tr>
+                    <tr>
+                      <td>Brewfather API key</td>
+                      <td>Paste your Brewfather API key. It is hidden as you type.</td>
+                    </tr>
+                    <tr>
+                      <td>Grain tolerance (g)</td>
+                      <td>How close to the target a malt must be for <strong>OK</strong> to appear. Default <code>10</code>.</td>
+                    </tr>
+                    <tr>
+                      <td>Hop tolerance (g)</td>
+                      <td>The same for hops. Default <code>1</code>.</td>
+                    </tr>
+                    <tr>
+                      <td>Spunding valve inertia (ml)</td>
+                      <td>
+                        How far before the set volume the keg filler closes the valve, to leave room for the beer still
+                        in the line. Keep the default <code>200</code> ml; raise it if your kegs overflow, lower it if they
+                        end up short.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Fill stall safety (s)</td>
+                      <td>
+                        Seconds without any weight change before the keg filler closes the solenoid valve. Keep the
+                        default <code>10</code> (accepted range: <code>3</code> to <code>600</code>). UHS then shows
+                        how long the volume has been unchanged: press <strong>Resume</strong> to reopen the valve and
+                        restart the countdown, or hold the button to go back to the launcher.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Standby after (min, 0 = off)</td>
+                      <td>
+                        Minutes without activity before UHS goes to sleep (see <a href="#standby">Standby and Wake-up</a>).
+                        <strong>Enter <code>30</code></strong>: it is the recommended value on mains and a requirement on
+                        battery. <code>0</code> disables standby.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Battery powered</td>
+                      <td>Tick this box <strong>only if a battery is fitted</strong> inside UHS. Leave it unticked on mains.</td>
+                    </tr>
+                    <tr>
+                      <td>Debug mode</td>
+                      <td>Leave it unticked. It is only useful when reporting a problem.</td>
+                    </tr>
+                    <tr>
+                      <td>Release channel</td>
+                      <td>Keep <code>Stable</code>. <code>Pre-release</code> gets new versions before everyone else, to test them.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Running on battery:</strong> if you fitted the optional LiPo cell, these two settings go
+                together. <strong>Standby after</strong> set to <code>30</code> minutes stops an idle screen from
+                draining the charge, and <strong>Battery powered</strong> lets UHS restart by itself if it ever freezes:
+                on battery, there is no plug to pull.</p>
+              </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Save and reboot</h3>
+              <p>
+                Tap <strong>Save and reboot</strong>. UHS saves the Wi-Fi credentials and the settings, then restarts
+                on its own. If a value is refused, the page shows <strong>Invalid fields</strong> and nothing is saved.
+              </p>
+            </li>
+          </ol>
+
+          <h3 class="uhs-subhead">Kegs</h3>
+          <p>
+            Every keg registered from the <a href="#keg">Keg</a> app is listed under <strong>Kegs</strong>, with its
+            <strong>Keg name</strong>, its <strong>Empty weight</strong> in grams and its <strong>Max volume</strong> in
+            litres. Edit them, then tap <strong>Save and reboot</strong>. The <strong>Delete</strong> button next to a keg
+            removes it at once, without restarting UHS.
+          </p>
+
+          <h3 class="uhs-subhead">Back up and restore</h3>
+          <p>
+            <strong>Back up</strong> downloads <code>uhs-backup.txt</code>, a text file holding the settings, the Wi-Fi
+            credentials, the kegs and the scale calibration. To put them back, for example after reinstalling the application,
+            choose that file under <strong>Backup file</strong> and tap <strong>Restore</strong>: UHS writes it and
+            restarts.
+          </p>
+          <div class="uhs-note uhs-note--warn">
+            <p><strong class="uhs-note__label">Keep the backup private:</strong> it contains your Wi-Fi password and your
+            Brewfather API key in plain text.</p>
+          </div>
+
+          <h3 class="uhs-subhead">Update the application</h3>
+          <p>
+            <strong>UPDATE APP</strong> restarts UHS, which downloads and installs the latest version of the chosen
+            <strong>Release channel</strong>, then shows
+            <strong>Installation complete, OK to restart</strong>: press the button. UHS never goes to sleep during an
+            update; do not unplug it either.
+          </p>
+
+          <h3 class="uhs-subhead">Leave</h3>
+          <p>
+            Turn the dial a quarter turn to the left, or hold the button 3 seconds. The portal closes, and so does the
+            <code>UHS-Setup</code> network.
+          </p>
+        </div>
+      </section>
+
+      <section id="troubleshooting" class="uhs-section">
+        <div class="wrap">
+          <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
+          <h2>Quick Troubleshooting</h2>
+          <p class="uhs-section__intro">
+            The messages you are most likely to meet during a brew day, and what to do about them.
+          </p>
+
+          <dl class="uhs-troubleshoot">
+            <dt>No recipe found</dt>
+            <dd>Only Brewfather batches in <code>Brewing</code> status are listed. Change the batch status in Brewfather, then open the app again. If a batch is brewing, check the Brewfather user ID and API key in the setup portal.</dd>
+            <dt>Network error, please retry</dt>
+            <dd>UHS could not reach Brewfather. Check that your Wi-Fi is up and in range, then open the app again.</dd>
+            <dt>No malts found</dt>
+            <dd>Malt only lists fermentables of type <code>Grain</code> or <code>Malt</code>. Weigh the others with the Scale app.</dd>
+            <dt>Keg Error: Relay not found</dt>
+            <dd>UHS does not see the relay that drives the valve. Check its cable inside the enclosure, as shown in the <a href="../../HardwareInstallationGuide/en/#assembly">Hardware Installation Guide</a>.</dd>
+            <dt>Phone cannot open the QR page</dt>
+            <dd>Reconnect to <code>UHS-Setup</code>, temporarily turn off mobile data/5G, then manually open <code>http://192.168.4.1:8080/</code>.</dd>
+            <dt>Wi-Fi does not connect after saving</dt>
+            <dd>Open the Settings app again: without Wi-Fi, UHS brings <code>UHS-Setup</code> back up. Check the SSID spelling and confirm it is a 2.4 GHz network.</dd>
+            <dt>UHS does not wake up with the button</dt>
+            <dd>That is expected: touch the screen to wake it.</dd>
+          </dl>
+        </div>
+      </section>
+    </main>
+
+    <footer class="uhs-footer">
+      <div class="wrap">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="30" fill="#0D0F12"/>
+          <circle cx="60" cy="26" r="8" fill="#FFFFFF"/>
+          <rect x="26" y="50" width="18" height="24" rx="9" fill="#13A923"/>
+          <rect x="51" y="40" width="18" height="34" rx="9" fill="#FBB500"/>
+          <rect x="76" y="46" width="18" height="28" rx="9" fill="#C9CED6"/>
+          <rect x="18" y="78" width="84" height="12" rx="6" fill="#FFFFFF"/>
+          <rect x="42" y="96" width="36" height="12" rx="6" fill="#FFFFFF" fill-opacity=".72"/>
+        </svg>
+        <a href="https://github.com/bnbbrewers/UltimateHomebrewingScale">github.com/bnbbrewers/UltimateHomebrewingScale</a>
+        <span>GPL-3.0</span>
+        <a href="../fr/" hreflang="fr" lang="fr">Français</a>
+      </div>
+    </footer>
+  </body>
+</html>

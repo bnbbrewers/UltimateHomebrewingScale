@@ -49,10 +49,11 @@
 
             <div class="uhs-hero__text">
               <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
-              <p class="uhs-eyebrow">Assemblage matériel</p>
+              <p class="uhs-eyebrow">Étape 1 sur 3 · Construire</p>
               <h1 id="page-title">Guide d'installation matérielle Ultimate Homebrewing Scale</h1>
               <p class="uhs-lede">
-                Liste des pièces et schémas de cablage
+                Tout ce qu'il faut pour construire l'UHS : les pièces à commander, puis l'assemblage et le câblage,
+                pas à pas. Une fois monté, le guide d'installation logicielle lui donne vie.
               </p>
               <div class="uhs-actions">
                 <a class="uhs-btn" href="#shopping-list">
@@ -60,7 +61,7 @@
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                 </a>
                 <a class="uhs-btn uhs-btn--ghost" href="../../SoftwareInstallationGuide/fr/">
-                  Guide logiciel
+                  Suite : le logiciel
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                 </a>
               </div>
@@ -122,9 +123,9 @@
           <li><a href="#before">Avant de commencer</a></li>
           <li><a href="#shopping-list">Pièces</a></li>
           <li><a href="#assembly">Assemblage</a></li>
-          <li><a href="#keg-filler">Keg filler</a></li>
+          <li><a href="#keg-filler">Remplissage de fût</a></li>
           <li><a href="#battery">Batterie</a></li>
-          <li><a href="#software">Logiciel</a></li>
+          <li><a href="#software">Étape suivante</a></li>
         </ul>
       </div>
     </nav>
@@ -153,7 +154,7 @@
             </article>
             <article class="uhs-card">
               <h3>Logiciel</h3>
-              <p>Après assemblage, utilisez le guide logiciel pour flasher le firmware et calibrer la balance.</p>
+              <p>Une fois l'UHS monté, le guide d'installation logicielle installe son application et calibre la balance.</p>
             </article>
           </div>
 
@@ -176,8 +177,8 @@
               </figure>
               <h3>M5Dial</h3>
               <p>
-                Le M5Stack Dial apporte l'ESP32, le Wi-Fi, l'écran rond et l'encodeur rotatif. Il limite le câblage
-                et donne au brasseur une interface physique utilisable même avec les mains humides.
+                Le cœur de l'UHS : écran rond, molette et Wi-Fi réunis. Très peu de câblage, et une commande
+                utilisable même avec les mains humides.
               </p>
               <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
@@ -286,7 +287,7 @@
             </article>
           </div>
 
-          <h3 class="uhs-subhead">Spunding valve optionnelle</h3>
+          <h3 id="keg-filler" class="uhs-subhead">Spunding valve optionnelle</h3>
           <p class="uhs-section__intro">Ajoutez ces pièces uniquement si vous utilisez le remplissage de keg.</p>
 
           <div class="uhs-cards">
@@ -304,7 +305,7 @@
               </ul>
             </article>
 
-            <article id="keg-filler" class="uhs-card uhs-card--part">
+            <article class="uhs-card uhs-card--part">
               <figure class="uhs-card__photo">
                 <img src="../img/spunding-valve.jpg" width="800" height="800" alt="Spunding valve photo produit depuis AliExpress">
               </figure>
@@ -346,11 +347,11 @@
             </article>
           </div>
 
-          <h3 class="uhs-subhead">Batterie optionnelle</h3>
+          <h3 id="battery" class="uhs-subhead">Batterie optionnelle</h3>
           <p class="uhs-section__intro">Ajoutez cette pièce uniquement si vous voulez utiliser la balance loin d'une prise de courant.</p>
 
           <div class="uhs-cards">
-            <article id="battery" class="uhs-card uhs-card--part">
+            <article class="uhs-card uhs-card--part">
               <figure class="uhs-card__photo">
                 <img src="../img/battery.jpg" width="850" height="637" alt="Cellule LiPo plate équipée d'un connecteur JST 1,25 mm 2 broches, photo produit depuis AliExpress">
               </figure>
@@ -363,7 +364,7 @@
           </div>
 
           <div class="uhs-note uhs-note--warn">
-            <p><strong class="uhs-note__label">Attention :</strong> sur batterie, la fonction keg filler est
+            <p><strong class="uhs-note__label">Attention :</strong> sur batterie, le remplissage de fût est
             indisponible. L'électrovanne 12 V ne peut pas être pilotée par la cellule.</p>
           </div>
         </div>
@@ -375,11 +376,43 @@
           <h2>Assemblage matériel</h2>
 
           <ol class="uhs-steps">
+            <li id="battery-assembly" class="uhs-step">
+              <h3>Installer d'abord la batterie optionnelle</h3>
+              <p>
+                Passez cette étape si l'UHS reste toujours sur l'alimentation 12 V. Si vous installez la batterie,
+                faites-le avant tout le reste : le Dial s'ouvre par l'arrière, ce qui n'est plus possible une fois
+                qu'il est monté dans le boîtier.
+              </p>
+              <figure class="uhs-figure">
+                <img src="../img/m5dial-battery-mount.png" width="1920" height="1080" alt="Trois étapes montrant le capot arrière du M5Stack Dial retiré pour exposer le connecteur de batterie JST 1,25 mm 2 broches">
+                <figcaption>Ouverture du capot arrière du M5Stack Dial pour accéder au connecteur de batterie. Source : documentation M5Stack.</figcaption>
+              </figure>
+              <ol>
+                <li>Débranchez le câble USB-C et tous les câbles Grove du Dial.</li>
+                <li>Retirez les deux vis du capot arrière, puis soulevez le capot hors du boîtier orange.</li>
+                <li>Repérez le connecteur blanc <code>1.25mm-2P</code> sur la carte ainsi dégagée, à côté du port USB-C.</li>
+                <li>Branchez le connecteur de la LiPo, fil rouge sur <code>+</code>. Il ne rentre que dans un sens ; ne forcez jamais.</li>
+                <li>Couchez la cellule à plat dans l'espace libre du capot sans pincer de fil, puis refermez le capot et remettez les vis.</li>
+              </ol>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Polarité :</strong> certaines cellules sont vendues avec les fils rouge et noir inversés
+                dans le connecteur. Vérifiez-les face aux repères <code>+</code> et <code>-</code> de la carte avant
+                de brancher : une cellule inversée détruit le Dial.</p>
+              </div>
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Charge :</strong> le Dial recharge la cellule dès que l'USB-C est branché. Branchez-le une
+                fois avant la première utilisation. Lors de la configuration de l'UHS, réglez la veille sur 30 minutes
+                pour qu'un écran resté allumé ne vide pas la charge : voir
+                <a href="../../UserGuide/fr/#portal-fields">les champs du portail de configuration</a>
+                dans le guide d'utilisation.</p>
+              </div>
+            </li>
+
             <li class="uhs-step">
               <h3>Préparer le boîtier</h3>
               <p>
                 Positionnez le M5Stack Dial pour que l'écran et l'encodeur rotatif restent accessibles. Marquez ensuite
-                les sorties nécessaires : alimentation 12 V, câble RJ9 de la balance et sortie de vanne si le keg filler est installé.
+                les sorties nécessaires : alimentation 12 V, câble RJ9 de la balance et sortie de vanne si vous installez le remplissage de fût.
               </p>
               <ol>
                 <li>Percez l'ouverture du M5Stack Dial à 45 mm à l'aide d'une scie cloche.</li>
@@ -387,11 +420,6 @@
                 <li>Percez un trou à 8 mm pour le jack d'alimentation, et un autre pour le jack de la spunding valve si nécessaire.</li>
                 <li>Insérez les Units à l'intérieur du boîtier et fixez-les avec du scotch double face.</li>
               </ol>
-              <div class="uhs-note uhs-note--info">
-                <p><strong class="uhs-note__label">Vous montez la batterie optionnelle ?</strong> Installez-la maintenant, avant de poser le
-                Dial dans le boîtier. Voir <a href="#battery-assembly">Installer la batterie optionnelle</a> à la
-                fin de cette section.</p>
-              </div>
             </li>
 
             <li class="uhs-step">
@@ -478,8 +506,8 @@
                 </table>
               </div>
               <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Avant la mise sous tension :</strong> utilisez le Port A rouge, pas le Port B. Vérifiez que le
-                connecteur est bien enfoncé et que le Unit Weight I2C répond sur l'adresse I2C <code>0x26</code>.</p>
+                <p><strong class="uhs-note__label">Avant la mise sous tension :</strong> utilisez le Port A rouge, pas le Port B, et vérifiez que
+                le connecteur est bien enfoncé.</p>
               </div>
             </li>
 
@@ -557,39 +585,6 @@
                 reste réservé au Unit Weight I2C.</p>
               </div>
             </li>
-
-            <li id="battery-assembly" class="uhs-step">
-              <h3>Installer la batterie optionnelle</h3>
-              <p>
-                Passez cette étape si la balance reste toujours reliée à l'alimentation 12 V. La batterie est
-                décrite en dernier parce qu'elle est optionnelle, mais elle s'installe tôt : le Dial doit être
-                ouvert par l'arrière, ce qui n'est plus praticable une fois qu'il est monté dans le boîtier. Lisez
-                cette étape avant d'attaquer l'étape 1, et réalisez-la à ce moment-là.
-              </p>
-              <figure class="uhs-figure">
-                <img src="../img/m5dial-battery-mount.png" width="1920" height="1080" alt="Trois étapes montrant le capot arrière du M5Stack Dial retiré pour exposer le connecteur de batterie JST 1,25 mm 2 broches">
-                <figcaption>Ouverture du capot arrière du M5Stack Dial pour accéder au connecteur de batterie. Source : documentation M5Stack.</figcaption>
-              </figure>
-              <ol>
-                <li>Débranchez le câble USB-C et tous les câbles Grove du Dial.</li>
-                <li>Retirez les deux vis du capot arrière, puis soulevez le capot hors du boîtier orange.</li>
-                <li>Repérez le connecteur blanc <code>1.25mm-2P</code> sur la carte ainsi dégagée, à côté du port USB-C.</li>
-                <li>Branchez le connecteur de la LiPo, fil rouge sur <code>+</code>. Il ne rentre que dans un sens ; ne forcez jamais.</li>
-                <li>Couchez la cellule à plat dans l'espace libre du capot sans pincer de fil, puis refermez le capot et remettez les vis.</li>
-              </ol>
-              <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Polarité :</strong> certaines cellules sont vendues avec les fils rouge et noir inversés
-                dans le connecteur. Vérifiez-les face aux repères <code>+</code> et <code>-</code> de la carte avant
-                de brancher : une cellule inversée détruit le Dial.</p>
-              </div>
-              <div class="uhs-note uhs-note--info">
-                <p><strong class="uhs-note__label">Charge :</strong> le Dial recharge la cellule dès que l'USB-C est branché. Branchez-le une
-                fois avant la première utilisation, et réglez le délai de mise en veille dans le portail de
-                configuration pour qu'un écran resté allumé ne vide pas la charge. Voir
-                <a href="../../SoftwareInstallationGuide/fr/#brewfather">Renseigner le Wi-Fi, Brewfather et les réglages de l'app</a>
-                dans le guide d'installation logicielle.</p>
-              </div>
-            </li>
           </ol>
         </div>
       </section>
@@ -597,10 +592,10 @@
       <section id="software" class="uhs-section">
         <div class="wrap">
           <div class="uhs-note uhs-note--tip">
-            <p><strong class="uhs-note__label">Étape suivante :</strong> ouvrez le
-            <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>, flashez le M5Stack Dial,
-            configurez le Wi-Fi et lancez la calibration. La précision finale dépend beaucoup de la qualité de calibration
-            et de la stabilité mécanique de la plateforme.</p>
+            <p><strong class="uhs-note__label">Étape suivante :</strong> l'UHS est monté. Le
+            <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a> installe l'application
+            depuis votre navigateur, relie l'UHS à votre Wi-Fi et à Brewfather, et calibre la balance. Posez le plateau
+            sur une surface plane et stable : les pesées n'en seront que plus justes.</p>
           </div>
         </div>
       </section>
