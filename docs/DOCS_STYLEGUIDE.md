@@ -190,7 +190,7 @@ Balises à ajouter dans le `<head>` de chaque page :
    720 px, le logo reste.
 
 L'en-tête de page ne porte **pas** de logo : il ne contient que le sélecteur de
-langue. Le pied de page reprend le petit logo à 24 px.
+guide et le sélecteur de langue. Le pied de page reprend le petit logo à 24 px.
 
 **Règles.** La tuile sombre est la seule version autorisée sur le site. Zone de
 protection égale au quart du côté de la tuile sur les quatre bords. Taille minimale
@@ -218,7 +218,8 @@ Placée juste avant chaque `h2`, et en tête du bloc de texte du hero, au-dessus
 surtitre. Toujours `aria-hidden` : elle ne porte aucune information.
 
 Les trois couleurs se retrouvent ensuite, et uniquement, sur : les puces de la
-bande de faits (§5.2), les pilules de la barre d'ancres (§5.3), le liseré haut des
+bande de faits (§5.2), les pastilles du sélecteur de guide (§5.1), les pilules de la
+barre d'ancres (§5.3), le liseré haut des
 cartes (§5.5), l'anneau des pastilles d'étape (§5.6) et la règle gauche des
 callouts (§5.8). Partout ailleurs, l'interface reste en encre et gris.
 
@@ -227,8 +228,35 @@ il passe en `--uhs-green-ink`, dont le contraste est vérifié dans les deux th�
 
 ### 5.1 En-tête (`.uhs-header`)
 
-Barre haute fine, fond `--uhs-surface`, bordure basse 1px, contenu aligné à
-droite. Elle ne contient que le sélecteur de langue — aucun logo, aucun titre.
+Barre haute fine, fond `--uhs-surface`, bordure basse 1px. Elle ne contient
+que deux blocs : le sélecteur de guide à gauche, sur les pages de guide, et le
+sélecteur de langue poussé à droite (`margin-left: auto`) — aucun logo, aucun
+titre.
+
+**Sélecteur de guide (`.uhs-guides`)** — les trois guides, dans la langue de la
+page, comme les trois étapes d'un montage : 1 Assembler / Assemble (matériel),
+2 Configurer / Configure (installation logicielle), 3 Utiliser / Use (guide
+d'utilisation).
+
+```html
+<nav class="uhs-guides" aria-label="Guides">
+  <a href="../../HardwareInstallationGuide/fr/" title="Assembler"><span class="uhs-guides__num">1</span><span class="uhs-guides__label">Assembler</span></a>
+  <a href="../../SoftwareInstallationGuide/fr/" title="Configurer"><span class="uhs-guides__num">2</span><span class="uhs-guides__label">Configurer</span></a>
+  <a href="../../UserGuide/fr/" aria-current="page" title="Utiliser"><span class="uhs-guides__num">3</span><span class="uhs-guides__label">Utiliser</span></a>
+</nav>
+```
+
+Une capsule flottante : fond `--uhs-surface`, bordure `--uhs-border`,
+`--uhs-radius-pill`, `--uhs-shadow`, 4 px de marge intérieure. Chaque guide y
+est une pilule ; le numéro, en `--uhs-font-mono` gras, est posé sur une
+pastille à la couleur de sa barre du logo (1 `--uhs-green`, 2 `--uhs-amber`,
+3 `--uhs-steel`) avec le texte en encre `#0D0F12` (6,2:1 au plus bas, sur le
+vert). Libellé en `--uhs-text-muted`, `--uhs-text` et fond `--uhs-surface-2` au
+survol. Le guide affiché porte `aria-current="page"` et prend le remplissage du
+bouton principal (`--uhs-btn-bg` / `--uhs-btn-fg`). Sous 520 px de large, seuls
+les numéros restent visibles : le libellé est masqué visuellement mais reste le
+nom accessible du lien, et le `title` le montre au survol. Les pages d'accueil
+n'ont pas de sélecteur de guide : elles listent déjà les guides en cartes.
 
 **Sélecteur de langue (`.uhs-lang`)** — les drapeaux SVG existants
 (`assets/flags/en.svg`, `fr.svg`) à 24×24, `border-radius: 4px`, opacité 0.55 au
@@ -499,6 +527,7 @@ docs/
 - Les couleurs pures `--uhs-green` et `--uhs-amber` en texte : elles ne servent
   qu'en aplat. Tout ce qui est lu passe par les variantes `-ink`.
 - Un logo dans l'en-tête de page : il vit dans le hero et dans la barre d'ancres.
+- Autre chose que le sélecteur de guide et le sélecteur de langue dans l'en-tête.
 - Emoji en guise d'icône dans les callouts ou les titres.
 - Icônes de bière, houblon, tonneau ou épi de blé en illustration : le vocabulaire
   brassicole vit dans les trois couleurs et dans le logo, nulle part ailleurs.
