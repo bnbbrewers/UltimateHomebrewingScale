@@ -121,14 +121,16 @@ class RecipeApp(BaseApp):
     def _weighing_reached_target(self, tolerance):
         """True when the operator confirmed a weight inside the tolerance.
 
-        Updates the on-screen OK marker as a side effect. In debug mode the
-        button is accepted at any weight, so a flow can be walked without the
-        hardware.
+        Updates the on-screen OK marker as a side effect. Once the target has
+        been reached the marker stays up for the rest of the step, even if the
+        reading drifts back out of the tolerance: the operator has already
+        poured the right amount. In debug mode the button is accepted at any
+        weight, so a flow can be walked without the hardware.
         """
         weight = self._read_and_update_weight(self._weight())
         if weight is None:
             return False
-        in_range = abs(self._target_g - weight) <= tolerance
+        in_range = self._last_in_range or abs(self._target_g - weight) <= tolerance
         if in_range != self._last_in_range:
             self._last_in_range = in_range
             self._weight().set_status(self.t("common.ok") if in_range else "")
