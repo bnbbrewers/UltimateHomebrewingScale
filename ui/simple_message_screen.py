@@ -113,12 +113,13 @@ class SimpleMessageScreen:
         title_bg_color=0x333333,
         text_color=0xE5E7EB,
         show_ok_button=False,
+        ok_label=None,
     ):
         self.set_title(title)
         self.set_message(message)
         self.set_title_color(title_bg_color)
         self.set_text_color(text_color)
-        self.set_ok_visible(show_ok_button)
+        self.set_ok_visible(show_ok_button, ok_label)
 
     def set_title(self, title):
         UIHelper.set_title(self._title_label, title)
@@ -137,10 +138,10 @@ class SimpleMessageScreen:
     def set_text_color(self, color):
         self._message_label.set_style_text_color(lv.color_hex(color), 0)
 
-    def set_ok_visible(self, visible):
+    def set_ok_visible(self, visible, label=None):
         UIHelper.set_action_button_visible(
             self._ok_bg,
             self._ok_label,
             visible,
-            self._ok_caption(),
+            label or self._ok_caption(),
         )

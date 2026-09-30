@@ -10,6 +10,7 @@ FIELDS = (
     ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance (g)", "number", ()),
     ("HOP_WEIGHT_TOLERANCE", "Hop tolerance (g)", "number", ()),
     ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding valve inertia (ml)", "number", ()),
+    ("KEG_FILL_STALL_TIMEOUT_S", "Fill stall safety (s)", "number", ()),
     ("STANDBY_TIMEOUT_MIN", "Standby after (min, 0 = off)", "number", ()),
     ("BATTERY", "Battery powered", "checkbox", ()),
     ("DEBUG", "Debug mode", "checkbox", ()),
