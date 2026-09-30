@@ -19,6 +19,15 @@ _STATE_HOP_DONE_ACK = 7
 _STATE_ALL_DONE_ACK = 8
 _STATE_LOADING_RECIPES = 9
 _COLOR_HOP = 0x388E3C
+# States where the dial has no other role, so it carries the back gesture.
+# The recipe list joins them only while it is empty.
+_DIAL_FREE_STATES = (
+    _STATE_PREP_ACK,
+    _STATE_PLACE_RECIPIENT_ACK,
+    _STATE_WEIGHT,
+    _STATE_HOP_DONE_ACK,
+    _STATE_ALL_DONE_ACK,
+)
 
 
 def _hop_weight_tolerance():
@@ -103,6 +112,8 @@ class HopAssistantApp(RecipeApp):
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if self._dial_is_free() and self._check_back(self._state):
+            return self._on_back()
         if self._state == _STATE_LOADING_RECIPES:
             self._load_batches()
         elif self._state == _STATE_RECIPE:
@@ -150,6 +161,41 @@ class HopAssistantApp(RecipeApp):
             self._step_idx = 0
             self._show_hop_select()
         return None
+
+    # ── back gesture ───────────────────────────────────────────────
+
+    def _dial_is_free(self):
+        if self._state == _STATE_RECIPE:
+            return not self._batches
+        return self._state in _DIAL_FREE_STATES
+
+    def _on_back(self):
+        # Results of a committed weighing (hop weighed, all weighed) ignore
+        # the gesture.
+        state = self._state
+        if state == _STATE_RECIPE:
+            return "launcher"
+        if state == _STATE_PREP_ACK:
+            # Without the prep flow this is an error or "no hops" message.
+            if self._prep_flow_active and self._batch_picker_shown:
+                self._reload_recipes()
+                return None
+            return "launcher"
+        if state == _STATE_PLACE_RECIPIENT_ACK:
+            self._show_step_select()
+        elif state == _STATE_WEIGHT:
+            self._show_place_recipient_prompt()
+        return None
+
+    def _reload_recipes(self):
+        # The batches were dropped to make room for the hops: the list comes
+        # back from the API, as it did when the app opened.
+        self._hops_list = []
+        self._vessel_numbers_by_step = {}
+        self._batch_id = None
+        self._prep_flow_active = False
+        self._release_screens_before_loading(self.t("recipe.loading_recipes"))
+        self._state = _STATE_LOADING_RECIPES
 
     # ── flow ───────────────────────────────────────────────────────
 

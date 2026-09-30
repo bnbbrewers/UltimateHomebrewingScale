@@ -14,6 +14,8 @@ HTTPS on an ESP32-S3.
 Implemented:
 
 - Launcher with rotary selection and single-button validation.
+- An eighth of a turn to the left steps back one screen inside an app,
+  wherever the dial is not already scrolling a list or adjusting a value.
 - Scale mode with live weight display and tare.
 - Malt assistant using Brewfather batches and fermentables.
 - Hop assistant using Brewfather batches and grouped hop additions.
@@ -234,6 +236,7 @@ Editable settings are defined in [webportal/config_keys.py](webportal/config_key
 - `GRAIN_WEIGHT_TOLERANCE`
 - `HOP_WEIGHT_TOLERANCE`
 - `KEG_SPUNDING_VALVE_INERTIA_ML`
+- `KEG_FILL_STALL_TIMEOUT_S`
 - `STANDBY_TIMEOUT_MIN`
 - `BATTERY` (virtual key, see below)
 - `DEBUG`
@@ -306,6 +309,7 @@ LANGUAGE = "en"  # "en" or "fr"
 GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
+KEG_FILL_STALL_TIMEOUT_S = 10  # seconds without weight change before the valve closes (3-600)
 STANDBY_TIMEOUT_MIN = 0  # minutes before deep sleep; 30 on battery, 0 disables
 DEBUG = False
 UPDATE_CHANNEL = "stable"
