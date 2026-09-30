@@ -400,6 +400,21 @@ Liste de définitions : symptôme en `dt` sans 600, remède en `dd` en
 Bordure haute 1px, fond `--uhs-surface-2`, mono `0.8rem`. Petit logo 24 px, lien
 vers le dépôt, mention GPL-3.0, lien vers l'autre langue.
 
+### 5.13 Apps du guide d'utilisation (`.uhs-applist` / `.uhs-app-head`)
+
+Les icônes du launcher (`assets/icons/*.png`, copiées dans `UserGuide/img/`) sont
+l'interface du Dial reproduite telle quelle, au même titre qu'une capture d'écran :
+elles ne relèvent pas de l'interdiction d'illustration brassicole du §10.
+
+- `.uhs-applist` — liste de liens dans le panneau du hero, une ligne par app :
+  icône 38 px, nom en gras, description courte en `--uhs-text-muted`.
+- `.uhs-app-head` — en tête de chaque section d'app, l'icône 48 px à gauche du `h2`,
+  sous la marque tricolore. L'icône porte un `alt` qui la décrit.
+
+Les sources font 38 px : ne pas les agrandir au-delà de 48 px. Leurs coins sont
+noirs opaques (dessinés pour l'écran noir du Dial) : elles sont rognées en cercle
+par `border-radius: 50%` plutôt que retouchées, pour rester identiques à l'appareil.
+
 ---
 
 ## 6. Responsive
@@ -449,6 +464,8 @@ docs/
     img/
   HardwareInstallationGuide/
     ...même structure
+  UserGuide/
+    ...même structure ; img/ contient les icônes du launcher
   index.html                  page d'accueil de la doc
 ```
 

@@ -6,7 +6,7 @@
     <title>Ultimate Homebrewing Scale Installation Guide</title>
     <meta
       name="description"
-      content="Step-by-step firmware, Wi-Fi, Brewfather, and scale calibration setup guide for Ultimate Homebrewing Scale on M5Stack Dial."
+      content="Install Ultimate Homebrewing Scale from your browser, connect it to your Wi-Fi and Brewfather, and calibrate the scale, step by step."
     >
     <link rel="stylesheet" href="../../assets/css/uhs-docs.css">
     <link rel="icon" type="image/png" sizes="32x32" href="../../assets/logo/uhs-logo-dark-32.png">
@@ -53,15 +53,15 @@
 
             <div class="uhs-hero__text">
               <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
-              <p class="uhs-eyebrow">M5Stack Dial setup</p>
+              <p class="uhs-eyebrow">Step 2 of 3 · Install</p>
               <h1 id="page-title">Ultimate Homebrewing Scale Installation Guide</h1>
               <p class="uhs-lede">
-                Flash the custom firmware, connect the Dial to Wi-Fi, enter your Brewfather credentials,
-                and calibrate the scale from the on-device wizard.
+                Your UHS is built. Install its application from this page, connect it to your Wi-Fi and to
+                Brewfather from your phone, then calibrate the scale: UHS guides you on screen at every step.
               </p>
               <div class="uhs-actions">
                 <a class="uhs-btn" href="#flash">
-                  Start with firmware
+                  Start the installation
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                 </a>
                 <a class="uhs-btn uhs-btn--ghost" href="#calibrate">
@@ -74,18 +74,18 @@
 
           <aside class="uhs-hero__panel" aria-label="Installation summary">
             <figure class="uhs-figure uhs-hero__figure">
-              <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="M5Stack Dial settings screen showing a QR code for the setup portal">
+              <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="UHS settings screen showing the QR code of the setup portal">
             </figure>
           </aside>
         </div>
 
         <div class="uhs-facts">
           <div>
-            <p class="uhs-facts__label">Device</p>
-            <p class="uhs-facts__value">M5Stack Dial / ESP32-S3</p>
+            <p class="uhs-facts__label">Installs from</p>
+            <p class="uhs-facts__value">Chrome or Edge on a computer</p>
           </div>
           <div>
-            <p class="uhs-facts__label">Setup access point</p>
+            <p class="uhs-facts__label">Setup Wi-Fi</p>
             <p class="uhs-facts__value"><code>UHS-Setup</code></p>
           </div>
           <div>
@@ -114,10 +114,9 @@
         <ul>
           <li><a href="#requirements">Requirements</a></li>
           <li><a href="#flash">Flash</a></li>
-          <li><a href="#wifi">Wi-Fi setup</a></li>
-          <li><a href="#brewfather">Brewfather</a></li>
+          <li><a href="#wifi">Configuration</a></li>
           <li><a href="#calibrate">Calibration</a></li>
-          <li><a href="#done">Finish</a></li>
+          <li><a href="#next">Next step</a></li>
         </ul>
       </div>
     </nav>
@@ -128,29 +127,29 @@
           <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Before You Start</h2>
           <p class="uhs-section__intro">
-            Prepare the Dial, the scale hardware, and the credentials you will enter after the first boot.
+            Five things to have at hand. The installation itself needs nothing else.
           </p>
 
           <div class="uhs-cards">
             <article class="uhs-card">
-              <h3>M5Stack Dial</h3>
-              <p>Use a USB-C data cable. Charge-only cables usually fail during flashing.</p>
+              <h3>Your UHS</h3>
+              <p>Assembled with the <a href="../../HardwareInstallationGuide/en/">Hardware Installation Guide</a>, and a USB-C data cable: a charge-only cable will not work.</p>
             </article>
             <article class="uhs-card">
               <h3>Desktop Browser</h3>
-              <p>Firmware flashing uses Web Serial, so use Chrome or Edge on a computer.</p>
+              <p>The installation runs in Chrome or Edge on a computer. There is nothing to download.</p>
             </article>
             <article class="uhs-card">
               <h3>Smartphone</h3>
-              <p>Use it after flashing to join the Dial setup Wi-Fi and scan the QR code.</p>
+              <p>To connect UHS to your Wi-Fi: you will scan a QR code shown on its screen.</p>
             </article>
             <article class="uhs-card">
               <h3>Brewfather Access</h3>
-              <p>Have your Brewfather API user ID and API key available on your phone so you can paste them into the portal.</p>
+              <p>Your Brewfather API user ID and API key, found in the Brewfather settings, copied on your phone.</p>
             </article>
             <article class="uhs-card">
               <h3>Calibration Weights</h3>
-              <p>The wizard defaults to 0 g, 100 g, 500 g, 5000 g, and 25000 g points.</p>
+              <p>The wizard asks for 0 g, 100 g, 500 g, 5 kg and 25 kg. If yours differ, you set their real weight on screen.</p>
             </article>
           </div>
         </div>
@@ -161,244 +160,124 @@
           <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Installation Steps</h2>
           <p class="uhs-section__intro">
-            Follow the steps in order. The Dial will reboot several times; that is expected.
+            Follow the steps in order. UHS restarts several times along the way: that is normal.
           </p>
 
           <ol class="uhs-steps">
             <li id="flash" class="uhs-step">
-              <h3>Put the Dial in firmware flash mode</h3>
+              <h3>Put UHS in installation mode</h3>
               <p>
-                Disconnect USB-C. Hold the rear <strong>BOOT / G0</strong> button, plug the Dial into your
-                computer while keeping the button pressed, then release it after the USB connection is made.
+                Unplug UHS. Hold the <strong>BOOT / G0</strong> button on the back of the Dial, plug the USB-C cable
+                into your computer while keeping the button pressed, then release it.
               </p>
               <figure class="uhs-figure uhs-figure--portrait">
                 <img src="../img/HoldG0.jpg" width="2268" height="2892" alt="Rear of the M5Stack Dial with the G0 button held while USB-C is connected">
                 <figcaption>Hold the rear G0 button while plugging in USB-C.</figcaption>
               </figure>
               <div class="uhs-note uhs-note--tip">
-                <p><strong class="uhs-note__label">Tip:</strong> If your browser cannot find a serial port in the next step,
-                unplug the Dial and repeat this flash-mode sequence.</p>
+                <p><strong class="uhs-note__label">Tip:</strong> if the browser finds nothing to connect to in the next step,
+                unplug UHS and do this step again.</p>
               </div>
-              <p>
-                On the M5Stack Dial this is the ESP32-S3 download mode sequence: hold the G0 button
-                before powering on, then release it after power is applied. M5Stack documents this in the
-                <a href="https://docs.m5stack.com/en/core/M5Dial#download-mode">Dial download mode notes</a>.
-              </p>
             </li>
 
             <li class="uhs-step">
-              <h3>Flash the firmware from this page</h3>
+              <h3>Install the application from this page</h3>
               <p>
-                Click the install button, choose the Dial serial port, and follow the browser prompts.
-                When asked whether to erase the device, choose the erase option for a clean first install.
+                Click the button below, choose the port that appears in the list, and follow the browser prompts.
+                When asked whether to erase the device, choose to erase it for a clean first install.
               </p>
               <div class="uhs-install">
                 <esp-web-install-button manifest="https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/latest/UHS-web-install-manifest.json">
                   <button slot="activate" type="button" class="uhs-btn">
-                    Install the firmware
+                    Install the application
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                   </button>
                 </esp-web-install-button>
               </div>
               <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Browser support:</strong> Web flashing works from desktop Chrome or Edge.
-                Mobile browsers and Safari generally do not expose the required serial connection.</p>
+                <p><strong class="uhs-note__label">Browser support:</strong> use Chrome or Edge on a computer. Installation does
+                not work from a phone, nor from Safari or Firefox.</p>
               </div>
             </li>
 
             <li class="uhs-step">
-              <h3>Reboot after flashing</h3>
+              <h3>Restart UHS</h3>
               <p>
-                When the flash process finishes, disconnect and reconnect USB-C, or press the reset button.
-                On a fresh install the application creates its default configuration and opens the setup
-                screen automatically.
-              </p>
-              <p>
-                Because no Wi-Fi credentials are saved yet, the Dial starts its own setup access point and
-                displays a QR code on the round screen.
+                When the installation is finished, unplug the USB-C cable and plug it back in.
               </p>
             </li>
 
             <li id="wifi" class="uhs-step">
-              <h3>Connect your smartphone to the Dial setup Wi-Fi</h3>
+              <h3>Configuration</h3>
               <p>
-                On your smartphone, open Wi-Fi settings and join <code>UHS-Setup</code>. The setup network
-                has no password by default.
+                On a first installation, UHS opens its setup screen by itself.
               </p>
               <p>
-                Stay connected to that Wi-Fi even if the phone warns that it has no internet access.
-                The phone only needs to reach the Dial locally.
+                As it does not know your Wi-Fi yet, it creates its own Wi-Fi network, <code>UHS-Setup</code>, and
+                shows a QR code on its round screen.
+              </p>
+              <p>
+                Join the <code>UHS-Setup</code> Wi-Fi with your smartphone, scan the QR code, fill in your Wi-Fi
+                network and your Brewfather API credentials, then tap <strong>Save and reboot</strong>.
               </p>
               <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Important:</strong> If the setup page does not open, temporarily turn off mobile data/5G.
-                Some phones prefer mobile data when the <code>UHS-Setup</code> Wi-Fi has no internet access, which
-                prevents the browser from reaching the Dial locally.</p>
+                <p><strong class="uhs-note__label">Turn off mobile data/5G:</strong> switch it off on the phone before opening the
+                portal. The <code>UHS-Setup</code> Wi-Fi has no internet access, so most phones fall back to mobile data,
+                which cannot reach UHS. Turn it back on once the settings are saved.</p>
               </div>
-            </li>
-
-            <li class="uhs-step">
-              <h3>Scan the QR code and open the setup portal</h3>
               <p>
-                Scan the QR code shown on the Dial. It opens the embedded setup page, normally at
-                <code>http://192.168.4.1:8080/</code>.
+                Every portal field is explained in the User Guide. Come back here once UHS has restarted.
               </p>
-              <figure class="uhs-figure uhs-figure--portrait">
-                <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="Dial settings screen displaying the QR code to scan">
-                <figcaption>The QR code appears on the Dial settings screen.</figcaption>
-              </figure>
-              <p>
-                If your camera app does not open the page, keep the phone connected to <code>UHS-Setup</code>
-                and type the address manually in the browser.
-              </p>
-            </li>
-
-            <li id="brewfather" class="uhs-step">
-              <h3>Fill in Wi-Fi, Brewfather, and app settings</h3>
-              <p>
-                The portal page is intentionally simple. Enter the values below, then review them before saving.
-              </p>
-
-              <figure class="uhs-figure uhs-figure--portrait">
-                <img src="../img/PortalPage.png" width="1020" height="2223" alt="Smartphone browser showing the Ultimate Homebrewing Scale setup portal fields">
-                <figcaption>Setup portal opened from the QR code while connected to <code>UHS-Setup</code>.</figcaption>
-              </figure>
-
-              <div class="uhs-table-wrap">
-                <table class="uhs-table">
-                  <thead>
-                    <tr>
-                      <th>Field</th>
-                      <th>What to enter</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Language</td>
-                      <td>Choose <code>English</code> or <code>French</code> for the Dial interface.</td>
-                    </tr>
-                    <tr>
-                      <td>Wi-Fi SSID</td>
-                      <td>Enter the exact name of your 2.4 GHz Wi-Fi network.</td>
-                    </tr>
-                    <tr>
-                      <td>Wi-Fi password</td>
-                      <td>Enter the password for that Wi-Fi network.</td>
-                    </tr>
-                    <tr>
-                      <td>Brewing software</td>
-                      <td>Leave <code>brewfather</code> selected.</td>
-                    </tr>
-                    <tr>
-                      <td>Brewfather user id</td>
-                      <td>Paste your Brewfather API user ID.</td>
-                    </tr>
-                    <tr>
-                      <td>Brewfather API key</td>
-                      <td>Paste your Brewfather API key. It is hidden as you type.</td>
-                    </tr>
-                    <tr>
-                      <td>Grain tolerance (g)</td>
-                      <td>Keep the default unless you want a wider or tighter weighing tolerance.</td>
-                    </tr>
-                    <tr>
-                      <td>Hop tolerance (g)</td>
-                      <td>Keep the default unless you want a wider or tighter hop weighing tolerance.</td>
-                    </tr>
-                    <tr>
-                      <td>Spunding valve inertia (ml)</td>
-                      <td>Keep the default <code>200</code> ml; this future keg filler setting will compensate valve closing inertia.</td>
-                    </tr>
-                    <tr>
-                      <td>Fill stall safety (s)</td>
-                      <td>
-                        Seconds without any weight change before the keg filler closes the solenoid valve. Keep the
-                        default <code>10</code> (accepted range: <code>3</code> to <code>600</code>). The Dial then shows
-                        how long the volume has been unchanged: press <strong>Resume</strong> to reopen the valve and
-                        restart the countdown, or long-press to go back to the launcher.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Standby after (min, 0 = off)</td>
-                      <td>
-                        Minutes without activity before the Dial goes to sleep. <strong>Enter <code>30</code></strong>:
-                        it is the recommended value on mains and a requirement on battery. <code>0</code> disables standby.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Battery powered</td>
-                      <td>Tick this box <strong>only if a battery is fitted</strong> inside the Dial. Leave it unticked on mains.</td>
-                    </tr>
-                    <tr>
-                      <td>Debug mode</td>
-                      <td>Leave it unticked. Tick it only to collect memory traces when reporting a problem.</td>
-                    </tr>
-                    <tr>
-                      <td>Release channel</td>
-                      <td>Keep <code>stable</code> for normal installs. <code>prerelease</code> accepts the newest pre-release.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="uhs-note uhs-note--tip">
-                <p><strong class="uhs-note__label">Save and reboot:</strong> Tap <strong>Save and reboot</strong>. The Dial saves
-                Wi-Fi credentials and app settings, then restarts automatically.</p>
-              </div>
-
-              <div class="uhs-note uhs-note--info">
-                <p><strong class="uhs-note__label">Running on battery:</strong> if you fitted the optional LiPo cell, these two settings go
-                together. <strong>Standby after</strong> set to <code>30</code> minutes stops an idle screen from
-                draining the charge, and <strong>Battery powered</strong> arms a 15-second watchdog that reboots
-                the Dial if the application ever freezes. That watchdog matters on battery because there is no
-                power outlet to unplug, while a mains install can always be recovered by cutting the power. The
-                Dial wakes from standby when you <strong>touch the screen</strong> — the rotary button cannot wake
-                it. Waking is a full reboot, so the Dial comes back on the launcher rather than on the screen you
-                left.</p>
+              <div class="uhs-actions">
+                <a class="uhs-btn" href="../../UserGuide/en/#settings">
+                  Open the setup portal guide
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
+                </a>
               </div>
             </li>
 
             <li id="calibrate" class="uhs-step">
               <h3>Run the scale calibration wizard</h3>
               <p>
-                After reboot, the app checks for <code>scale_calibration.json</code>. On a fresh install,
-                that file does not exist yet, so the Dial opens the scale calibration wizard automatically.
+                After this restart, UHS opens the scale calibration wizard by itself. It teaches UHS what your
+                platform reads for known weights, and it is only done once.
               </p>
               <ol>
-                <li>Connect the scale hardware when the Dial asks for it, then press the Dial button to continue.</li>
-                <li>For each step, place the requested weight on the scale.</li>
-                <li>If your physical weight is not exactly the requested value, rotate the Dial to adjust the target.</li>
-                <li>Press the Dial button to start measuring and keep the weight still for the 30 second countdown.</li>
-                <li>Repeat for all calibration points.</li>
+                <li>Connect the platform when UHS asks for it, then press the button to continue.</li>
+                <li>For each step, place the requested weight on the platform.</li>
+                <li>If your weight is not exactly the requested value, turn the dial to set its real weight.</li>
+                <li>Press the button to start measuring, and keep the weight still for the 30-second countdown.</li>
+                <li>Repeat for every weight.</li>
               </ol>
               <div class="uhs-figures">
                 <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-connect-scale.jpg" width="2268" height="2194" alt="Dial calibration intro screen asking to connect the scale">
+                  <img src="../img/ScaleCalibration-connect-scale.jpg" width="2268" height="2194" alt="UHS calibration screen asking to connect the scale">
                   <figcaption>Connect the scale and press OK.</figcaption>
                 </figure>
                 <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-ajust-weight.jpg" width="2268" height="3004" alt="Dial calibration screen for adjusting the target weight">
-                  <figcaption>Rotate the Dial if the target weight must be adjusted.</figcaption>
+                  <img src="../img/ScaleCalibration-ajust-weight.jpg" width="2268" height="3004" alt="UHS calibration screen for adjusting the target weight">
+                  <figcaption>Turn the dial if your weight differs from the one requested.</figcaption>
                 </figure>
                 <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-process-steo.jpg" width="2268" height="2646" alt="Dial calibration measuring screen with progress bar and countdown">
+                  <img src="../img/ScaleCalibration-process-steo.jpg" width="2268" height="2646" alt="UHS calibration measuring screen with progress bar and countdown">
                   <figcaption>Keep the scale still during each 30 second measurement.</figcaption>
                 </figure>
               </div>
               <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Stability matters:</strong> Put the scale on a flat surface and avoid touching the
-                load during each 30 second measurement. Better calibration data gives better brewing weights.</p>
+                <p><strong class="uhs-note__label">Stability matters:</strong> put the platform on a flat surface and do not touch it
+                during each 30-second measurement. The more careful the calibration, the more accurate your weighings.</p>
               </div>
             </li>
 
             <li id="done" class="uhs-step">
-              <h3>Restart from the end of the wizard</h3>
+              <h3>Finish the calibration</h3>
               <p>
-                When the final calibration point is complete, the Dial saves the calibration file and shows
-                <strong>Calibration complete, OK to restart</strong>. Press the Dial button once.
+                After the last weight, UHS shows <strong>Calibration complete, OK to restart</strong>. Press the
+                button once.
               </p>
               <p>
-                The application performs a soft reset. On the next boot, Wi-Fi and calibration are both saved,
-                so the launcher opens normally and the scale is ready to use with Brewfather recipes.
+                UHS restarts one last time and opens the launcher, the wheel of apps. It is ready for your first
+                brew day.
               </p>
             </li>
           </ol>
@@ -410,19 +289,25 @@
           <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Quick Troubleshooting</h2>
           <p class="uhs-section__intro">
-            Most setup problems come from the USB cable, flash mode, phone Wi-Fi switching, or calibration movement.
+            Most installation problems come from the USB cable or from the installation mode. Setup portal problems
+            are covered in the <a href="../../UserGuide/en/#troubleshooting">User Guide</a>.
           </p>
 
           <dl class="uhs-troubleshoot">
-            <dt>No serial port appears</dt>
-            <dd>Use a data-capable USB-C cable and repeat the rear BOOT / G0 flash-mode sequence.</dd>
-            <dt>Phone cannot open the QR page</dt>
-            <dd>Reconnect to <code>UHS-Setup</code>, temporarily turn off mobile data/5G, then manually open <code>http://192.168.4.1:8080/</code>.</dd>
-            <dt>Wi-Fi does not connect after saving</dt>
-            <dd>Reopen the setup portal from Settings, check SSID spelling, and confirm it is a 2.4 GHz network.</dd>
+            <dt>The browser finds nothing to connect to</dt>
+            <dd>Use a USB-C cable that carries data, not a charge-only one, and put UHS back in installation mode with the BOOT / G0 button.</dd>
             <dt>Weights look wrong</dt>
-            <dd>Run the calibration wizard again and keep the scale unloaded for the 0 g point.</dd>
+            <dd>Check that the platform sits flat and that nothing touches it, then tare in the Scale app. If the error remains, the calibration has to be redone: install the application again from step 2, choosing to erase the device.</dd>
           </dl>
+        </div>
+      </section>
+      <section id="next" class="uhs-section">
+        <div class="wrap">
+          <div class="uhs-note uhs-note--tip">
+            <p><strong class="uhs-note__label">Next step:</strong> UHS is ready. The
+            <a href="../../UserGuide/en/">User Guide</a> takes you through your brew day: the controls, then each app
+            in turn, from weighing the malts to filling a keg.</p>
+          </div>
         </div>
       </section>
     </main>

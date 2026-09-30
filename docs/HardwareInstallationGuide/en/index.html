@@ -49,10 +49,11 @@
 
             <div class="uhs-hero__text">
               <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
-              <p class="uhs-eyebrow">Hardware assembly</p>
+              <p class="uhs-eyebrow">Step 1 of 3 · Build</p>
               <h1 id="page-title">Ultimate Homebrewing Scale Hardware Installation Guide</h1>
               <p class="uhs-lede">
-                Parts list and wiring diagrams
+                Everything you need to build UHS: the parts to order, then the assembly and the wiring, step by
+                step. Once it is built, the Software Installation Guide brings it to life.
               </p>
               <div class="uhs-actions">
                 <a class="uhs-btn" href="#shopping-list">
@@ -60,7 +61,7 @@
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                 </a>
                 <a class="uhs-btn uhs-btn--ghost" href="../../SoftwareInstallationGuide/en/">
-                  Software guide
+                  Next: the software
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h11"/><path d="M9 4l4 4-4 4"/></svg>
                 </a>
               </div>
@@ -124,7 +125,7 @@
           <li><a href="#assembly">Assembly</a></li>
           <li><a href="#keg-filler">Keg filler</a></li>
           <li><a href="#battery">Battery</a></li>
-          <li><a href="#software">Software</a></li>
+          <li><a href="#software">Next step</a></li>
         </ul>
       </div>
     </nav>
@@ -153,7 +154,7 @@
             </article>
             <article class="uhs-card">
               <h3>Software</h3>
-              <p>After assembly, use the software guide to flash the firmware and calibrate the scale.</p>
+              <p>Once UHS is built, the Software Installation Guide installs its application and calibrates the scale.</p>
             </article>
           </div>
 
@@ -176,8 +177,8 @@
               </figure>
               <h3>M5Dial</h3>
               <p>
-                The M5Stack Dial provides the ESP32, Wi-Fi, round screen, and rotary encoder. It keeps wiring
-                low and gives the brewer a physical interface that remains usable with wet hands.
+                The heart of UHS: round screen, dial and Wi-Fi in one unit. Very little wiring, and a control you
+                can use with wet hands.
               </p>
               <ul class="uhs-card__links">
                 <li><a target="_blank" rel="noopener noreferrer" href="https://s.click.aliexpress.com/e/_c3fnF9C9">M5Dial</a></li>
@@ -286,7 +287,7 @@
             </article>
           </div>
 
-          <h3 class="uhs-subhead">Optional Spunding Valve</h3>
+          <h3 id="keg-filler" class="uhs-subhead">Optional Spunding Valve</h3>
           <p class="uhs-section__intro">Add these parts only if you use keg filling.</p>
 
           <div class="uhs-cards">
@@ -304,7 +305,7 @@
               </ul>
             </article>
 
-            <article id="keg-filler" class="uhs-card uhs-card--part">
+            <article class="uhs-card uhs-card--part">
               <figure class="uhs-card__photo">
                 <img src="../img/spunding-valve.jpg" width="800" height="800" alt="Spunding valve product photo from AliExpress">
               </figure>
@@ -346,11 +347,11 @@
             </article>
           </div>
 
-          <h3 class="uhs-subhead">Optional Battery</h3>
+          <h3 id="battery" class="uhs-subhead">Optional Battery</h3>
           <p class="uhs-section__intro">Add this part only if you want to use the scale away from a power outlet.</p>
 
           <div class="uhs-cards">
-            <article id="battery" class="uhs-card uhs-card--part">
+            <article class="uhs-card uhs-card--part">
               <figure class="uhs-card__photo">
                 <img src="../img/battery.jpg" width="850" height="637" alt="Flat LiPo cell fitted with a JST 1.25mm 2-pin connector, product photo from AliExpress">
               </figure>
@@ -375,6 +376,37 @@
           <h2>Hardware Assembly</h2>
 
           <ol class="uhs-steps">
+            <li id="battery-assembly" class="uhs-step">
+              <h3>Fit The Optional Battery First</h3>
+              <p>
+                Skip this step if UHS always stays on the 12 V supply. If you fit the battery, do it before anything
+                else: the Dial opens from the back, which is no longer possible once it is mounted in the enclosure.
+              </p>
+              <figure class="uhs-figure">
+                <img src="../img/m5dial-battery-mount.png" width="1920" height="1080" alt="Three steps showing the M5Stack Dial back cover removed to expose the battery socket, a JST 1.25mm 2-pin connector">
+                <figcaption>Opening the M5Stack Dial back cover to reach the battery socket. Source: M5Stack documentation.</figcaption>
+              </figure>
+              <ol>
+                <li>Unplug the USB-C cable and every Grove cable from the Dial.</li>
+                <li>Remove the two screws on the back cover, then lift the cover off the orange case.</li>
+                <li>Locate the white <code>1.25mm-2P</code> battery socket on the exposed board, next to the USB-C port.</li>
+                <li>Plug the LiPo connector in, red wire on <code>+</code>. It only goes in one way; never force it.</li>
+                <li>Lay the cell flat in the free space of the back cover so no wire is pinched, then refit the cover and its screws.</li>
+              </ol>
+              <div class="uhs-note uhs-note--warn">
+                <p><strong class="uhs-note__label">Polarity:</strong> some cells are sold with the red and black wires swapped in the connector
+                housing. Check them against the <code>+</code> and <code>-</code> markings on the board before
+                plugging in; a reversed cell destroys the Dial.</p>
+              </div>
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Charging:</strong> the Dial charges the cell whenever USB-C is connected. Plug it in once
+                before first use. When you configure UHS, set standby to 30 minutes so an idle screen does not drain
+                the charge: see
+                <a href="../../UserGuide/en/#portal-fields">the setup portal fields</a>
+                in the User Guide.</p>
+              </div>
+            </li>
+
             <li class="uhs-step">
               <h3>Prepare The Enclosure</h3>
               <p>
@@ -387,10 +419,6 @@
                 <li>Drill one 8 mm hole for the power jack, and another one for the spunding valve jack if needed.</li>
                 <li>Insert the Units inside the enclosure and secure them with double-sided tape.</li>
               </ol>
-              <div class="uhs-note uhs-note--info">
-                <p><strong class="uhs-note__label">Using the optional battery?</strong> Fit it now, before the Dial goes into the enclosure.
-                See <a href="#battery-assembly">Fit The Optional Battery</a> at the end of this section.</p>
-              </div>
             </li>
 
             <li class="uhs-step">
@@ -477,8 +505,8 @@
                 </table>
               </div>
               <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Before power-up:</strong> use the red Port A, not Port B. Check that the connector is fully
-                seated and that the Unit Weight I2C responds at I2C address <code>0x26</code>.</p>
+                <p><strong class="uhs-note__label">Before power-up:</strong> use the red Port A, not Port B, and check that the connector is
+                fully seated.</p>
               </div>
             </li>
 
@@ -556,39 +584,6 @@
                 reserved for the Unit Weight I2C.</p>
               </div>
             </li>
-
-            <li id="battery-assembly" class="uhs-step">
-              <h3>Fit The Optional Battery</h3>
-              <p>
-                Skip this step if the scale always stays connected to the 12 V supply. The battery is described
-                last because it is optional, but it is fitted early: the Dial has to be opened from the back, which
-                is no longer practical once it is mounted in the enclosure. Read this step before starting step 1,
-                and carry it out then.
-              </p>
-              <figure class="uhs-figure">
-                <img src="../img/m5dial-battery-mount.png" width="1920" height="1080" alt="Three steps showing the M5Stack Dial back cover removed to expose the battery socket, a JST 1.25mm 2-pin connector">
-                <figcaption>Opening the M5Stack Dial back cover to reach the battery socket. Source: M5Stack documentation.</figcaption>
-              </figure>
-              <ol>
-                <li>Unplug the USB-C cable and every Grove cable from the Dial.</li>
-                <li>Remove the two screws on the back cover, then lift the cover off the orange case.</li>
-                <li>Locate the white <code>1.25mm-2P</code> battery socket on the exposed board, next to the USB-C port.</li>
-                <li>Plug the LiPo connector in, red wire on <code>+</code>. It only goes in one way; never force it.</li>
-                <li>Lay the cell flat in the free space of the back cover so no wire is pinched, then refit the cover and its screws.</li>
-              </ol>
-              <div class="uhs-note uhs-note--warn">
-                <p><strong class="uhs-note__label">Polarity:</strong> some cells are sold with the red and black wires swapped in the connector
-                housing. Check them against the <code>+</code> and <code>-</code> markings on the board before
-                plugging in; a reversed cell destroys the Dial.</p>
-              </div>
-              <div class="uhs-note uhs-note--info">
-                <p><strong class="uhs-note__label">Charging:</strong> the Dial charges the cell whenever USB-C is connected. Plug it in once
-                before first use, and set the standby delay in the setup portal so the charge is not drained by an
-                idle screen. See
-                <a href="../../SoftwareInstallationGuide/en/#brewfather">Fill in Wi-Fi, Brewfather, and app settings</a>
-                in the Software Installation Guide.</p>
-              </div>
-            </li>
           </ol>
         </div>
       </section>
@@ -596,10 +591,10 @@
       <section id="software" class="uhs-section">
         <div class="wrap">
           <div class="uhs-note uhs-note--tip">
-            <p><strong class="uhs-note__label">Next step:</strong> open the
-            <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a>, flash the M5Stack Dial,
-            configure Wi-Fi, and run calibration. Final weighing accuracy depends heavily on calibration quality
-            and on the mechanical stability of the platform.</p>
+            <p><strong class="uhs-note__label">Next step:</strong> UHS is built. The
+            <a href="../../SoftwareInstallationGuide/en/">Software Installation Guide</a> installs the application from
+            your browser, connects UHS to your Wi-Fi and Brewfather, and calibrates the scale. Place the platform on a
+            flat, firm surface: it makes the weights more accurate.</p>
           </div>
         </div>
       </section>
