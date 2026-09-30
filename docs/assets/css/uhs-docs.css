@@ -250,6 +250,87 @@ strong { font-weight: 700; }
   display: inline-flex;
   align-items: center;
   gap: var(--uhs-space-3);
+  margin-left: auto;
+}
+
+/* Guide switcher: the three guides as the three steps of a build, in a
+   floating capsule. The current guide is filled like the primary button, and
+   each step number carries its bar colour from the logo. Numbers only on a
+   phone, where the labels and the flags do not fit on one line. */
+.uhs-guides {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid var(--uhs-border);
+  border-radius: var(--uhs-radius-pill);
+  background: var(--uhs-surface);
+  box-shadow: var(--uhs-shadow);
+}
+
+.uhs-guides a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--uhs-space-2);
+  padding: 6px;
+  border-radius: var(--uhs-radius-pill);
+  color: var(--uhs-text-muted);
+  font-family: var(--uhs-font-sans);
+  font-size: .95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.uhs-guides a:hover {
+  background: var(--uhs-surface-2);
+  color: var(--uhs-text);
+}
+
+.uhs-guides a[aria-current="page"] {
+  background: var(--uhs-btn-bg);
+  color: var(--uhs-btn-fg);
+}
+
+/* Ink on the three brand fills: 6.2:1 on green, the lowest of the three. */
+.uhs-guides__num {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #0D0F12;
+  font-family: var(--uhs-font-mono);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.uhs-guides a:nth-child(1) .uhs-guides__num { background: var(--uhs-green); }
+.uhs-guides a:nth-child(2) .uhs-guides__num { background: var(--uhs-amber); }
+.uhs-guides a:nth-child(3) .uhs-guides__num { background: var(--uhs-steel); }
+
+/* Hidden from sight only: the label stays the link's accessible name. */
+.uhs-guides__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 520px) {
+  .uhs-guides a { padding-right: 14px; }
+
+  .uhs-guides__label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
 }
 
 .uhs-lang a {
