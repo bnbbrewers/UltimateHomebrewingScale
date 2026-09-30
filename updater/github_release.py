@@ -7,6 +7,7 @@ GITHUB_API_BASE = "https://api.github.com"
 MANIFEST_ASSET_NAME = "uhs-update-manifest.json"
 GITHUB_JSON_TMP_PATH = "updater_github.tmp"
 MANIFEST_JSON_TMP_PATH = "updater_manifest.tmp"
+PRERELEASE_SCAN_PAGES = 10
 
 
 def _t(i18n, key, fallback):
@@ -174,19 +175,28 @@ def resolve_release(channel="stable", requests_module=None, i18n=None):
             return info
         raise RuntimeError("No matching release manifest")
 
-    releases = github_api_get_json(releases_url(), requests_module, i18n=i18n)
-    for release in releases:
-        if release.get("draft"):
-            continue
-        if not release.get("prerelease"):
-            continue
-        manifest_url = asset_download_url(release)
-        if manifest_url:
-            info = release_info(release, manifest_url)
-            del release
-            del releases
-            http_client.gc_hard(cycles=1, pause_ms=10)
-            return info
+    # One release per page: a release weighs ~13 KiB of JSON, so the full
+    # list outgrows the 64 KiB spool budget after a handful of releases.
+    for page in range(1, PRERELEASE_SCAN_PAGES + 1):
+        releases = github_api_get_json(
+            releases_url(page=page, per_page=1), requests_module, i18n=i18n
+        )
+        if not releases:
+            break
+        for release in releases:
+            if release.get("draft"):
+                continue
+            if not release.get("prerelease"):
+                continue
+            manifest_url = asset_download_url(release)
+            if manifest_url:
+                info = release_info(release, manifest_url)
+                del release
+                del releases
+                http_client.gc_hard(cycles=1, pause_ms=10)
+                return info
+        del releases
+        http_client.gc_hard(cycles=1, pause_ms=10)
     raise RuntimeError("No matching release manifest")
 
 
