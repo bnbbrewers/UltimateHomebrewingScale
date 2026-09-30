@@ -35,18 +35,22 @@ Work in progress:
 
 ## Quick Start
 
-1. Assemble the hardware:
-   [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/).
-2. Flash the custom M5Dial firmware:
-   [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/).
-3. Configure Wi-Fi and Brewfather credentials from the Settings portal or from
-   `config.py`.
-4. Run the calibration wizard and save `scale_calibration.json`.
-5. Reboot the M5Dial and start from `main.py`.
+The documentation site walks through a build in three guides, in English and
+French:
 
-See [INSTALLATION.MD](INSTALLATION.MD) for the repository-level installation
-notes and [firmware/CustomFirmware.MD](firmware/CustomFirmware.MD) for details
-about the custom firmware build.
+1. **Assemble**:
+   [Hardware Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/HardwareInstallationGuide/)
+   (shopping list and assembly).
+2. **Configure**:
+   [Software Installation Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/SoftwareInstallationGuide/)
+   (flash from the browser, connect Wi-Fi and Brewfather from the setup portal,
+   calibrate the scale).
+3. **Use**:
+   [User Guide](https://bnbbrewers.github.io/UltimateHomebrewingScale/UserGuide/)
+   (the controls and each app, step by step).
+
+Building the custom firmware yourself is covered in
+[firmware/CustomFirmware.MD](firmware/CustomFirmware.MD).
 
 ## Hardware
 
@@ -399,9 +403,6 @@ to retrieve:
 - fermentables for malt weighing
 - hops grouped into compact addition steps for hop weighing
 
-See [api/README.md](api/README.md) for the API interface and extension points
-for future brewing software connectors.
-
 ## Development
 
 Most files are MicroPython/UIFlow2 code intended to run on the M5Dial, but a few
@@ -427,7 +428,6 @@ Useful local docs:
 
 - [DEBUG_GUIDE.md](DEBUG_GUIDE.md) - memory and debug traces
 - [devices/DEVICES_GUIDE.md](devices/DEVICES_GUIDE.md) - hardware abstraction notes
-- [i18n/README.md](i18n/README.md) - translation system
 - [FONTS_GUIDE.md](FONTS_GUIDE.md) - font notes
 
 ## License
