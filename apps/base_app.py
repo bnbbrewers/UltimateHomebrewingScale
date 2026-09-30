@@ -4,6 +4,10 @@ Base application class with no direct LVGL dependency.
 
 from ui import screen_ids
 
+# _check_back has not seen any state yet. A plain None would be mistaken for
+# the state of an app that passes None.
+_UNARMED = object()
+
 
 class BaseApp:
     APP_ID = None
@@ -16,6 +20,7 @@ class BaseApp:
         self.i18n = i18n
 
         self._active = False
+        self._back_state = _UNARMED
 
     def t(self, key, *args, **kwargs):
         if self.i18n:
@@ -24,6 +29,7 @@ class BaseApp:
 
     def on_enter(self):
         self._active = True
+        self._back_state = _UNARMED
         button = self.hardware.button
         if button and hasattr(button, "long_press_duration_ms"):
             button.long_press_duration_ms = self.LONG_PRESS_DURATION_MS
@@ -71,6 +77,24 @@ class BaseApp:
         if button and button.was_long_pressed():
             return True
         return False
+
+    def _check_back(self, state):
+        """True when the operator turned the dial an eighth of a turn left.
+
+        Call it on every tick of a state where the dial has no other role,
+        and only there: lists and editors read the dial themselves. The first
+        call in a new state clears the dial, so a turn made on the previous
+        screen never counts towards a gesture on this one.
+        """
+        rotary = getattr(self.hardware, "rotary", None)
+        if not rotary:
+            return False
+        if state != self._back_state:
+            self._back_state = state
+            rotary.reset()
+            return False
+        gesture = getattr(rotary, "consume_back_gesture", None)
+        return bool(gesture and gesture())
 
     def _show_msg(self, title, message, bar_color=0x333333, show_ok=False):
         scr = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)

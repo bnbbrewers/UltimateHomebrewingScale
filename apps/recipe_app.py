@@ -29,6 +29,12 @@ class RecipeApp(BaseApp):
     #: Tag prefix for the memory traces, e.g. "grain" or "hop".
     TRACE_PREFIX = "recipe"
 
+    def __init__(self, screen_manager, hardware, apis, i18n=None):
+        super().__init__(screen_manager, hardware, apis, i18n=i18n)
+        # False when a single batch skipped the recipe list: stepping back
+        # from the recipe then has no list to return to.
+        self._batch_picker_shown = False
+
     def _select(self):
         if self._select_screen is None:
             self._select_screen = self.screen_manager.get(screen_ids.SELECT_ITEM)
@@ -55,6 +61,7 @@ class RecipeApp(BaseApp):
             return
         names = [b.name for b in self._batches]
         self._batch_idx = 0
+        self._batch_picker_shown = False
         if len(self._batches) == 1:
             on_single_batch()
             return
@@ -67,6 +74,7 @@ class RecipeApp(BaseApp):
         self.screen_manager.show(screen_ids.SELECT_ITEM)
         if self._rotary:
             self._rotary.reset()
+        self._batch_picker_shown = True
         self._state = recipe_state
         gc.collect()
         runtime_debug.snapshot("{}.batches_loaded".format(self.TRACE_PREFIX))

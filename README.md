@@ -14,6 +14,8 @@ HTTPS on an ESP32-S3.
 Implemented:
 
 - Launcher with rotary selection and single-button validation.
+- An eighth of a turn to the left steps back one screen inside an app,
+  wherever the dial is not already scrolling a list or adjusting a value.
 - Scale mode with live weight display and tare.
 - Malt assistant using Brewfather batches and fermentables.
 - Hop assistant using Brewfather batches and grouped hop additions.

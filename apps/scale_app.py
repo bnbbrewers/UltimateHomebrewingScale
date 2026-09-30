@@ -49,6 +49,8 @@ class ScaleApp(BaseApp):
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if self._check_back(None):
+            return "launcher"
 
         if self.hardware.button and self.hardware.button.was_short_pressed():
             if self._scale is None:
