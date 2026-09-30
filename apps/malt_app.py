@@ -17,6 +17,16 @@ _STATE_DONE = 4
 _STATE_MESSAGE_ACK = 5
 _STATE_LOADING_RECIPES = 6
 _STATE_PLACE_RECIPIENT_ACK = 7
+_STATE_ALL_DONE_ACK = 8
+# States where the dial has no other role, so it carries the back gesture.
+# The recipe list joins them only while it is empty.
+_DIAL_FREE_STATES = (
+    _STATE_PLACE_RECIPIENT_ACK,
+    _STATE_WEIGHT,
+    _STATE_MESSAGE_ACK,
+    _STATE_ALL_DONE_ACK,
+    _STATE_DONE,
+)
 _COLOR_MALT = 0xD4840A
 _COLOR_RECIPE = _COLOR_MALT
 
@@ -72,6 +82,8 @@ class GrainAssistantApp(RecipeApp):
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if self._dial_is_free() and self._check_back(self._state):
+            return self._on_back()
         if self._state == _STATE_LOADING_RECIPES:
             self._load_batches()
         elif self._state == _STATE_RECIPE:
@@ -85,9 +97,26 @@ class GrainAssistantApp(RecipeApp):
         elif self._state == _STATE_DONE:
             if time.ticks_diff(time.ticks_ms(), self._done_at) >= 2000:
                 return "launcher"
-        elif self._state == _STATE_MESSAGE_ACK:
+        elif self._state in (_STATE_MESSAGE_ACK, _STATE_ALL_DONE_ACK):
             if self.hardware.button.was_short_pressed():
                 return "launcher"
+        return None
+
+    # ── back gesture ───────────────────────────────────────────────
+
+    def _dial_is_free(self):
+        if self._state == _STATE_RECIPE:
+            return not self._batches
+        return self._state in _DIAL_FREE_STATES
+
+    def _on_back(self):
+        # Results of a committed weighing (all done) ignore the gesture.
+        if self._state in (_STATE_RECIPE, _STATE_MESSAGE_ACK):
+            return "launcher"
+        if self._state == _STATE_PLACE_RECIPIENT_ACK:
+            self._show_malt_select()
+        elif self._state == _STATE_WEIGHT:
+            self._show_place_recipient_prompt()
         return None
 
     # ── loading / display ──────────────────────────────────────────
@@ -107,14 +136,9 @@ class GrainAssistantApp(RecipeApp):
             return
         gc.collect()
         self._malt_idx = 0
-        names = [m.name for m in self._malts]
 
-        if names:
-            self._select().configure(
-                title=self.t("grain.select_malt"), items=names,
-                accent_color=_COLOR_MALT, selected_index=0)
-            self.screen_manager.show(screen_ids.SELECT_ITEM)
-            self._state = _STATE_MALT
+        if self._malts:
+            self._show_malt_select()
         elif self._show_msg(
                 self.t("grain.title"), self.t("grain.no_malts"),
                 _COLOR_MALT, show_ok=True):
@@ -129,6 +153,15 @@ class GrainAssistantApp(RecipeApp):
         if self._rotary:
             self._rotary.reset()
         runtime_debug.log("[MEM] grain.malts_loaded free={}", runtime_debug.mem_free())
+
+    def _show_malt_select(self):
+        self._select().configure(
+            title=self.t("grain.select_malt"),
+            items=[m.name for m in self._malts],
+            accent_color=_COLOR_MALT,
+            selected_index=self._malt_idx)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
+        self._state = _STATE_MALT
 
     def _show_network_error(self):
         if self._show_msg(
@@ -176,16 +209,11 @@ class GrainAssistantApp(RecipeApp):
             if self._malts:
                 if self._malt_idx >= len(self._malts):
                     self._malt_idx = len(self._malts) - 1
-                names = [m.name for m in self._malts]
-                self._select().configure(
-                    title=self.t("grain.select_malt"), items=names,
-                    accent_color=_COLOR_MALT, selected_index=self._malt_idx)
-                self.screen_manager.show(screen_ids.SELECT_ITEM)
-                self._state = _STATE_MALT
+                self._show_malt_select()
             elif self._show_msg(
                     self.t("grain.title"), self.t("grain.all_malts_done"),
                     _COLOR_MALT, show_ok=True):
-                self._state = _STATE_MESSAGE_ACK
+                self._state = _STATE_ALL_DONE_ACK
             else:
                 self._done_at = time.ticks_ms()
                 self._state = _STATE_DONE

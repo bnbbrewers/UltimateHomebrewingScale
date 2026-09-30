@@ -190,6 +190,8 @@ class SettingsApp(BaseApp):
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if self._check_back(None):
+            return "launcher"
         try:
             if self._portal:
                 self._portal.tick()

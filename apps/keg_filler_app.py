@@ -54,6 +54,29 @@ _STATE_FILLING_DONE_ACK = 10
 _STATE_FILLING_DONE_SELECT = 11
 _STATE_FILLING_STALLED_ACK = 12
 
+# States where the dial has no other role, so it carries the back gesture.
+# The fill and its two prompts are among them only so the dial is drained:
+# the gesture is ignored there, it must never lead to reopening the valve.
+_DIAL_FREE_STATES = (
+    _STATE_EMPTY_PLATFORM_ACK,
+    _STATE_CALIBRATION_1_ACK,
+    _STATE_CALIBRATING_WEIGHT,
+    _STATE_CALIBRATION_DONE_ACK,
+    _STATE_FILLING_SETUP_ACK,
+    _STATE_ERROR_ACK,
+    _STATE_FILLING,
+    _STATE_FILLING_DONE_ACK,
+    _STATE_FILLING_STALLED_ACK,
+)
+# Free-dial states where the gesture does nothing. They fall through to their
+# normal tick, so the fill loop never misses a stop or stall check.
+_BACK_IGNORED_STATES = (
+    _STATE_CALIBRATION_DONE_ACK,
+    _STATE_FILLING,
+    _STATE_FILLING_DONE_ACK,
+    _STATE_FILLING_STALLED_ACK,
+)
+
 DEFAULT_SPUNDING_VALVE_INERTIA_ML = 200
 
 _COLOR_KEG = 0x607D8B
@@ -191,6 +214,9 @@ class KegFillerApp(BaseApp):
     def tick(self):
         if self._check_return_to_launcher():
             return "launcher"
+        if (self._state in _DIAL_FREE_STATES and self._check_back(self._state)
+                and self._state not in _BACK_IGNORED_STATES):
+            return self._on_back()
 
         if self._state == _STATE_EMPTY_PLATFORM_ACK:
             self._tick_empty_platform_ack()
@@ -529,14 +555,29 @@ class KegFillerApp(BaseApp):
         return "launcher"
 
     def _tick_error_ack(self):
-        if not self.hardware.button.was_short_pressed():
-            return
+        if self.hardware.button.was_short_pressed():
+            self._leave_error()
+
+    def _leave_error(self):
         if self._error_return_state == _STATE_CALIBRATION_1_ACK:
             self._show_calibration_step_1()
         elif self._error_return_state == _STATE_KEG_SELECT:
             self._show_select()
         else:
             self._show_empty_platform()
+
+    def _on_back(self):
+        state = self._state
+        if state == _STATE_EMPTY_PLATFORM_ACK:
+            return "launcher"
+        if state in (_STATE_CALIBRATION_1_ACK, _STATE_FILLING_SETUP_ACK):
+            self._show_select()
+        elif state == _STATE_CALIBRATING_WEIGHT:
+            self._samples = []
+            self._show_calibration_step_1()
+        elif state == _STATE_ERROR_ACK:
+            self._leave_error()
+        return None
 
     def _consume_rotary_delta(self):
         if not self._rotary:

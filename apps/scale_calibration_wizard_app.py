@@ -19,6 +19,11 @@ CALIBRATION_FILE = "scale_calibration.json"
 SAMPLE_INTERVAL_MS = 100
 MEM_SNAPSHOT_INTERVAL_MS = 5000
 INTRO_COLOR = 0x00897B
+# The wizard tracks its screens with flags, not a state number: these name the
+# screens where the dial is free, for BaseApp._check_back.
+_DIAL_INTRO = "intro"
+_DIAL_MEASURING = "measuring"
+_DIAL_RESTART = "restart"
 
 class ScaleCalibrationWizardApp(BaseApp):
     APP_ID = "scale_calibration_wizard_app"
@@ -84,6 +89,14 @@ class ScaleCalibrationWizardApp(BaseApp):
         if self._check_return_to_launcher():
             return "launcher"
 
+        dial_state = self._dial_state()
+        if dial_state is not None and self._check_back(dial_state):
+            if dial_state == _DIAL_INTRO:
+                return "launcher"
+            if dial_state == _DIAL_MEASURING:
+                self._abort_measurement()
+            return None
+
         if self._waiting_restart_confirmation:
             button = self.hardware.button
             if button and button.was_short_pressed():
@@ -115,6 +128,25 @@ class ScaleCalibrationWizardApp(BaseApp):
             self._start_measurement()
 
         return None
+
+    def _dial_state(self):
+        """The free-dial screen on show, or None while the dial edits a weight."""
+        if self._waiting_restart_confirmation:
+            return _DIAL_RESTART
+        if not self._intro_acknowledged:
+            return _DIAL_INTRO
+        if self._measuring and self._scale is not None:
+            return _DIAL_MEASURING
+        return None
+
+    def _abort_measurement(self):
+        # Back to the same point, keeping the weight the operator adjusted.
+        self._measuring = False
+        self._sample_sum = 0
+        self._sample_count = 0
+        if self._rotary:
+            self._rotary.reset()
+        self._render()
 
     def _show_intro(self):
         screen = self.screen_manager.get(screen_ids.SIMPLE_MESSAGE)

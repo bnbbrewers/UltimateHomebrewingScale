@@ -60,7 +60,10 @@ class StandbyManager:
         rotary = getattr(hardware, "rotary", None)
         if rotary is not None:
             try:
-                value = rotary.get_rotary_value()
+                # The active app clears the raw value before this sample, so
+                # a turn is only visible through the device's own marker.
+                marker = getattr(rotary, "activity_marker", None)
+                value = marker() if marker else rotary.get_rotary_value()
             except Exception:
                 value = None
             if value is not None:
