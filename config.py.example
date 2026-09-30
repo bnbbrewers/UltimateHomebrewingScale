@@ -22,6 +22,9 @@ HOP_WEIGHT_TOLERANCE = 5
 # Spunding valve inertia compensation for keg filling
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
 
+# Seconds without weight change before the keg filler closes the valve
+KEG_FILL_STALL_TIMEOUT_S = 10
+
 # M5Dial Port B pins for the Unit Relay
 KEG_RELAY_IO = (1, 2)
 
