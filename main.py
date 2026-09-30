@@ -61,8 +61,9 @@ def _run_boot_update_if_requested():
     if run_update_boot():
         return True
 
-    # Keep the device in the lightweight updater path. The flag remains set so
-    # the next power cycle can retry without loading the normal application.
+    # Only reached without a display to wait for OK on: keep the device in the
+    # lightweight updater path. The flag remains set so the next power cycle
+    # can retry without loading the normal application.
     while True:
         time.sleep(60)
 
