@@ -11,6 +11,10 @@ import runtime_watchdog
 # helper only loads it when DEBUG is set.
 _mem_snapshot = runtime_debug.snapshot
 
+# A working network answers in a few seconds; past this the launcher reports
+# the saved credentials as a problem. The updater waits 25 s for the same link.
+CONNECT_TIMEOUT_MS = 20000
+
 
 def _wlan_state(wlan):
     if wlan is None:
@@ -50,8 +54,10 @@ class WifiDevice:
         self._connect_requested = False
         self._done = False
         self._failed = False
+        self._abandoned = False
         self._wlan = None
         self._last_log_ms = 0
+        self._start_ms = 0
 
     def tick(self):
         if self._done or self._failed:
@@ -140,15 +146,21 @@ class WifiDevice:
         if not self._done and not self._failed:
             self._connect_requested = True
 
-    def is_connected(self):
-        if self._done:
+    def connection_failed(self):
+        """True when the saved network could not be joined.
+
+        Judged when asked, not when the timeout expires: a router that comes
+        back late, after a power cut, never gets reported. A connection that
+        was abandoned on purpose, or never requested, has not failed.
+        """
+        if self._abandoned or self._done or not self._started:
+            return False
+        if self._failed:
             return True
         if self._wlan is not None and self._wlan.isconnected():
             self._done = True
-        return self._done
-
-    def has_failed(self):
-        return self._failed
+            return False
+        return time.ticks_diff(time.ticks_ms(), self._start_ms) >= CONNECT_TIMEOUT_MS
 
     def abandon(self):
         """Stop every connection attempt for the rest of this boot.
@@ -159,6 +171,7 @@ class WifiDevice:
         own connection from the same NVS credentials.
         """
         self._failed = True
+        self._abandoned = True
         self._connect_requested = False
         wlan = self._wlan
         try:
@@ -174,6 +187,7 @@ class WifiDevice:
     def _start_connect(self):
         self._connect_requested = True
         self._started = True
+        self._start_ms = time.ticks_ms()
         _mem_snapshot("wifi.start.begin", enabled=self._debug)
         try:
             import network

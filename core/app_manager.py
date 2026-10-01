@@ -77,7 +77,7 @@ class AppManager:
         return self._active_app_id
 
     def standby_inhibited(self):
-        """True while the active app must not be interrupted by deep sleep.
+        """True while the active app must not be interrupted by standby.
 
         Two reasons: the app is inherently uninterruptible (declared in the
         registry), or it is in the middle of a physical operation and says so
@@ -108,8 +108,6 @@ class AppManager:
         return True
 
     def _switch_to(self, app_id):
-        if app_id == app_registry.STARTUP:
-            app_id = _initial_app_id()
         if app_id == self._active_app_id:
             return
         old = self._active_app_id

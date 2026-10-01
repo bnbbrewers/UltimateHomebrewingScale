@@ -121,7 +121,7 @@
           </div>
           <div>
             <p class="uhs-facts__label">Sortie de veille</p>
-            <p class="uhs-facts__value">Toucher l'écran</p>
+            <p class="uhs-facts__value">Appuyer sur le bouton</p>
           </div>
         </div>
       </div>
@@ -160,8 +160,8 @@
           <span class="uhs-rule" aria-hidden="true"><i></i><i></i><i></i></span>
           <h2>Fonctionnement de l'UHS</h2>
           <p class="uhs-section__intro">
-            Tout se pilote avec la molette et le bouton situé sous l'écran. L'écran tactile ne sert qu'à sortir
-            l'UHS de veille.
+            Tout se pilote avec la molette et le bouton situé sous l'écran. L'écran tactile n'est pas
+            utilisé.
           </p>
 
           <div class="uhs-cards">
@@ -181,10 +181,6 @@
               <h3>Un quart de tour à gauche</h3>
               <p>Revient à l'écran précédent. Fonctionne sur les écrans de message et de pesée, où la molette n'a pas d'autre rôle.</p>
             </article>
-            <article class="uhs-card">
-              <h3>Toucher l'écran</h3>
-              <p>Sort l'UHS de veille. Le tactile n'a aucun autre rôle quand l'UHS est éveillé.</p>
-            </article>
           </div>
 
           <div class="uhs-note uhs-note--info">
@@ -196,10 +192,10 @@
 
           <h3 class="uhs-subhead">À la mise sous tension</h3>
           <p>
-            L'UHS se connecte d'abord à votre Wi-Fi, le temps d'afficher <strong>Connexion Wi-Fi</strong>, puis
-            s'ouvre sur le launcher. S'il affiche <strong>Problème Wi-Fi</strong>, voyez le
-            <a href="#troubleshooting">dépannage</a>. S'il s'ouvre plutôt sur un QR code ou sur l'assistant de
-            calibration, son installation n'est pas terminée : reprenez-la là où vous l'aviez laissée dans le
+            L'UHS s'ouvre directement sur le launcher et se connecte seul à votre Wi-Fi. Si la connexion échoue, le
+            launcher affiche <strong>Problème Wi-Fi</strong> : voyez le <a href="#troubleshooting">dépannage</a>.
+            S'il s'ouvre plutôt sur un QR code ou sur l'assistant de calibration, son installation n'est pas
+            terminée : reprenez-la là où vous l'aviez laissée dans le
             <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>.
           </p>
 
@@ -279,23 +275,18 @@
               </p>
             </li>
             <li class="uhs-step">
-              <h3>Il se met en veille à la fin du délai</h3>
+              <h3>Il s'éteint à la fin du délai</h3>
               <p>
-                L'écran devient noir. Si une vanne de fût est branchée, elle reste fermée pendant la veille.
+                L'écran devient noir. Si une vanne de fût est branchée, elle reste fermée tant que l'UHS est éteint.
               </p>
             </li>
             <li class="uhs-step">
-              <h3>Touchez l'écran pour le réveiller</h3>
+              <h3>Appuyez sur le bouton pour le rallumer</h3>
               <p>
                 L'UHS redémarre sur le launcher, pas sur l'écran que vous aviez quitté.
               </p>
             </li>
           </ol>
-
-          <div class="uhs-note uhs-note--warn">
-            <p><strong class="uhs-note__label">Le bouton ne réveille pas l'UHS :</strong> le matériel du M5Stack Dial ne le
-            permet pas. Seul un toucher sur l'écran le réveille.</p>
-          </div>
 
           <div class="uhs-note uhs-note--info">
             <p><strong class="uhs-note__label">Quand l'UHS ne se met jamais en veille :</strong> pendant l'assistant de
@@ -819,9 +810,9 @@
             <dt>Le téléphone n'ouvre pas la page du QR code</dt>
             <dd>Reconnectez-vous à <code>UHS-Setup</code>, coupez temporairement les données mobiles/5G, puis ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</dd>
             <dt>Problème Wi-Fi : Vérifier le paramétrage</dt>
-            <dd>Au démarrage, l'UHS n'a pas pu rejoindre le Wi-Fi enregistré : mot de passe erroné, réseau renommé ou nouvelle box. Appuyez sur OK : l'UHS redémarre sur <code>UHS-Setup</code> et le portail reprend les identifiants enregistrés. Corrigez le SSID ou le mot de passe, en vérifiant qu'il s'agit bien d'un réseau 2,4 GHz, puis enregistrez. Si votre box redémarrait simplement, après une coupure de courant par exemple, éteignez puis rallumez l'UHS une fois la box revenue.</dd>
-            <dt>L'UHS ne se réveille pas avec le bouton</dt>
-            <dd>C'est normal : touchez l'écran pour le réveiller.</dd>
+            <dd>L'UHS n'a pas pu rejoindre le Wi-Fi enregistré : mot de passe erroné, réseau renommé ou nouvelle box. L'écran apparaît sur le launcher, jamais au milieu d'une app. Appuyez sur OK : l'UHS redémarre sur <code>UHS-Setup</code> et le portail reprend les identifiants enregistrés. Corrigez le SSID ou le mot de passe, en vérifiant qu'il s'agit bien d'un réseau 2,4 GHz, puis enregistrez. Si votre box redémarrait simplement, après une coupure de courant par exemple, éteignez puis rallumez l'UHS une fois la box revenue.</dd>
+            <dt>L'UHS ne se rallume pas avec le bouton</dt>
+            <dd>Sur batterie, la cellule est probablement vide : branchez l'USB-C pour la recharger, puis appuyez à nouveau sur le bouton.</dd>
           </dl>
         </div>
       </section>
