@@ -102,6 +102,26 @@ def _startup_config_ready():
         return False
 
 
+def _consume_setup_ap_request():
+    """True once after the Wi-Fi check's OK, then cleared.
+
+    Read on every boot, credentials or not: left set, it would skip the check
+    on the boot after the operator saves working credentials. A flag that
+    cannot be cleared is not honoured, or every boot would open the access
+    point and saving the portal could never leave it.
+    """
+    try:
+        import nvs_store
+
+        if not nvs_store.read_setup_ap_flag():
+            return False
+        nvs_store.write_setup_ap_flag(False)
+        return True
+    except Exception as e:
+        runtime_debug.log("[BOOTCFG] setup_ap flag error={}", e)
+        return False
+
+
 def request_stop():
     global _RUNNING
     _RUNNING = False
@@ -169,16 +189,24 @@ def main():
     initial_app_id = None
     initial_screen_id = None
     startup_ready = _startup_config_ready()
+    setup_ap_requested = _consume_setup_ap_request()
     update_requested = startup_ready and _update_requested()
     if update_requested:
         initial_app_id = "updater_app"
         initial_screen_id = "simple_message"
     elif not startup_ready:
         initial_app_id = "settings_app"
-    elif startup_ready:
-        # Keep the normal configured path compatible with the alpha runtime:
-        # Wi-Fi warms up in the background while the launcher is available,
-        # leaving the API workflow to use an already-settled interface.
+    elif setup_ap_requested:
+        # The previous boot could not join the saved network and the operator
+        # acknowledged it: open the portal on the access point, as without
+        # credentials, but keep them so the form comes back filled in.
+        hardware.wifi.abandon()
+        initial_app_id = "settings_app"
+    else:
+        # Every configured boot proves the credentials before the launcher: a
+        # wrong password or a replaced box would otherwise only surface as a
+        # network error in Malt or Hop.
+        initial_app_id = "wifi_check_app"
         hardware.wifi.request_connection()
         # The connector is deliberately warmed while the C heap is still
         # healthy. Its import used to happen at boot; deferring it until the

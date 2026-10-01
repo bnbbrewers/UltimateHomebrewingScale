@@ -22,6 +22,10 @@ WIFI_PASSWORD_KEY = "pswd0"
 APP_NAMESPACE = "uhs"
 UPDATE_KEY = "update"
 WATCHDOG_COUNT_KEY = "wdt_count"
+# One-shot: raised by the Wi-Fi check when the operator acknowledges a failed
+# connection, consumed by the next boot to open the setup portal on the access
+# point without trying the saved credentials again.
+SETUP_AP_KEY = "setup_ap"
 
 
 def open_nvs(namespace):
@@ -139,4 +143,18 @@ def read_update_flag(nvs=None):
 def write_update_flag(requested, nvs=None):
     nvs = nvs or open_nvs(APP_NAMESPACE)
     set_int(nvs, UPDATE_KEY, 1 if requested else 0)
+    nvs.commit()
+
+
+def read_setup_ap_flag(nvs=None):
+    try:
+        nvs = nvs or open_nvs(APP_NAMESPACE)
+        return get_int(nvs, SETUP_AP_KEY) == 1
+    except Exception:
+        return False
+
+
+def write_setup_ap_flag(requested, nvs=None):
+    nvs = nvs or open_nvs(APP_NAMESPACE)
+    set_int(nvs, SETUP_AP_KEY, 1 if requested else 0)
     nvs.commit()

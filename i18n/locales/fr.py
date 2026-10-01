@@ -111,6 +111,13 @@ TRANSLATIONS = {
         'portal_error': 'Erreur portail, verifier le reseau',
     },
 
+    'wifi_check': {
+        'title': 'Wi-Fi',
+        'connecting': 'Connexion Wi-Fi',
+        'failed_title': 'Probleme Wi-Fi',
+        'failed_message': 'Verifier le parametrage',
+    },
+
     'updater': {
         'title': 'Mise a jour',
         'ready': 'Preparation...',

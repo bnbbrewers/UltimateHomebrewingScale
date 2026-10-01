@@ -86,6 +86,10 @@ class WifiDevice:
         if self._done:
             _mem_snapshot("wifi.ensure.already_done", enabled=self._debug)
             return True
+        if self._failed:
+            # Covers abandon() before any attempt: starting here would bring
+            # back the retries the setup access point needs gone.
+            return False
         self.request_connection()
         if not self._started:
             _mem_snapshot("wifi.ensure.before_start", enabled=self._debug)
@@ -135,6 +139,37 @@ class WifiDevice:
         """Enable background connection attempts without starting them twice."""
         if not self._done and not self._failed:
             self._connect_requested = True
+
+    def is_connected(self):
+        if self._done:
+            return True
+        if self._wlan is not None and self._wlan.isconnected():
+            self._done = True
+        return self._done
+
+    def has_failed(self):
+        return self._failed
+
+    def abandon(self):
+        """Stop every connection attempt for the rest of this boot.
+
+        The station keeps retrying a network it cannot join, and on the ESP32
+        it shares the radio with the setup access point. The interface is
+        looked up even before any attempt of ours: UIFlow may have started its
+        own connection from the same NVS credentials.
+        """
+        self._failed = True
+        self._connect_requested = False
+        wlan = self._wlan
+        try:
+            if wlan is None:
+                import network
+
+                wlan = network.WLAN(network.STA_IF)
+            wlan.disconnect()
+        except Exception as e:
+            if self._debug:
+                print("[WiFi] abandon disconnect failed:", e)
 
     def _start_connect(self):
         self._connect_requested = True
