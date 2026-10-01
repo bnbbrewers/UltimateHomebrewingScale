@@ -30,6 +30,10 @@ KEG = "keg_filler_app"
 SETTINGS = "settings_app"
 CALIBRATION_WIZARD = "scale_calibration_wizard_app"
 UPDATER = "updater_app"
+WIFI_CHECK = "wifi_check_app"
+# Not an app: an app returns it to hand over to whatever a boot would open
+# next, which core.app_manager decides (launcher, or calibration first).
+STARTUP = "startup"
 
 DEFAULT_COLOR = 0x333333
 
@@ -107,6 +111,13 @@ APPS = {
         "color": 0x1565C0,
         # A reboot during an install leaves an incomplete runtime on flash.
         "inhibits_standby": True,
+    },
+    WIFI_CHECK: {
+        "module": "apps.wifi_check_app",
+        "cls": "WifiCheckApp",
+        "label": "Wi-Fi",
+        "i18n": "wifi_check.title",
+        "color": 0x1565C0,
     },
 }
 
