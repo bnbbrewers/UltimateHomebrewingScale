@@ -108,6 +108,8 @@ class AppManager:
         return True
 
     def _switch_to(self, app_id):
+        if app_id == app_registry.STARTUP:
+            app_id = _initial_app_id()
         if app_id == self._active_app_id:
             return
         old = self._active_app_id

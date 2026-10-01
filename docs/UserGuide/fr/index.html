@@ -196,9 +196,11 @@
 
           <h3 class="uhs-subhead">À la mise sous tension</h3>
           <p>
-            L'UHS s'ouvre directement sur le launcher et se connecte seul à votre Wi-Fi. S'il s'ouvre plutôt sur un
-            QR code ou sur l'assistant de calibration, son installation n'est pas terminée : reprenez-la là où vous
-            l'aviez laissée dans le <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>.
+            L'UHS se connecte d'abord à votre Wi-Fi, le temps d'afficher <strong>Connexion Wi-Fi</strong>, puis
+            s'ouvre sur le launcher. S'il affiche <strong>Problème Wi-Fi</strong>, voyez le
+            <a href="#troubleshooting">dépannage</a>. S'il s'ouvre plutôt sur un QR code ou sur l'assistant de
+            calibration, son installation n'est pas terminée : reprenez-la là où vous l'aviez laissée dans le
+            <a href="../../SoftwareInstallationGuide/fr/">guide d'installation logicielle</a>.
           </p>
 
           <h3 class="uhs-subhead">Le launcher</h3>
@@ -816,8 +818,8 @@
             <dd>L'UHS ne voit pas le relais qui commande la vanne. Vérifiez son câble dans le boîtier, comme indiqué dans le <a href="../../HardwareInstallationGuide/fr/#assembly">guide d'installation matérielle</a>.</dd>
             <dt>Le téléphone n'ouvre pas la page du QR code</dt>
             <dd>Reconnectez-vous à <code>UHS-Setup</code>, coupez temporairement les données mobiles/5G, puis ouvrez manuellement <code>http://192.168.4.1:8080/</code>.</dd>
-            <dt>Le Wi-Fi ne se connecte pas après l'enregistrement</dt>
-            <dd>Rouvrez l'app Config : faute de Wi-Fi, l'UHS relance <code>UHS-Setup</code>. Vérifiez l'orthographe du SSID et qu'il s'agit bien d'un réseau 2,4 GHz.</dd>
+            <dt>Problème Wi-Fi : Vérifier le paramétrage</dt>
+            <dd>Au démarrage, l'UHS n'a pas pu rejoindre le Wi-Fi enregistré : mot de passe erroné, réseau renommé ou nouvelle box. Appuyez sur OK : l'UHS redémarre sur <code>UHS-Setup</code> et le portail reprend les identifiants enregistrés. Corrigez le SSID ou le mot de passe, en vérifiant qu'il s'agit bien d'un réseau 2,4 GHz, puis enregistrez. Si votre box redémarrait simplement, après une coupure de courant par exemple, éteignez puis rallumez l'UHS une fois la box revenue.</dd>
             <dt>L'UHS ne se réveille pas avec le bouton</dt>
             <dd>C'est normal : touchez l'écran pour le réveiller.</dd>
           </dl>
