@@ -120,7 +120,7 @@
           </div>
           <div>
             <p class="uhs-facts__label">Wake from standby</p>
-            <p class="uhs-facts__value">Touch the screen</p>
+            <p class="uhs-facts__value">Press the button</p>
           </div>
         </div>
       </div>
@@ -160,7 +160,7 @@
           <h2>How UHS Works</h2>
           <p class="uhs-section__intro">
             Everything is driven from the rotary dial and the button under the screen. The touch screen is
-            only used to wake UHS from standby.
+            not used.
           </p>
 
           <div class="uhs-cards">
@@ -179,10 +179,6 @@
             <article class="uhs-card">
               <h3>A quarter turn left</h3>
               <p>Steps back one screen. It works on message and weighing screens, where the dial has nothing else to do.</p>
-            </article>
-            <article class="uhs-card">
-              <h3>Touch the screen</h3>
-              <p>Wakes UHS when it is in standby. Touch has no other role while UHS is awake.</p>
             </article>
           </div>
 
@@ -276,28 +272,23 @@
               </p>
             </li>
             <li class="uhs-step">
-              <h3>It goes to sleep when the time runs out</h3>
+              <h3>It switches off when the time runs out</h3>
               <p>
-                The screen turns black. If a keg valve is connected, it stays closed while UHS sleeps.
+                The screen turns black. If a keg valve is connected, it stays closed while UHS is off.
               </p>
             </li>
             <li class="uhs-step">
-              <h3>Touch the screen to wake it</h3>
+              <h3>Press the button to switch it back on</h3>
               <p>
                 UHS starts up again on the launcher, not on the screen you left.
               </p>
             </li>
           </ol>
 
-          <div class="uhs-note uhs-note--warn">
-            <p><strong class="uhs-note__label">The button cannot wake UHS:</strong> the M5Stack Dial hardware does not allow
-            it. Only a touch on the screen wakes it up.</p>
-          </div>
-
           <div class="uhs-note uhs-note--info">
-            <p><strong class="uhs-note__label">When UHS never sleeps:</strong> during the scale calibration wizard, during a
+            <p><strong class="uhs-note__label">When UHS never switches off:</strong> during the scale calibration wizard, during a
             software update, and in the Keg app from the moment the valve opens until you leave the end-of-fill or
-            no-flow screen. Sleeping then would lose the calibration, break the installation or cut a fill short.</p>
+            no-flow screen. Switching off then would lose the calibration, break the installation or cut a fill short.</p>
           </div>
         </div>
       </section>
@@ -714,7 +705,7 @@
                     <tr>
                       <td>Standby after (min, 0 = off)</td>
                       <td>
-                        Minutes without activity before UHS goes to sleep (see <a href="#standby">Standby and Wake-up</a>).
+                        Minutes without activity before UHS switches off (see <a href="#standby">Standby and Wake-up</a>).
                         <strong>Enter <code>30</code></strong>: it is the recommended value on mains and a requirement on
                         battery. <code>0</code> disables standby.
                       </td>
@@ -776,7 +767,7 @@
           <p>
             <strong>UPDATE APP</strong> restarts UHS, which downloads and installs the latest version of the chosen
             <strong>Release channel</strong>, then shows
-            <strong>Installation complete, OK to restart</strong>: press the button. UHS never goes to sleep during an
+            <strong>Installation complete, OK to restart</strong>: press the button. UHS never switches off during an
             update; do not unplug it either.
           </p>
 
@@ -809,8 +800,8 @@
             <dd>Reconnect to <code>UHS-Setup</code>, temporarily turn off mobile data/5G, then manually open <code>http://192.168.4.1:8080/</code>.</dd>
             <dt>Wi-Fi problem: Check the settings</dt>
             <dd>UHS could not join the saved Wi-Fi: wrong password, renamed network or a new router. The screen appears on the launcher, never in the middle of an app. Press OK: UHS restarts on <code>UHS-Setup</code> and the portal comes back with the saved credentials. Correct the SSID or the password, making sure it is a 2.4 GHz network, then save. If your router was simply restarting, after a power cut for instance, turn UHS off and on again once the router is back.</dd>
-            <dt>UHS does not wake up with the button</dt>
-            <dd>That is expected: touch the screen to wake it.</dd>
+            <dt>UHS does not switch back on with the button</dt>
+            <dd>On battery, the cell is probably flat: plug in USB-C to charge it, then press the button again.</dd>
           </dl>
         </div>
       </section>

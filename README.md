@@ -25,7 +25,7 @@ Implemented:
   tolerance, standby delay, battery mode, debug mode and release channel.
 - Hidden updater app that downloads application files from GitHub.
 - Optional runtime watchdog with relay-safe reboot and persistent reset lock.
-- Optional idle standby with deep sleep and touch wake, for battery builds.
+- Optional idle standby that powers the device off, woken by the knob.
 - English and French UI strings.
 
 Work in progress:
@@ -314,7 +314,7 @@ GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
 KEG_FILL_STALL_TIMEOUT_S = 10  # seconds without weight change before the valve closes (3-600)
-STANDBY_TIMEOUT_MIN = 0  # minutes before deep sleep; 30 on battery, 0 disables
+STANDBY_TIMEOUT_MIN = 0  # minutes before power off; 30 on battery, 0 disables
 DEBUG = False
 UPDATE_CHANNEL = "stable"
 # Optional: uncomment to enable a 15-second runtime watchdog.
@@ -370,8 +370,8 @@ NVS partition.
 
 ### Idle Standby
 
-`STANDBY_TIMEOUT_MIN` puts the device into ESP32 deep sleep after that many
-minutes without operator activity. `0` disables the feature, and values outside
+`STANDBY_TIMEOUT_MIN` powers the device off after that many minutes without
+operator activity. `0` disables the feature, and values outside
 `1`-`240` are rejected with a log line rather than applied. **30 minutes is the
 recommended value in every install, and is what makes a battery build usable.**
 The setting is editable from the portal as **Standby after (min, 0 = off)**.
@@ -380,15 +380,18 @@ Activity is the button, the rotary encoder, and a weight change larger than
 `HOP_WEIGHT_TOLERANCE`. The updater and the calibration wizard inhibit standby
 while they run, so a long download or a calibration session is never cut short.
 
-Before sleeping, the manager pins the keg relay line low and holds it through
-deep sleep, dims the display, then arms the wake source. If the relay cannot be
-pinned or the wake source cannot be armed, it stays awake rather than sleeping
-with no way back.
+Before powering off, the manager pins the keg relay line low, blacks out the
+display, then releases the supply latch (GPIO46). If the relay cannot be pinned
+or the knob cannot be read, it stays awake rather than sleeping with no way
+back.
 
-**Waking is done by touching the screen.** The main button cannot wake the
-board: GPIO42 is not an RTC GPIO on the ESP32-S3, so the wake source is the
-touch interrupt on GPIO14. Waking is a full reboot, so the device returns to the
-launcher rather than to the screen it left.
+**Pressing the knob brings the device back, whatever the supply.** On the
+battery connector, releasing the latch cuts the power, and the knob, wired to
+the power-on circuit, turns it back on. On USB or the 5 V connector the latch
+changes nothing: the board stays up with a black screen until the knob is
+pressed, then restarts. Both cases end in a full boot, so the device returns to
+the launcher rather than to the screen it left. Deep sleep is not used: the
+knob, GPIO42, is not an RTC GPIO on the ESP32-S3 and could not wake it.
 
 `standby.py` stays dependency-light on purpose: no UI, no application managers,
 no network clients, and no retained references to any of them.
