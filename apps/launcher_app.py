@@ -39,6 +39,11 @@ class LauncherApp(BaseApp):
             self._rotary.reset()
 
     def tick(self):
+        # Reported here only: an app in use (a weighing, a keg fill) is never
+        # interrupted, the problem waits for the operator to come back.
+        wifi = getattr(self.hardware, "wifi", None)
+        if wifi is not None and wifi.connection_failed():
+            return app_registry.WIFI_PROBLEM
         if self._rotary:
             delta = self._rotary.consume_delta()
             if delta:
