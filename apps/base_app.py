@@ -38,7 +38,7 @@ class BaseApp:
         self._active = False
 
     def inhibits_standby(self):
-        """True while this app must not be interrupted by deep sleep.
+        """True while this app must not be interrupted by standby.
 
         Default False: idle detection is enough for an app the operator can
         simply come back to. Override for a state that drives hardware or

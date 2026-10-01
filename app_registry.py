@@ -19,7 +19,7 @@ Keys:
     loading_i18n       optional override for the whole loading line
     loading_label      English fallback for that override
     icon, order        launcher entry; an app without them is not listed
-    inhibits_standby   never deep-sleep while this app is active
+    inhibits_standby   never enter standby while this app is active
 """
 
 LAUNCHER = "launcher"

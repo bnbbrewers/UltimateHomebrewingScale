@@ -77,7 +77,7 @@ class AppManager:
         return self._active_app_id
 
     def standby_inhibited(self):
-        """True while the active app must not be interrupted by deep sleep.
+        """True while the active app must not be interrupted by standby.
 
         Two reasons: the app is inherently uninterruptible (declared in the
         registry), or it is in the middle of a physical operation and says so
