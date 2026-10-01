@@ -19,7 +19,7 @@ Keys:
     loading_i18n       optional override for the whole loading line
     loading_label      English fallback for that override
     icon, order        launcher entry; an app without them is not listed
-    inhibits_standby   never deep-sleep while this app is active
+    inhibits_standby   never enter standby while this app is active
 """
 
 LAUNCHER = "launcher"
@@ -30,10 +30,7 @@ KEG = "keg_filler_app"
 SETTINGS = "settings_app"
 CALIBRATION_WIZARD = "scale_calibration_wizard_app"
 UPDATER = "updater_app"
-WIFI_CHECK = "wifi_check_app"
-# Not an app: an app returns it to hand over to whatever a boot would open
-# next, which core.app_manager decides (launcher, or calibration first).
-STARTUP = "startup"
+WIFI_PROBLEM = "wifi_problem_app"
 
 DEFAULT_COLOR = 0x333333
 
@@ -112,12 +109,15 @@ APPS = {
         # A reboot during an install leaves an incomplete runtime on flash.
         "inhibits_standby": True,
     },
-    WIFI_CHECK: {
-        "module": "apps.wifi_check_app",
-        "cls": "WifiCheckApp",
-        "label": "Wi-Fi",
-        "i18n": "wifi_check.title",
-        "color": 0x1565C0,
+    WIFI_PROBLEM: {
+        "module": "apps.wifi_problem_app",
+        "cls": "WifiProblemApp",
+        "label": "Wi-Fi problem",
+        "i18n": "wifi_problem.title",
+        "color": 0xD32F2F,
+        # The transition names the problem itself rather than "Loading ...".
+        "loading_i18n": "wifi_problem.title",
+        "loading_label": "Wi-Fi problem",
     },
 }
 

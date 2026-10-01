@@ -203,10 +203,10 @@ def main():
         hardware.wifi.abandon()
         initial_app_id = "settings_app"
     else:
-        # Every configured boot proves the credentials before the launcher: a
-        # wrong password or a replaced box would otherwise only surface as a
-        # network error in Malt or Hop.
-        initial_app_id = "wifi_check_app"
+        # Keep the normal configured path compatible with the alpha runtime:
+        # Wi-Fi warms up in the background while the launcher is available,
+        # leaving the API workflow to use an already-settled interface. The
+        # launcher reports a connection that fails.
         hardware.wifi.request_connection()
         # The connector is deliberately warmed while the C heap is still
         # healthy. Its import used to happen at boot; deferring it until the

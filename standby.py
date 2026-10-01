@@ -1,11 +1,15 @@
 """Optional idle standby.
 
-The device enters ESP32 deep sleep after STANDBY_TIMEOUT_MIN minutes without
-operator activity, and wakes when the screen is touched. The feature stays
-completely disabled unless the setting is present and valid.
+After STANDBY_TIMEOUT_MIN minutes without operator activity the device powers
+itself off, and pressing the knob brings it back with a full boot. The feature
+stays completely disabled unless the setting is present and valid.
 
-Waking is a full reboot: the main button cannot wake this board, GPIO42 is not
-an RTC GPIO on the ESP32-S3, so the wake source is the touch interrupt.
+Power off means releasing the supply latch. On the battery connector that cuts
+the power for good, and the knob, wired to the power-on circuit, closes it
+again. On USB or the 5 V connector the latch changes nothing: the board stays
+up with a black screen until the knob is pressed, then restarts. Both supplies
+therefore look the same to the operator. Deep sleep is not used: the knob,
+GPIO42, is not an RTC GPIO on the ESP32-S3 and could not wake it.
 
 This module must stay dependency-light: no UI, no application managers, no
 network clients, and no retained references to any of them.
@@ -15,10 +19,11 @@ _MIN_TIMEOUT_MIN = 1
 _MAX_TIMEOUT_MIN = 240
 _DEFAULT_WEIGHT_TOLERANCE_G = 5
 _WEIGHT_SAMPLE_MS = 1000
-_TOUCH_INT_PIN = 14
+# The knob pulls this pad low while pressed.
+_KNOB_PIN = 42
+_KNOB_POLL_MS = 20
 # On the battery connector the supply latch stays closed only while this pad
-# is driven high; M5Unified raises it at boot but machine.deepsleep() lets it
-# float, which cuts the power and leaves nothing to wake.
+# is driven high; M5Unified raises it at boot.
 _POWER_HOLD_PIN = 46
 _DEFAULT_RELAY_IO = (1, 2)
 
@@ -26,15 +31,15 @@ _DEFAULT_RELAY_IO = (1, 2)
 class StandbyManager:
     def __init__(self, timeout_ms, weight_tolerance_g=_DEFAULT_WEIGHT_TOLERANCE_G,
                  relay_pin=_DEFAULT_RELAY_IO[1], machine_module=None,
-                 esp32_module=None, time_module=None, display=None, logger=None):
+                 time_module=None, display=None, watchdog_feed=None, logger=None):
         self.timeout_ms = timeout_ms
         self.enabled = timeout_ms is not None
         self.weight_tolerance_g = weight_tolerance_g
         self.relay_pin = relay_pin
         self._machine = machine_module
-        self._esp32 = esp32_module
         self._time = time_module
         self._display = display
+        self._watchdog_feed = watchdog_feed
         self._logger = logger or print
         self._idle_since_ms = None
         self._last_rotary = None
@@ -145,20 +150,8 @@ class StandbyManager:
             self._logger("Standby tick failed: %s" % error)
             return False
 
-    def _release_hold(self):
-        try:
-            self._esp32.gpio_deep_sleep_hold(False)
-        except Exception:
-            pass
-        try:
-            self._machine.Pin(self.relay_pin, self._machine.Pin.OUT,
-                              value=0, hold=False)
-        except Exception:
-            pass
-
     def _abort_sleep(self, reason, restore_brightness):
         self._logger("Standby did not sleep: %s" % reason)
-        self._release_hold()
         if restore_brightness is not None and self._display is not None:
             try:
                 self._display.setBrightness(restore_brightness)
@@ -167,47 +160,58 @@ class StandbyManager:
         self.note_activity()
         return False
 
+    def _wait_for_knob_press(self, knob):
+        """Block until the knob goes from released to pressed.
+
+        A knob already held when standby starts must be released first, so a
+        stuck reading cannot turn standby into a restart loop. The runtime
+        watchdog, when armed, would otherwise reset the board mid-wait.
+        """
+        released = False
+        while True:
+            if self._watchdog_feed is not None:
+                try:
+                    self._watchdog_feed()
+                except Exception:
+                    pass
+            pressed = knob.value() == 0
+            if released and pressed:
+                return
+            if not pressed:
+                released = True
+            self._time.sleep_ms(_KNOB_POLL_MS)
+
     def sleep_now(self):
-        """Pin the relay line and the power latch, arm the touch wake, and
-        enter deep sleep."""
-        if self._machine is None or self._esp32 is None:
+        """Pin the relay line, black out the screen and release the power
+        latch; when the board is still powered, restart on a knob press."""
+        if self._machine is None or self._time is None:
             return self._abort_sleep("platform modules unavailable", None)
 
+        Pin = self._machine.Pin
         try:
-            self._machine.Pin(self.relay_pin, self._machine.Pin.OUT,
-                              value=0, hold=True)
+            Pin(self.relay_pin, Pin.OUT, value=0)
         except Exception as error:
             return self._abort_sleep("relay line could not be pinned: %s" % error, None)
         try:
-            self._machine.Pin(_POWER_HOLD_PIN, self._machine.Pin.OUT,
-                              value=1, hold=True)
-            self._esp32.gpio_deep_sleep_hold(True)
+            knob = Pin(_KNOB_PIN, Pin.IN, Pin.PULL_UP)
         except Exception as error:
-            # Sleeping on the battery would cut the power for good.
-            return self._abort_sleep("power latch could not be held: %s" % error, None)
+            # Without the knob nothing could bring a USB-powered board back.
+            return self._abort_sleep("knob could not be read: %s" % error, None)
 
-        previous_brightness = None
         if self._display is not None:
-            try:
-                previous_brightness = self._display.getBrightness()
-            except Exception:
-                previous_brightness = None
             try:
                 self._display.setBrightness(0)
             except Exception as error:
                 self._logger("Standby could not dim the display: %s" % error)
 
         try:
-            self._esp32.wake_on_ext0(
-                pin=self._machine.Pin(_TOUCH_INT_PIN, self._machine.Pin.IN),
-                level=self._esp32.WAKEUP_ALL_LOW,
-            )
+            Pin(_POWER_HOLD_PIN, Pin.OUT, value=0)
         except Exception as error:
-            # Sleeping with no wake source would need a physical power cycle.
-            return self._abort_sleep("wake source could not be armed: %s" % error,
-                                     previous_brightness)
+            self._logger("Standby could not release the power latch: %s" % error)
 
-        self._machine.deepsleep()
+        # Still running: the supply is external, so wait in the dark.
+        self._wait_for_knob_press(knob)
+        self._machine.reset()
         return True
 
 
@@ -246,8 +250,8 @@ def _configured_relay_pin(config_module):
         return _DEFAULT_RELAY_IO[1]
 
 
-def configure(config_module, machine_module=None, esp32_module=None,
-              time_module=None, display=None, logger=None):
+def configure(config_module, machine_module=None, time_module=None,
+              display=None, watchdog_feed=None, logger=None):
     """Configure the optional idle standby. Returns an inert manager when off."""
     log = logger or print
     timeout_ms = _configured_timeout_ms(config_module, log)
@@ -257,12 +261,6 @@ def configure(config_module, machine_module=None, esp32_module=None,
     if machine_module is None:
         try:
             import machine as machine_module
-        except Exception as error:
-            log("Standby unavailable: %s" % error)
-            return StandbyManager(None, logger=log)
-    if esp32_module is None:
-        try:
-            import esp32 as esp32_module
         except Exception as error:
             log("Standby unavailable: %s" % error)
             return StandbyManager(None, logger=log)
@@ -278,15 +276,21 @@ def configure(config_module, machine_module=None, esp32_module=None,
             display = M5.Display
         except Exception:
             display = None
+    if watchdog_feed is None:
+        try:
+            import runtime_watchdog
+            watchdog_feed = runtime_watchdog.feed
+        except Exception:
+            watchdog_feed = None
 
     manager = StandbyManager(
         timeout_ms,
         weight_tolerance_g=_configured_weight_tolerance(config_module),
         relay_pin=_configured_relay_pin(config_module),
         machine_module=machine_module,
-        esp32_module=esp32_module,
         time_module=time_module,
         display=display,
+        watchdog_feed=watchdog_feed,
         logger=log,
     )
     manager.note_activity()
