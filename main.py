@@ -173,6 +173,12 @@ def main():
 
     M5.begin()
     runtime_debug.snapshot("boot.after_m5_begin", collect=True)
+    # Temporary: holding the button at power-on runs the display test, which
+    # needs the panel before LVGL owns it and restarts the device when done.
+    import display_diag
+
+    if display_diag.requested(M5):
+        display_diag.run(M5)
     m5ui.init()
     runtime_debug.snapshot("boot.after_m5ui_init", collect=True)
     Speaker.begin()
