@@ -77,6 +77,11 @@ def _check():
             runtime_debug.log("[update_notice] skipped: low memory")
             return
         watchdog = _import("runtime_watchdog")
+        # A lookup that stalls past the watchdog would reset the device on
+        # every boot and end on the lockout screen: never try after a reset.
+        if watchdog.reset_count() > 0:
+            runtime_debug.log("[update_notice] skipped: watchdog reset")
+            return
         boot = _import("updater.boot")
         version = _import("updater.version")
         github_release = _import("updater.github_release")

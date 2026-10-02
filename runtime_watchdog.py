@@ -218,3 +218,11 @@ def http_timeout_s():
     if _active is None or not _active.running:
         return None
     return _WATCHDOG_HTTP_TIMEOUT_S
+
+
+def reset_count():
+    """Consecutive watchdog resets recorded for this boot; 0 when unknown."""
+    try:
+        return max(0, int(_active.reset_count))
+    except Exception:
+        return 0
