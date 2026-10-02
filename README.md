@@ -416,7 +416,7 @@ host-side tests are available:
 python -m unittest discover -s tools -p "test_*.py" -v
 ```
 
-The setup portal screenshot used by the Software Installation Guide is
+The setup portal screenshots used by the User Guide, one per tab, are
 generated, not captured by hand:
 
 ```bash
@@ -424,8 +424,9 @@ python tools/render_portal_screenshot.py
 ```
 
 It renders `webportal.portal_html.render_form_html` itself in headless Chrome or
-Edge and overwrites `docs/SoftwareInstallationGuide/img/PortalPage.png`, so the
-image cannot drift from the real form. Rerun it after changing `FIELDS` in
+Edge and overwrites `docs/SoftwareInstallationGuide/img/PortalPage-<tab>.png`, so
+the images cannot drift from the real form. Rerun it after changing `FIELDS`,
+`TABS` or the inline `_CSS` in
 [webportal/portal_html.py](webportal/portal_html.py).
 
 Useful local docs:

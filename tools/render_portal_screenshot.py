@@ -1,16 +1,16 @@
-"""Render the setup portal to a PNG used by the Software Installation Guide.
+"""Render the setup portal tabs to the PNGs used by the user guides.
 
-The screenshot is produced from ``webportal.portal_html.render_form_html`` so it
-cannot drift from the real form: adding a field to ``FIELDS`` and rerunning this
-script is enough to refresh the guide image.
+The screenshots are produced from ``webportal.portal_html.render_form_html`` so
+they cannot drift from the real form: changing ``FIELDS`` or ``TABS`` and
+rerunning this script is enough to refresh the guide images.
 
 Usage (from the repository root):
 
     python tools/render_portal_screenshot.py
 
-It writes ``docs/SoftwareInstallationGuide/img/PortalPage.png``. Rendering needs
-a Chrome or Edge binary; pass ``--browser`` when it lives outside the usual
-install paths.
+It writes one ``docs/SoftwareInstallationGuide/img/PortalPage-<tab>.png`` per
+tab. Rendering needs a Chrome or Edge binary; pass ``--browser`` when it lives
+outside the usual install paths.
 """
 
 import argparse
@@ -23,14 +23,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-OUTPUT = os.path.join(ROOT, "docs", "SoftwareInstallationGuide", "img", "PortalPage.png")
+OUTPUT_DIR = os.path.join(ROOT, "docs", "SoftwareInstallationGuide", "img")
 
-# Viewport of a phone in portrait, which is how the portal is used. 510 is the
-# narrowest width where the backup fieldset still fits: the portal ships no CSS,
-# so that box is laid out at its min-content width and overflows below this.
-WIDTH = 510
-# Taller than the form on purpose; the blank tail is cropped after rendering.
-HEIGHT = 1700
+# Width of a phone in portrait, which is how the portal is used. Headless
+# Chrome on Windows will not lay out a window below about 500 px (it renders
+# wider and crops), so the page is laid out in an iframe of this width and the
+# shot is cropped to it.
+WIDTH = 360
+# Taller than any tab on purpose; the blank tail is cropped after rendering.
+HEIGHT = 1400
+WINDOW_WIDTH = 520
+SCALE = 2
 
 BROWSER_CANDIDATES = (
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
@@ -42,8 +45,8 @@ BROWSER_CANDIDATES = (
     "/usr/bin/chromium-browser",
 )
 
-# Values shown in the screenshot. They are illustrative placeholders, never real
-# credentials: the guide tells the reader to substitute their own.
+# Values shown in the screenshots. They are illustrative placeholders, never
+# real credentials: the guide tells the reader to substitute their own.
 SAMPLE_VALUES = {
     "LANGUAGE": "en",
     "WIFI_SSID": "MyBrewery",
@@ -61,6 +64,12 @@ SAMPLE_VALUES = {
     "UPDATE_CHANNEL": "stable",
 }
 
+# One keg, so the guide shows the keg editor of the Kegs tab.
+SAMPLE_KEGS = [{"name": "Corny 19L", "empty_weight_g": 4200, "max_volume_l": 19}]
+
+# Matches the portal's light background, so the trimmed tail blends in.
+BACKGROUND = "#F4F4F2"
+
 
 def find_browser(explicit=None):
     if explicit:
@@ -74,53 +83,47 @@ def find_browser(explicit=None):
         "no Chrome or Edge binary found; pass --browser with the path to one")
 
 
-def build_page():
-    """Wrap the portal's own HTML in a minimal phone frame."""
+def build_page(tab):
+    """The portal's own page on ``tab``, in its light theme, under a URL bar.
+
+    The dark-theme block is dropped so the image does not follow the theme of
+    the machine that renders it. English, as on a first setup, which is what
+    the guides describe; the Dial always passes its i18n, so the choices read
+    "English" and "Stable" rather than their raw values.
+    """
+    from i18n import I18n
     from webportal.portal_html import render_form_html
 
-    form = render_form_html(SAMPLE_VALUES)
-    body = form[form.index("<body>") + len("<body>"):form.index("</body>")]
-    return PAGE_TEMPLATE % {"body": body}
+    page = render_form_html(SAMPLE_VALUES, kegs=SAMPLE_KEGS, include_kegs=True,
+                            i18n=I18n("en"), tab=tab)
+    dark = page.index("@media(prefers-color-scheme:dark){")
+    page = page[:dark] + page[page.index("}}", dark) + 2:]
+    page = page.replace("content='light dark'", "content='light'")
+    page = page.replace("</style>", URL_BAR_CSS + "</style>", 1)
+    return page.replace("<body>", "<body>" + URL_BAR, 1)
 
 
-PAGE_TEMPLATE = """<!doctype html>
-<html><head><meta charset='utf-8'>
-<style>
-  html, body { margin: 0; padding: 0; background: #ffffff; }
-  .chrome {
-    display: flex; align-items: center; gap: 10px;
-    background: #202124; color: #e8eaed;
-    padding: 10px 14px; font: 15px/1.2 system-ui, sans-serif;
-  }
-  .chrome .url {
-    flex: 1; background: #303134; border-radius: 999px;
-    padding: 7px 14px; color: #bdc1c6;
-  }
-  .page { padding: 12px 16px 28px; }
-</style>
-</head>
-<body>
-  <div class="chrome"><span class="url">192.168.4.1:8080</span></div>
-  <div class="page">%(body)s</div>
-</body></html>
-"""
+URL_BAR_CSS = (
+    ".chrome{display:flex;background:#202124;padding:10px 14px;font:15px/1.2 system-ui,sans-serif}"
+    ".chrome span{flex:1;background:#303134;border-radius:999px;padding:7px 14px;color:#bdc1c6}"
+)
+URL_BAR = "<div class='chrome'><span>192.168.4.1:8080</span></div>"
+
+FRAME_PAGE = (
+    "<!doctype html><html><body style='margin:0;background:%(bg)s'>"
+    "<iframe src='%(src)s' style='display:block;border:0;width:%(w)dpx;height:%(h)dpx'></iframe>"
+    "</body></html>"
+)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--browser", help="path to a Chrome or Edge binary")
-    parser.add_argument("--output", default=OUTPUT, help="PNG to write")
-    parser.add_argument("--width", type=int, default=WIDTH,
-                        help="viewport width in CSS pixels (default %d)" % WIDTH)
-    args = parser.parse_args()
-
-    browser = find_browser(args.browser)
-    page = build_page()
-
-    tmp_dir = tempfile.mkdtemp(prefix="uhs-portal-shot-")
-    html_path = os.path.join(tmp_dir, "portal.html")
-    with open(html_path, "w", encoding="utf-8") as handle:
-        handle.write(page)
+def render_tab(browser, tab, output, tmp_dir):
+    page_path = os.path.join(tmp_dir, "portal-%s.html" % tab)
+    with open(page_path, "w", encoding="utf-8") as handle:
+        handle.write(build_page(tab))
+    frame_path = os.path.join(tmp_dir, "frame-%s.html" % tab)
+    with open(frame_path, "w", encoding="utf-8") as handle:
+        handle.write(FRAME_PAGE % {"bg": BACKGROUND, "src": os.path.basename(page_path),
+                                   "w": WIDTH, "h": HEIGHT})
 
     subprocess.run(
         [
@@ -128,54 +131,71 @@ def main():
             "--headless",
             "--disable-gpu",
             "--hide-scrollbars",
-            "--force-device-scale-factor=2",
-            # The portal form is English-only, so keep browser-supplied widget
+            "--force-device-scale-factor=%d" % SCALE,
+            # The page is rendered in English, so keep browser-supplied widget
             # text (the file picker) English too whatever the host locale is.
             "--lang=en-US",
             "--accept-lang=en-US",
-            "--screenshot=%s" % args.output,
-            "--window-size=%d,%d" % (args.width, HEIGHT),
-            "--user-data-dir=%s" % os.path.join(tmp_dir, "profile"),
-            html_path,
+            # The iframe loads a sibling file:// page.
+            "--allow-file-access-from-files",
+            "--virtual-time-budget=3000",
+            "--screenshot=%s" % output,
+            "--window-size=%d,%d" % (WINDOW_WIDTH, HEIGHT),
+            "--user-data-dir=%s" % os.path.join(tmp_dir, "profile-%s" % tab),
+            frame_path,
         ],
         check=True,
         env=dict(os.environ, LANG="en_US.UTF-8", LANGUAGE="en_US"),
     )
-
-    if not os.path.exists(args.output):
-        raise SystemExit("the browser did not produce %s" % args.output)
-    _trim_trailing_blank(args.output)
-    print("wrote %s" % args.output)
+    if not os.path.exists(output):
+        raise SystemExit("the browser did not produce %s" % output)
+    _crop(output)
 
 
-def _trim_trailing_blank(path, margin=24):
-    """Drop the empty page below the form, so the guide image stays compact.
+def main():
+    from webportal.portal_html import TABS
 
-    The window has to be taller than the form to avoid clipping it, which leaves
-    blank pixels at the bottom. Skipped when Pillow is unavailable.
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--browser", help="path to a Chrome or Edge binary")
+    parser.add_argument("--output-dir", default=OUTPUT_DIR, help="folder of the PNGs")
+    args = parser.parse_args()
+
+    browser = find_browser(args.browser)
+    tmp_dir = tempfile.mkdtemp(prefix="uhs-portal-shot-")
+    for tab in TABS:
+        output = os.path.join(args.output_dir, "PortalPage-%s.png" % tab[0])
+        render_tab(browser, tab[0], output, tmp_dir)
+        print("wrote %s" % output)
+
+
+def _crop(path, margin=24):
+    """Keep the iframe's width and drop the empty page below the last card.
+
+    The window has to be wider and taller than the phone frame, which leaves
+    blank pixels on the right and at the bottom. Skipped when Pillow is
+    unavailable.
     """
     try:
         from PIL import Image
     except ImportError:
-        print("Pillow missing: keeping the full-height screenshot")
+        print("Pillow missing: keeping the full-size screenshot")
         return
 
     image = Image.open(path).convert("RGB")
-    width, height = image.size
+    width = min(image.size[0], WIDTH * SCALE)
+    image = image.crop((0, 0, width, image.size[1]))
     pixels = image.load()
-    background = pixels[width - 1, height - 1]
+    background = pixels[width - 1, image.size[1] - 1]
 
     last_content = 0
-    for y in range(height):
+    for y in range(image.size[1]):
         for x in range(width):
             if pixels[x, y] != background:
                 last_content = y
                 break
 
-    bottom = min(height, last_content + margin)
-    if bottom < height:
-        image.crop((0, 0, width, bottom)).save(path)
-        print("trimmed %d blank pixels" % (height - bottom))
+    bottom = min(image.size[1], last_content + margin)
+    image.crop((0, 0, width, bottom)).save(path)
 
 
 if __name__ == "__main__":

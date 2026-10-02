@@ -214,7 +214,7 @@
             une sixième icône apparaît au bout de l'arc quelques secondes après le démarrage. Sélectionnée, elle
             affiche <strong>UPDATE</strong> avec la version installée et la nouvelle. Appuyez sur le bouton : la question
             <strong>Mettre a jour ?</strong> s'affiche. Choisissez <strong>Oui</strong> pour redémarrer et l'installer,
-            exactement comme avec <strong>UPDATE APP</strong> dans le portail, ou <strong>Non</strong> pour revenir au
+            exactement comme avec <strong>Mettre à jour l'application</strong> dans le portail, ou <strong>Non</strong> pour revenir au
             launcher, où l'icône reste jusqu'au prochain démarrage. L'UHS
             vérifie une fois par démarrage, seulement lorsqu'il est connecté à votre Wi-Fi.
             </p>
@@ -657,15 +657,33 @@
             <li id="portal-fields" class="uhs-step">
               <h3>Renseignez les champs</h3>
               <p>
-                La page du portail est volontairement simple. Renseignez les valeurs ci-dessous, puis vérifiez-les
-                avant de sauvegarder. Lors d'une première configuration, le portail est en anglais : le libellé anglais
-                de chaque champ est indiqué entre parenthèses.
+                La page a quatre onglets. <strong>Général</strong> (General) réunit le Wi-Fi et les réglages de
+                l'appareil, <strong>Brassage</strong> (Brewing) l'accès Brewfather et les tolérances de pesée,
+                <strong>Fûts</strong> (Kegs) les réglages de remplissage et vos fûts, et <strong>Maintenance</strong>
+                les mises à jour et la sauvegarde. Le tableau ci-dessous suit les mêmes onglets. Renseignez les
+                valeurs, puis vérifiez-les avant de sauvegarder : un seul <strong>Enregistrer et redémarrer</strong>
+                enregistre tous les onglets à la fois. Lors d'une première configuration, le portail est en anglais :
+                le libellé anglais de chaque onglet et de chaque champ est indiqué entre parenthèses.
               </p>
 
-              <figure class="uhs-figure uhs-figure--portrait">
-                <img src="../../SoftwareInstallationGuide/img/PortalPage.png" width="1020" height="2223" alt="Navigateur smartphone affichant les champs du portail de configuration Ultimate Homebrewing Scale">
-                <figcaption>Portail de configuration ouvert depuis le QR code en étant connecté à <code>UHS-Setup</code>.</figcaption>
-              </figure>
+              <div class="uhs-figures">
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1589" alt="Onglet General du portail de configuration : cartes Wi-Fi et Device">
+                  <figcaption><strong>Général</strong> : Wi-Fi et appareil.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-brewing.png" width="720" height="1584" alt="Onglet Brewing du portail de configuration : cartes Brewfather et Weighing">
+                  <figcaption><strong>Brassage</strong> : Brewfather et pesée.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-kegs.png" width="720" height="1646" alt="Onglet Kegs du portail de configuration : carte Filling et un fût enregistré avec son bouton Delete rouge">
+                  <figcaption><strong>Fûts</strong> : remplissage et fûts enregistrés.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-maintenance.png" width="720" height="1597" alt="Onglet Maintenance du portail de configuration : carte Updates, sauvegarde et restauration">
+                  <figcaption><strong>Maintenance</strong> : mises à jour et sauvegarde.</figcaption>
+                </figure>
+              </div>
 
               <div class="uhs-table-wrap">
                 <table class="uhs-table">
@@ -677,6 +695,9 @@
                   </thead>
                   <tbody>
                     <tr>
+                      <th colspan="2" scope="rowgroup">Général (General)</th>
+                    </tr>
+                    <tr>
                       <td>Langue (Language)</td>
                       <td>Choisissez <code>Anglais</code> ou <code>Français</code> pour l'interface de l'UHS et du portail.</td>
                     </tr>
@@ -687,6 +708,25 @@
                     <tr>
                       <td>Mot de passe Wi-Fi (Wi-Fi password)</td>
                       <td>Saisissez le mot de passe de ce réseau Wi-Fi.</td>
+                    </tr>
+                    <tr>
+                      <td>Veille après (min, 0 = désactivé) (Standby after)</td>
+                      <td>
+                        Minutes sans activité avant la mise en veille de l'UHS (voir <a href="#standby">Mise en veille et réveil</a>).
+                        <strong>Saisissez <code>30</code></strong> : c'est la valeur recommandée sur secteur et une
+                        nécessité sur batterie. <code>0</code> désactive la veille.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Alimentation sur batterie (Battery powered)</td>
+                      <td>Activez cet interrupteur <strong>uniquement si une batterie est installée</strong> dans l'UHS. Laissez-le désactivé sur secteur.</td>
+                    </tr>
+                    <tr>
+                      <td>Mode debug (Debug mode)</td>
+                      <td>Laissez-le désactivé. Il ne sert que pour signaler un problème.</td>
+                    </tr>
+                    <tr>
+                      <th colspan="2" scope="rowgroup">Brassage (Brewing)</th>
                     </tr>
                     <tr>
                       <td>Logiciel de brassage (Brewing software)</td>
@@ -709,6 +749,9 @@
                       <td>La même chose pour les houblons. Par défaut <code>1</code>.</td>
                     </tr>
                     <tr>
+                      <th colspan="2" scope="rowgroup">Fûts (Kegs)</th>
+                    </tr>
+                    <tr>
                       <td>Inertie spunding valve (ml) (Spunding valve inertia)</td>
                       <td>
                         La marge avant le volume réglé à laquelle le remplisseur ferme la vanne, pour laisser la place à
@@ -726,20 +769,7 @@
                       </td>
                     </tr>
                     <tr>
-                      <td>Veille après (min, 0 = désactivé) (Standby after)</td>
-                      <td>
-                        Minutes sans activité avant la mise en veille de l'UHS (voir <a href="#standby">Mise en veille et réveil</a>).
-                        <strong>Saisissez <code>30</code></strong> : c'est la valeur recommandée sur secteur et une
-                        nécessité sur batterie. <code>0</code> désactive la veille.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Alimentation sur batterie (Battery powered)</td>
-                      <td>Cochez cette case <strong>uniquement si une batterie est installée</strong> dans l'UHS. Laissez-la décochée sur secteur.</td>
-                    </tr>
-                    <tr>
-                      <td>Mode debug (Debug mode)</td>
-                      <td>Laissez décoché. Il ne sert que pour signaler un problème.</td>
+                      <th colspan="2" scope="rowgroup">Maintenance</th>
                     </tr>
                     <tr>
                       <td>Canal de mise à jour (Release channel)</td>
@@ -760,24 +790,26 @@
             <li class="uhs-step">
               <h3>Enregistrez et redémarrez</h3>
               <p>
-                Appuyez sur <strong>Enregistrer et redémarrer</strong> (Save and reboot). L'UHS enregistre
-                les identifiants Wi-Fi et les réglages, puis redémarre seul. Si une valeur est refusée, la page affiche
-                <strong>Champs invalides</strong> et rien n'est enregistré.
+                Appuyez sur <strong>Enregistrer et redémarrer</strong> (Save and reboot) : le bouton reste en bas de
+                l'écran, dans chaque onglet. L'UHS enregistre les identifiants Wi-Fi et les
+                réglages, puis redémarre seul. Si une valeur est refusée, la page affiche <strong>Champs invalides</strong>
+                en haut et rien n'est enregistré.
               </p>
             </li>
           </ol>
 
           <h3 class="uhs-subhead">Fûts</h3>
           <p>
-            Chaque fût enregistré depuis l'app <a href="#keg">Fût</a> apparaît sous <strong>Kegs</strong>, avec son
-            <strong>Nom du keg</strong>, son <strong>Poids vide</strong> en grammes et son <strong>Volume max</strong> en
-            litres. Modifiez-les, puis appuyez sur <strong>Enregistrer et redémarrer</strong>. Le bouton
-            <strong>Supprimer</strong> à côté d'un fût le retire immédiatement, sans redémarrer l'UHS.
+            Chaque fût enregistré depuis l'app <a href="#keg">Fût</a> apparaît dans l'onglet <strong>Fûts</strong>,
+            sous les réglages de <strong>Remplissage</strong>, avec son <strong>Nom du keg</strong>, son <strong>Poids vide (g)</strong>
+            et son <strong>Volume max (L)</strong>. Modifiez-les, puis appuyez sur <strong>Enregistrer et redémarrer</strong>.
+            Le bouton rouge <strong>Supprimer</strong> sous un fût, suivi de son nom, le retire immédiatement, sans
+            redémarrer l'UHS, et la page se rouvre sur l'onglet <strong>Fûts</strong>.
           </p>
 
           <h3 class="uhs-subhead">Sauvegarder et restaurer</h3>
           <p>
-            <strong>Sauvegarder</strong> télécharge <code>uhs-backup.txt</code>, un fichier texte qui contient les
+            Dans l'onglet <strong>Maintenance</strong>, <strong>Sauvegarder</strong> télécharge <code>uhs-backup.txt</code>, un fichier texte qui contient les
             réglages, les identifiants Wi-Fi, les fûts et la calibration de la balance. Pour les remettre en place,
             par exemple après une réinstallation de l'application, choisissez ce fichier sous <strong>Fichier de sauvegarde</strong>
             et appuyez sur <strong>Restaurer</strong> : l'UHS l'écrit et redémarre.
@@ -789,7 +821,8 @@
 
           <h3 class="uhs-subhead">Mettre à jour l'application</h3>
           <p>
-            <strong>UPDATE APP</strong> redémarre l'UHS, qui télécharge et installe la dernière version du
+            <strong>Mettre à jour l'application</strong> (Update the app), dans l'onglet <strong>Maintenance</strong>,
+            redémarre l'UHS, qui télécharge et installe la dernière version du
             <strong>Canal de mise à jour</strong> choisi, puis affiche
             <strong>Installation terminée, OK pour redémarrer</strong> : appuyez sur le bouton. L'UHS ne se met jamais
             en veille pendant une mise à jour ; ne le débranchez pas non plus.
