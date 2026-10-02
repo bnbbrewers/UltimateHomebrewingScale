@@ -31,6 +31,7 @@ SETTINGS = "settings_app"
 CALIBRATION_WIZARD = "scale_calibration_wizard_app"
 UPDATER = "updater_app"
 WIFI_PROBLEM = "wifi_problem_app"
+UPDATE_PROMPT = "update_prompt_app"
 
 DEFAULT_COLOR = 0x333333
 
@@ -118,6 +119,16 @@ APPS = {
         # The transition names the problem itself rather than "Loading ...".
         "loading_i18n": "wifi_problem.title",
         "loading_label": "Wi-Fi problem",
+    },
+    UPDATE_PROMPT: {
+        "module": "apps.update_prompt_app",
+        "cls": "UpdatePromptApp",
+        "label": "Update?",
+        "i18n": "update_prompt.title",
+        "color": 0xD32F2F,
+        # The transition asks the question itself rather than "Loading ...".
+        "loading_i18n": "update_prompt.title",
+        "loading_label": "Update?",
     },
 }
 
