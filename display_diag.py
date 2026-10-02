@@ -1,30 +1,22 @@
 """
 Temporary display diagnostic, started by holding the button at power-on.
 
-Some screens show header-coloured pixels along the bottom edge. The steps
-below tell a panel/driver fault (the top rows wrap to the bottom even without
-LVGL) from an LVGL rendering one. Each step lasts STEP_MS; the operator notes
-what the bottom edge shows. The device restarts when the test ends.
+Screens with a header show header-coloured pixels along the bottom edge.
+The panel and a plain LVGL header were cleared by the first round, and the
+same screens render clean bottom rows in a desktop LVGL build, so each step
+below adds one ingredient of the real screens -- the title label, a header
+redrawn after display, the hop list configured before or after display.
+Each step is announced on a black page, then shown for STEP_MS while the
+operator notes the bottom edge. The device restarts when the test ends.
 """
 
 import time
 
 CONFIRM_MS = 2000
-STEP_MS = 12000
+STEP_MS = 10000
 
 _BLACK = 0x000000
 _WHITE = 0xFFFFFF
-_RED = 0xFF0000
-
-# 4-px stripes on rows 0-19, then a block down to row 49 like a header.
-_STRIPES = (
-    (0, 4, 0xFF0000),
-    (4, 4, 0x00FF00),
-    (8, 4, 0x0000FF),
-    (12, 4, 0xFFFFFF),
-    (16, 4, 0xFFFF00),
-    (20, 30, 0xFF00FF),
-)
 
 
 def _pump(m5, ms):
@@ -65,19 +57,20 @@ def requested(m5):
     return True
 
 
-def _lvgl_page(m5ui, lv, header_y, lines):
+_GREEN = 0x4CAF50
+_BLUE = 0x1976D2
+_TITLE = "Selectionner un houblon"
+_ITEMS = ["Columbus", "Citra", "Mosaic", "Saaz"]
+INTRO_MS = 4000
+
+
+def _intro(m5, m5ui, lv, number, lines):
+    """Black page naming the next step: it has no header, so no band."""
     page = m5ui.M5Page(bg_c=_BLACK)
-    header = lv.obj(page)
-    header.set_size(240, 50)
-    header.set_pos(0, header_y)
-    header.set_style_bg_color(lv.color_hex(_RED), 0)
-    header.set_style_bg_opa(255, 0)
-    header.set_style_border_width(0, 0)
-    header.set_style_radius(0, 0)
     label = m5ui.M5Label(
-        "\n".join(lines),
+        "\n".join(("Step {}/{}".format(number, _STEP_COUNT),) + lines),
         x=0,
-        y=110,
+        y=80,
         text_c=_WHITE,
         bg_c=_BLACK,
         bg_opa=0,
@@ -86,37 +79,87 @@ def _lvgl_page(m5ui, lv, header_y, lines):
     )
     label.set_width(240)
     label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
-    return page
+    _show(page)
+    _pump(m5, INTRO_MS)
+
+
+_current = [None]
+
+
+def _show(page):
+    previous = _current[0]
+    page.screen_load()
+    _current[0] = page
+    if previous is not None:
+        previous.delete()
+
+
+def _step_title_static(m5, m5ui, lv, UIHelper):
+    page = m5ui.M5Page(bg_c=_BLACK)
+    UIHelper.create_title(page, _TITLE, _GREEN)
+    _show(page)
+    _pump(m5, STEP_MS)
+
+
+def _step_title_text_after_load(m5, m5ui, lv, UIHelper):
+    page = m5ui.M5Page(bg_c=_BLACK)
+    _, label = UIHelper.create_title(page, "", _GREEN)
+    _show(page)
+    _pump(m5, 1000)
+    UIHelper.set_title(label, _TITLE)
+    _pump(m5, STEP_MS)
+
+
+def _step_header_recolour_after_load(m5, m5ui, lv, UIHelper):
+    page = m5ui.M5Page(bg_c=_BLACK)
+    bar, _ = UIHelper.create_title(page, "", _BLUE)
+    _show(page)
+    _pump(m5, 1000)
+    UIHelper.set_title_color(bar, _GREEN)
+    _pump(m5, STEP_MS)
+
+
+def _step_select_configured_before_load(m5, m5ui, lv, UIHelper):
+    from ui.select_item_screen import SelectItemScreen
+
+    screen = SelectItemScreen()
+    screen.configure(_TITLE, _ITEMS, _GREEN)
+    _show(screen.root())
+    _pump(m5, STEP_MS)
+
+
+def _step_select_configured_after_load(m5, m5ui, lv, UIHelper):
+    from ui.select_item_screen import SelectItemScreen
+
+    screen = SelectItemScreen()
+    _show(screen.root())
+    _pump(m5, 1000)
+    screen.configure(_TITLE, _ITEMS, _GREEN)
+    _pump(m5, STEP_MS)
+
+
+# (step, description shown before it)
+_STEPS = (
+    (_step_title_static, ("header + title", "drawn once")),
+    (_step_title_text_after_load, ("header, title text", "set after display")),
+    (_step_header_recolour_after_load, ("header recoloured", "after display")),
+    (_step_select_configured_before_load, ("hop list", "configured first")),
+    (_step_select_configured_after_load, ("hop list", "configured after")),
+)
+_STEP_COUNT = len(_STEPS)
 
 
 def run(m5):
     """Run every step, then restart. Call after M5.begin(), before m5ui.init()."""
-    lcd = m5.Lcd
-
-    print("[DISPLAY_DIAG] step 1: M5GFX stripes on rows 0-49")
-    lcd.fillScreen(_BLACK)
-    for y, h, color in _STRIPES:
-        lcd.fillRect(0, y, 240, h, color)
-    _lcd_text(m5, ("1/4  no LVGL", "stripes on top", "bottom?"))
-    _pump(m5, STEP_MS)
-
-    print("[DISPLAY_DIAG] step 2: M5GFX, top rows black")
-    lcd.fillScreen(_BLACK)
-    _lcd_text(m5, ("2/4  no LVGL", "top rows black", "bottom?"))
-    _pump(m5, STEP_MS)
-
     import lvgl as lv
     import m5ui
+    from ui.ui_helper import UIHelper
 
     m5ui.init()
-
-    print("[DISPLAY_DIAG] step 3: LVGL red header on rows 0-49")
-    _lvgl_page(m5ui, lv, 0, ("3/4  LVGL", "header rows 0-49", "bottom?")).screen_load()
-    _pump(m5, STEP_MS)
-
-    print("[DISPLAY_DIAG] step 4: LVGL red header on rows 20-69")
-    _lvgl_page(m5ui, lv, 20, ("4/4  LVGL", "header rows 20-69", "bottom?")).screen_load()
-    _pump(m5, STEP_MS)
+    for number, (step, lines) in enumerate(_STEPS, 1):
+        print("[DISPLAY_DIAG] step {}: {}".format(number, " ".join(lines)))
+        _intro(m5, m5ui, lv, number, lines)
+        step(m5, m5ui, lv, UIHelper)
 
     print("[DISPLAY_DIAG] done, restarting")
     import machine
