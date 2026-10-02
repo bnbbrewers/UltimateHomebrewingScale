@@ -143,6 +143,13 @@ TRANSLATIONS = {
         'hop': 'Hop',
         'keg': 'Keg',
         'settings': 'Settings',
+        'update': 'UPDATE',
+    },
+
+    'update_prompt': {
+        'title': 'Update?',
+        'yes': 'Yes',
+        'no': 'No',
     },
 
     'portal': {

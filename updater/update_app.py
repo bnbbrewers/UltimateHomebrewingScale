@@ -9,6 +9,7 @@ initial app by firmware/startup code when an update has been requested.
 from apps.base_app import BaseApp
 import runtime_debug
 from ui import screen_ids
+from updater.boot import configured_channel as boot_channel
 
 _DEBUG = runtime_debug.DEBUG
 
@@ -64,7 +65,7 @@ class UpdaterApp(BaseApp):
             _mem_snapshot("updater_app.after_import_runner")
 
             result = update(
-                channel=self._update_channel(),
+                channel=boot_channel(),
                 progress_callback=self._on_progress,
                 wifi_device=self.hardware.wifi,
                 ensure_wifi=False,
@@ -114,18 +115,6 @@ class UpdaterApp(BaseApp):
             message = "{}\n{}".format(message, detail)
         self._screen.set_message(message)
         self._flush_lvgl()
-
-    def _update_channel(self):
-        try:
-            import config
-
-            value = getattr(config, "UPDATE_CHANNEL", "stable")
-        except Exception:
-            value = "stable"
-        value = str(value or "stable").strip().lower()
-        if value != "prerelease":
-            return "stable"
-        return "prerelease"
 
     def _text(self, key, fallback):
         if self.i18n:

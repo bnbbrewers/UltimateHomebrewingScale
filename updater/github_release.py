@@ -7,7 +7,10 @@ GITHUB_API_BASE = "https://api.github.com"
 MANIFEST_ASSET_NAME = "uhs-update-manifest.json"
 GITHUB_JSON_TMP_PATH = "updater_github.tmp"
 MANIFEST_JSON_TMP_PATH = "updater_manifest.tmp"
-PRERELEASE_SCAN_PAGES = 10
+# The newest published release sits on page 1; later pages only cover a
+# release still waiting for its manifest. Each page is a TLS handshake.
+PRERELEASE_SCAN_PAGES = 3
+BODY_PREVIEW_BYTES = 512
 
 
 def _t(i18n, key, fallback):
@@ -64,6 +67,28 @@ def print_exception(e):
             pass
 
 
+def _body_preview(response, limit=BODY_PREVIEW_BYTES):
+    """At most `limit` bytes of a response body, for the console.
+
+    `.text` would read an HTML error page whole and decode a second copy,
+    enough to force a heap growth on the Dial; a streamed body is read from
+    `.raw` up to the limit instead.
+    """
+    raw = getattr(response, "raw", None)
+    if raw is not None and hasattr(raw, "read"):
+        try:
+            chunk = raw.read(limit)
+        except Exception:
+            return ""
+        if not chunk:
+            return ""
+        try:
+            return chunk.decode("utf-8")
+        except Exception:
+            return str(chunk)
+    return http_client.response_text(response)[:limit]
+
+
 def log_github_api_failure(url, attempt, retries, use_headers, err=None, response=None):
     try:
         status = None
@@ -81,7 +106,7 @@ def log_github_api_failure(url, attempt, retries, use_headers, err=None, respons
             )
         )
         if response is not None:
-            body = http_client.response_text(response)
+            body = _body_preview(response)
             if body:
                 if len(body) > 300:
                     body = body[:300] + "..."
@@ -105,10 +130,11 @@ def is_rate_limited(response):
                 return True
         except Exception:
             pass
-    return "rate limit" in http_client.response_text(response).lower()
+    return "rate limit" in _body_preview(response).lower()
 
 
-def github_api_get_json(url, requests_module, retries=4, i18n=None):
+def github_api_get_json(url, requests_module, retries=4, i18n=None, timeout_s=None,
+                        before_request=None):
     headers = {
         "User-Agent": "UHS-M5Dial-Updater",
         "Accept": "application/vnd.github+json",
@@ -119,7 +145,15 @@ def github_api_get_json(url, requests_module, retries=4, i18n=None):
         r = None
         try:
             http_client.gc_hard(cycles=2, pause_ms=20)
-            r = http_client.get(requests_module, url, headers=headers, stream=True)
+            if before_request is not None:
+                before_request()
+            r = http_client.get(
+                requests_module,
+                url,
+                headers=headers,
+                stream=True,
+                timeout_s=timeout_s or http_client.REQUEST_TIMEOUT_S,
+            )
             status = getattr(r, "status_code", None)
             if status is None:
                 status = getattr(r, "status", None)
@@ -159,14 +193,24 @@ def github_api_get_json(url, requests_module, retries=4, i18n=None):
     raise RuntimeError("GitHub API request failed: %s err=%r" % (url, last_err))
 
 
-def resolve_release(channel="stable", requests_module=None, i18n=None):
+def resolve_release(channel="stable", requests_module=None, i18n=None,
+                    retries=4, timeout_s=None, before_request=None):
+    """The release the channel installs.
+
+    stable: the latest stable release. prerelease: the latest published
+    release, stable or not -- a prerelease promoted to stable is still the
+    newest version, and skipping it would resolve an older prerelease.
+    """
     requests_module = requests_module or http_client.default_requests_module()
     if requests_module is None:
         raise RuntimeError("Missing requests2 module")
 
     normalized = str(channel or "stable").strip().lower()
     if normalized != "prerelease":
-        release = github_api_get_json(latest_release_url(), requests_module, i18n=i18n)
+        release = github_api_get_json(
+            latest_release_url(), requests_module, retries=retries, i18n=i18n,
+            timeout_s=timeout_s, before_request=before_request,
+        )
         manifest_url = asset_download_url(release)
         if manifest_url:
             info = release_info(release, manifest_url)
@@ -179,14 +223,14 @@ def resolve_release(channel="stable", requests_module=None, i18n=None):
     # list outgrows the 64 KiB spool budget after a handful of releases.
     for page in range(1, PRERELEASE_SCAN_PAGES + 1):
         releases = github_api_get_json(
-            releases_url(page=page, per_page=1), requests_module, i18n=i18n
+            releases_url(page=page, per_page=1), requests_module,
+            retries=retries, i18n=i18n, timeout_s=timeout_s,
+            before_request=before_request,
         )
         if not releases:
             break
         for release in releases:
             if release.get("draft"):
-                continue
-            if not release.get("prerelease"):
                 continue
             manifest_url = asset_download_url(release)
             if manifest_url:
