@@ -154,6 +154,21 @@ TRANSLATIONS = {
 
     'portal': {
         'title': 'Ultimate Homebrewing Scale setup',
+        'subtitle': 'Setup',
+        'tabs': {
+            'general': 'General',
+            'brewing': 'Brewing',
+            'kegs': 'Kegs',
+            'maintenance': 'Maintenance',
+        },
+        'sections': {
+            'wifi': 'Wi-Fi',
+            'device': 'Device',
+            'brewfather': 'Brewfather',
+            'weighing': 'Weighing',
+            'filling': 'Filling',
+            'updates': 'Updates',
+        },
         'ap': 'AP',
         'saved': 'Saved',
         'invalid_fields': 'Invalid fields',
@@ -168,7 +183,8 @@ TRANSLATIONS = {
         'keg_save_error': 'Keg save error',
         'saved_rebooting': 'Saved. Rebooting...',
         'saved_manual_reboot': 'Saved. Please reboot manually.',
-        'update_app': 'UPDATE APP',
+        'update_app': 'Update the app',
+        'channel_hint': 'Changed the channel? Save and reboot first, then update.',
         'update_rebooting': 'Update requested. Rebooting...',
         'update_request_failed': 'Update request failed: {0}',
         'backup_title': 'Configuration backup and restore',
