@@ -84,7 +84,8 @@ def _check():
         watchdog.feed()
         try:
             release = github_release.resolve_release(
-                boot.configured_channel(), retries=1, timeout_s=timeout_s
+                boot.configured_channel(), retries=1, timeout_s=timeout_s,
+                before_request=watchdog.feed,
             )
         finally:
             watchdog.feed()

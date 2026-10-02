@@ -133,7 +133,8 @@ def is_rate_limited(response):
     return "rate limit" in _body_preview(response).lower()
 
 
-def github_api_get_json(url, requests_module, retries=4, i18n=None, timeout_s=None):
+def github_api_get_json(url, requests_module, retries=4, i18n=None, timeout_s=None,
+                        before_request=None):
     headers = {
         "User-Agent": "UHS-M5Dial-Updater",
         "Accept": "application/vnd.github+json",
@@ -144,6 +145,8 @@ def github_api_get_json(url, requests_module, retries=4, i18n=None, timeout_s=No
         r = None
         try:
             http_client.gc_hard(cycles=2, pause_ms=20)
+            if before_request is not None:
+                before_request()
             r = http_client.get(
                 requests_module,
                 url,
@@ -191,7 +194,7 @@ def github_api_get_json(url, requests_module, retries=4, i18n=None, timeout_s=No
 
 
 def resolve_release(channel="stable", requests_module=None, i18n=None,
-                    retries=4, timeout_s=None):
+                    retries=4, timeout_s=None, before_request=None):
     """The release the channel installs.
 
     stable: the latest stable release. prerelease: the latest published
@@ -206,7 +209,7 @@ def resolve_release(channel="stable", requests_module=None, i18n=None,
     if normalized != "prerelease":
         release = github_api_get_json(
             latest_release_url(), requests_module, retries=retries, i18n=i18n,
-            timeout_s=timeout_s,
+            timeout_s=timeout_s, before_request=before_request,
         )
         manifest_url = asset_download_url(release)
         if manifest_url:
@@ -222,6 +225,7 @@ def resolve_release(channel="stable", requests_module=None, i18n=None,
         releases = github_api_get_json(
             releases_url(page=page, per_page=1), requests_module,
             retries=retries, i18n=i18n, timeout_s=timeout_s,
+            before_request=before_request,
         )
         if not releases:
             break
