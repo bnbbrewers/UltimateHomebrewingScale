@@ -2,9 +2,7 @@ import gc
 import os
 
 from . import http_client
-
-
-VERSION_FILE = "uhs-version.txt"
+from .version import VERSION_FILE
 ARCHIVE_TMP = "uhs-update.tar.tmp"
 ARCHIVE_PATH = "uhs-update.tar"
 
