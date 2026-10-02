@@ -27,6 +27,10 @@ MIN_C_LARGEST = 12 * 1024
 FALLBACK_TIMEOUT_S = 10
 
 # Imported for the lookup only; dropped again unless they were already loaded.
+# Modules loaded before the check (e.g. netcore.http_transport, which the
+# Brewfather pre-warm loads and which caches requests2) are never evicted, so
+# in a normal session this mostly frees updater.github_release,
+# updater.http_client and memory_debug.
 _EVICTABLE = (
     "updater.github_release",
     "updater.http_client",
