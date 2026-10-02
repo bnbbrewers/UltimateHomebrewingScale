@@ -24,7 +24,13 @@ MIN_C_LARGEST = 12 * 1024
 FALLBACK_TIMEOUT_S = 10
 
 # Imported for the lookup only; dropped again unless they were already loaded.
-_EVICTABLE = ("updater.github_release", "updater.http_client", "memory_debug")
+_EVICTABLE = (
+    "updater.github_release",
+    "updater.http_client",
+    "netcore.http_transport",
+    "requests2",
+    "memory_debug",
+)
 
 _done = False
 _available = None
@@ -104,13 +110,13 @@ def _memory_ok():
 
 
 def _evict(before):
-    package = sys.modules.get("updater")
     for name in _EVICTABLE:
         if name in before or name not in sys.modules:
             continue
         del sys.modules[name]
         parent, _, attr = name.rpartition(".")
-        if parent == "updater" and package is not None:
+        package = sys.modules.get(parent) if parent else None
+        if package is not None:
             try:
                 delattr(package, attr)
             except Exception:
