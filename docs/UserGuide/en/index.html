@@ -211,7 +211,7 @@
             When a newer version of the application is published on your <strong>Release channel</strong>, a sixth
             icon appears at the end of the arc a few seconds after start-up. Selected, it reads
             <strong>UPDATE</strong> with the installed version and the new one. Press the button: the prompt <strong>Update?</strong> appears. Choose
-            <strong>Yes</strong> to restart and install it, exactly as with <strong>UPDATE APP</strong> in the
+            <strong>Yes</strong> to restart and install it, exactly as with <strong>Update the app</strong> in the
             portal, or <strong>No</strong> to go back to the launcher, where the icon stays until the next start-up.
             UHS checks once per start-up, only when it is
             connected to your Wi-Fi.
@@ -649,13 +649,31 @@
             <li id="portal-fields" class="uhs-step">
               <h3>Fill in the fields</h3>
               <p>
-                The portal page is intentionally simple. Enter the values below, then review them before saving.
+                The page has four tabs. <strong>General</strong> holds the Wi-Fi and the device settings,
+                <strong>Brewing</strong> the Brewfather access and the weighing tolerances, <strong>Kegs</strong> the
+                filling settings and your kegs, and <strong>Maintenance</strong> the updates and the backup. The table
+                below follows the same tabs. Enter the values, then review them before saving: a single
+                <strong>Save and reboot</strong> saves every tab at once.
               </p>
 
-              <figure class="uhs-figure uhs-figure--portrait">
-                <img src="../../SoftwareInstallationGuide/img/PortalPage.png" width="1020" height="2223" alt="Smartphone browser showing the Ultimate Homebrewing Scale setup portal fields">
-                <figcaption>Setup portal opened from the QR code while connected to <code>UHS-Setup</code>.</figcaption>
-              </figure>
+              <div class="uhs-figures">
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1589" alt="General tab of the setup portal: Wi-Fi and Device cards">
+                  <figcaption><strong>General</strong>: Wi-Fi and device.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-brewing.png" width="720" height="1584" alt="Brewing tab of the setup portal: Brewfather and Weighing cards">
+                  <figcaption><strong>Brewing</strong>: Brewfather and weighing.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-kegs.png" width="720" height="1646" alt="Kegs tab of the setup portal: Filling card and one saved keg with its red Delete button">
+                  <figcaption><strong>Kegs</strong>: filling and saved kegs.</figcaption>
+                </figure>
+                <figure class="uhs-figure">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-maintenance.png" width="720" height="1597" alt="Maintenance tab of the setup portal: Updates card and backup and restore">
+                  <figcaption><strong>Maintenance</strong>: updates and backup.</figcaption>
+                </figure>
+              </div>
 
               <div class="uhs-table-wrap">
                 <table class="uhs-table">
@@ -667,6 +685,9 @@
                   </thead>
                   <tbody>
                     <tr>
+                      <th colspan="2" scope="rowgroup">General</th>
+                    </tr>
+                    <tr>
                       <td>Language</td>
                       <td>Choose <code>English</code> or <code>French</code> for the interface of UHS and of the portal.</td>
                     </tr>
@@ -677,6 +698,25 @@
                     <tr>
                       <td>Wi-Fi password</td>
                       <td>Enter the password for that Wi-Fi network.</td>
+                    </tr>
+                    <tr>
+                      <td>Standby after (min, 0 = off)</td>
+                      <td>
+                        Minutes without activity before UHS switches off (see <a href="#standby">Standby and Wake-up</a>).
+                        <strong>Enter <code>30</code></strong>: it is the recommended value on mains and a requirement on
+                        battery. <code>0</code> disables standby.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Battery powered</td>
+                      <td>Turn this switch on <strong>only if a battery is fitted</strong> inside UHS. Leave it off on mains.</td>
+                    </tr>
+                    <tr>
+                      <td>Debug mode</td>
+                      <td>Leave it off. It is only useful when reporting a problem.</td>
+                    </tr>
+                    <tr>
+                      <th colspan="2" scope="rowgroup">Brewing</th>
                     </tr>
                     <tr>
                       <td>Brewing software</td>
@@ -699,6 +739,9 @@
                       <td>The same for hops. Default <code>1</code>.</td>
                     </tr>
                     <tr>
+                      <th colspan="2" scope="rowgroup">Kegs</th>
+                    </tr>
+                    <tr>
                       <td>Spunding valve inertia (ml)</td>
                       <td>
                         How far before the set volume the keg filler closes the valve, to leave room for the beer still
@@ -716,20 +759,7 @@
                       </td>
                     </tr>
                     <tr>
-                      <td>Standby after (min, 0 = off)</td>
-                      <td>
-                        Minutes without activity before UHS switches off (see <a href="#standby">Standby and Wake-up</a>).
-                        <strong>Enter <code>30</code></strong>: it is the recommended value on mains and a requirement on
-                        battery. <code>0</code> disables standby.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Battery powered</td>
-                      <td>Tick this box <strong>only if a battery is fitted</strong> inside UHS. Leave it unticked on mains.</td>
-                    </tr>
-                    <tr>
-                      <td>Debug mode</td>
-                      <td>Leave it unticked. It is only useful when reporting a problem.</td>
+                      <th colspan="2" scope="rowgroup">Maintenance</th>
                     </tr>
                     <tr>
                       <td>Release channel</td>
@@ -750,23 +780,24 @@
             <li class="uhs-step">
               <h3>Save and reboot</h3>
               <p>
-                Tap <strong>Save and reboot</strong>. UHS saves the Wi-Fi credentials and the settings, then restarts
-                on its own. If a value is refused, the page shows <strong>Invalid fields</strong> and nothing is saved.
+                Tap <strong>Save and reboot</strong>: the button stays at the bottom of the screen, on every tab. UHS saves the Wi-Fi credentials and the settings, then restarts on its own. If a
+                value is refused, the page shows <strong>Invalid fields</strong> at the top and nothing is saved.
               </p>
             </li>
           </ol>
 
           <h3 class="uhs-subhead">Kegs</h3>
           <p>
-            Every keg registered from the <a href="#keg">Keg</a> app is listed under <strong>Kegs</strong>, with its
-            <strong>Keg name</strong>, its <strong>Empty weight</strong> in grams and its <strong>Max volume</strong> in
-            litres. Edit them, then tap <strong>Save and reboot</strong>. The <strong>Delete</strong> button next to a keg
-            removes it at once, without restarting UHS.
+            Every keg registered from the <a href="#keg">Keg</a> app is listed in the <strong>Kegs</strong> tab,
+            below the <strong>Filling</strong> settings, with its <strong>Keg name</strong>, its <strong>Empty weight (g)</strong> and
+            its <strong>Max volume (L)</strong>. Edit them, then tap <strong>Save and reboot</strong>. The
+            red <strong>Delete</strong> button under a keg, followed by its name, removes it at once, without restarting
+            UHS, and the page reopens on the <strong>Kegs</strong> tab.
           </p>
 
           <h3 class="uhs-subhead">Back up and restore</h3>
           <p>
-            <strong>Back up</strong> downloads <code>uhs-backup.txt</code>, a text file holding the settings, the Wi-Fi
+            In the <strong>Maintenance</strong> tab, <strong>Back up</strong> downloads <code>uhs-backup.txt</code>, a text file holding the settings, the Wi-Fi
             credentials, the kegs and the scale calibration. To put them back, for example after reinstalling the application,
             choose that file under <strong>Backup file</strong> and tap <strong>Restore</strong>: UHS writes it and
             restarts.
@@ -778,7 +809,7 @@
 
           <h3 class="uhs-subhead">Update the application</h3>
           <p>
-            <strong>UPDATE APP</strong> restarts UHS, which downloads and installs the latest version of the chosen
+            <strong>Update the app</strong>, in the <strong>Maintenance</strong> tab, restarts UHS, which downloads and installs the latest version of the chosen
             <strong>Release channel</strong>, then shows
             <strong>Installation complete, OK to restart</strong>: press the button. UHS never switches off during an
             update; do not unplug it either.

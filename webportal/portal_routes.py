@@ -6,6 +6,18 @@ allocation required while entering Settings on MicroPython.
 """
 
 
+def _message(service, client, status, key, default, detail=None):
+    """Answer with a one-line page in the portal's look, translated."""
+    import webportal.setup_portal_service as portal
+
+    html = portal._portal_content()
+    text = html._t(service._i18n, "portal." + key, default)
+    if detail is not None:
+        text = text.format(detail)
+    service._send(client, status, "text/html; charset=utf-8",
+                  html.render_message_html(text, i18n=service._i18n, error=status >= 400))
+
+
 def handle_request(service, client, method, target, body):
     # Import lazily: this file must not be loaded while Settings is starting.
     import webportal.setup_portal_service as portal
@@ -76,11 +88,9 @@ def handle_request(service, client, method, target, body):
 
         text = multipart.field_value(
             body, multipart.boundary_of(service._request_content_type), "backup")
-        translate = portal._portal_content()._t
         if not text or not text.strip():
-            send(client, 400, "text/html; charset=utf-8",
-                 translate(service._i18n, "portal.backup_restore_failed",
-                           "Restore failed: {0}").format("no backup file"))
+            _message(service, client, 400, "backup_restore_failed",
+                     "Restore failed: {0}", "no backup file")
             return
         try:
             from storage import config_backup
@@ -88,13 +98,11 @@ def handle_request(service, client, method, target, body):
         except Exception as e:
             ok, error = False, str(e)
         if not ok:
-            send(client, 400, "text/html; charset=utf-8",
-                 translate(service._i18n, "portal.backup_restore_failed",
-                           "Restore failed: {0}").format(error))
+            _message(service, client, 400, "backup_restore_failed",
+                     "Restore failed: {0}", error)
             return
-        send(client, 200, "text/html; charset=utf-8",
-             translate(service._i18n, "portal.backup_restored",
-                       "Configuration restored. Rebooting..."))
+        _message(service, client, 200, "backup_restored",
+                 "Configuration restored. Rebooting...")
         try:
             import machine
             portal._sleep_ms(200)
@@ -115,6 +123,7 @@ def handle_request(service, client, method, target, body):
                 portal._current_values(),
                 kegs=portal._load_kegs(),
                 i18n=service._i18n,
+                tab=query.get("tab", ""),
             ),
         )
         return
@@ -150,9 +159,9 @@ def handle_request(service, client, method, target, body):
             except Exception:
                 kegs_saved = False
             if not kegs_saved:
-                send(client, 500, "text/html; charset=utf-8", "Keg save error")
+                _message(service, client, 500, "keg_save_error", "Keg save error")
                 return
-        send(client, 200, "text/html; charset=utf-8", "Saved. Rebooting...")
+        _message(service, client, 200, "saved_rebooting", "Saved. Rebooting...")
         try:
             import machine
             portal._sleep_ms(200)
@@ -171,17 +180,18 @@ def handle_request(service, client, method, target, body):
             kegs = keg_registry.load_kegs()
             updated = keg_registry.delete_keg(kegs, form.get("idx"))
             if updated is None:
-                send(client, 400, "text/html; charset=utf-8", "Invalid fields")
+                _message(service, client, 400, "invalid_fields", "Invalid fields")
                 return
             if not keg_registry.save_kegs(keg_registry.KEG_FILE, updated):
-                send(client, 500, "text/html; charset=utf-8", "Keg save error")
+                _message(service, client, 500, "keg_save_error", "Keg save error")
                 return
-        except Exception as e:
-            send(client, 500, "text/html; charset=utf-8", "Keg save error: {}".format(e))
+        except Exception:
+            _message(service, client, 500, "keg_save_error", "Keg save error")
             return
-        location = "/?saved=1"
+        # Back on the Kegs tab, where the delete button was.
+        location = "/?saved=1&tab=kegs"
         if service._cfg.get("require_token"):
-            location = "/?saved=1&k={}".format(service._token)
+            location = "/?saved=1&tab=kegs&k={}".format(service._token)
         send(client, 303, "text/plain; charset=utf-8", "", headers={"Location": location})
         return
 
@@ -196,9 +206,10 @@ def handle_request(service, client, method, target, body):
         except Exception as e:
             ok, error = False, str(e)
         if not ok:
-            send(client, 500, "text/html; charset=utf-8", "Update request failed: {}".format(error))
+            _message(service, client, 500, "update_request_failed",
+                     "Update request failed: {0}", error)
             return
-        send(client, 200, "text/html; charset=utf-8", "Update requested. Rebooting...")
+        _message(service, client, 200, "update_rebooting", "Update requested. Rebooting...")
         try:
             import machine
             portal._sleep_ms(200)
