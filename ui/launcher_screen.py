@@ -1,5 +1,7 @@
 """
-Launcher screen. LVGL objects are created once in __init__.
+Launcher screen. LVGL objects are created once and reused: an icon slot gets
+its image the first time an entry needs it and is hidden, never destroyed,
+when the entry goes away.
 """
 
 import math
@@ -8,7 +10,9 @@ import lvgl as lv
 
 
 class LauncherScreen:
-    _MAX_ITEMS = 5
+    # Five apps plus the update entry, which only exists when a newer
+    # release is available (updater.update_notice).
+    _MAX_ITEMS = 6
     _SCREEN_W = 240
     _SCREEN_H = 240
     _CENTER_X = 120
@@ -18,6 +22,15 @@ class LauncherScreen:
     _ROUND_EDGE_MARGIN = 2
     _ARC_START = 105
     _ARC_TOTAL = 135
+    # The five apps' spacing (135 / 4), kept whatever the number of entries:
+    # the apps never move, and a sixth icon spread over the same arc would
+    # put its black corners over its neighbours' discs.
+    _ANGLE_STEP = 33.75
+    _CAPTION_X = 120
+    _CAPTION_W = 110
+    _TITLE_Y = 104
+    _TITLE_Y_WITH_DETAIL = 84
+    _DETAIL_Y = 114
 
     def __init__(self, i18n=None):
         self._i18n = i18n
@@ -25,7 +38,6 @@ class LauncherScreen:
         self._selected_index = 0
         self._icon_slots = []
         self._selection_indicator = None
-        self._icons_initialized = False
         self._indicator_target_x = 0
         self._indicator_target_y = 0
         self._indicator_current_x = 0.0
@@ -33,18 +45,9 @@ class LauncherScreen:
 
         self.page = m5ui.M5Page(bg_c=0x000000)
 
-        self._center_label = m5ui.M5Label(
-            "",
-            x=120,
-            y=104,
-            text_c=0xFFFFFF,
-            bg_c=0x000000,
-            bg_opa=0,
-            font=lv.font_montserrat_24,
-            parent=self.page,
-        )
-        self._center_label.set_width(110)
-        self._center_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        self._center_label = self._make_caption_label(self._TITLE_Y, lv.font_montserrat_24)
+        # Lines 2-3 of an entry that carries caption_lines (the update's versions).
+        self._detail_label = self._make_caption_label(self._DETAIL_Y, lv.font_montserrat_16)
 
         # Fixed white dot indicator (moved per selection)
         self._selection_indicator = lv.obj(self.page)
@@ -54,14 +57,23 @@ class LauncherScreen:
         self._selection_indicator.set_style_bg_opa(255, 0)
         self._selection_indicator.set_style_border_width(0, 0)
 
-        # Pre-create icon slots once (actual images loaded when set_items is called).
         for _ in range(self._MAX_ITEMS):
-            self._icon_slots.append({
-                "img": None,
-                "x": 0,
-                "y": 0,
-                "angle": 0.0,
-            })
+            self._icon_slots.append({"img": None, "path": None, "hidden": False})
+
+    def _make_caption_label(self, y, font):
+        label = m5ui.M5Label(
+            "",
+            x=self._CAPTION_X,
+            y=y,
+            text_c=0xFFFFFF,
+            bg_c=0x000000,
+            bg_opa=0,
+            font=font,
+            parent=self.page,
+        )
+        label.set_width(self._CAPTION_W)
+        label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+        return label
 
     def root(self):
         return self.page
@@ -70,9 +82,7 @@ class LauncherScreen:
         self._items = items if items else []
         if self._selected_index >= len(self._items):
             self._selected_index = 0
-        if not self._icons_initialized:
-            self._create_icons_once()
-            self._icons_initialized = True
+        self._sync_icons()
         self._update_selection(self._selected_index)
 
     def set_selected_index(self, index):
@@ -132,7 +142,7 @@ class LauncherScreen:
         total = len(self._items)
         if total == 0:
             self._selected_index = 0
-            self._center_label.set_text("No app")
+            self._show_caption("No app", "")
             self._selection_indicator.set_pos(-20, -20)
             return
         if new_index < 0:
@@ -141,46 +151,59 @@ class LauncherScreen:
             new_index = 0
         old_index = self._selected_index
         self._selected_index = new_index
-        center = self._label_text(self._items[self._selected_index])
-        self._center_label.set_text(center)
+        item = self._items[self._selected_index]
+        lines = item.get("caption_lines")
+        if lines:
+            self._show_caption(lines[0], "\n".join(lines[1:]))
+        else:
+            self._show_caption(self._label_text(item), "")
         self._move_indicator_to_selected()
         if old_index != new_index:
             self._play_selection_beep()
 
-    def _create_icons_once(self):
-        total = len(self._items)
-        if total <= 0:
-            return
+    def _show_caption(self, title, detail):
+        self._center_label.set_y(self._TITLE_Y_WITH_DETAIL if detail else self._TITLE_Y)
+        self._center_label.set_text(title)
+        self._detail_label.set_text(detail)
+
+    def _sync_icons(self):
+        for i, slot in enumerate(self._icon_slots):
+            img = slot["img"]
+            if i >= len(self._items):
+                if img is not None and not slot["hidden"]:
+                    img.add_flag(lv.obj.FLAG.HIDDEN)
+                    slot["hidden"] = True
+                continue
+            path = self._items[i].get("icon", "")
+            if img is None:
+                x, y = self.icon_position(i)
+                img = m5ui.M5Image(path, x=x, y=y, parent=self.page)
+                img.set_scale(1.0, 1.0)
+                img.set_pivot(self._ICON_SIZE // 2, self._ICON_SIZE // 2)
+                img.set_size(self._ICON_SIZE, self._ICON_SIZE)
+                slot["img"] = img
+                slot["path"] = path
+                slot["hidden"] = False
+                continue
+            if slot["path"] != path:
+                img.set_image(path)
+                slot["path"] = path
+            if slot["hidden"]:
+                img.remove_flag(lv.obj.FLAG.HIDDEN)
+                slot["hidden"] = False
+
+    def _icon_angle(self, index):
+        return float(self._ARC_START + self._ARC_TOTAL) - float(index) * self._ANGLE_STEP
+
+    def icon_position(self, index):
+        """Top-left corner of the icon at `index` on the wheel."""
         icon_radius = self._get_safe_icon_radius()
-
-        if total > 1:
-            angle_step = float(self._ARC_TOTAL) / float(total - 1)
-        else:
-            angle_step = 0.0
-
-        for i in range(min(total, self._MAX_ITEMS)):
-            item = self._items[i]
-            angle_deg = float(self._ARC_START + self._ARC_TOTAL) - (float(i) * angle_step)
-            angle_rad = math.radians(angle_deg)
-            x = int(self._CENTER_X + icon_radius * math.cos(angle_rad) - (self._ICON_SIZE / 2))
-            y = int(self._CENTER_Y + icon_radius * math.sin(angle_rad) - (self._ICON_SIZE / 2))
-            x = self._clamp(x, 0, self._SCREEN_W - self._ICON_SIZE)
-            y = self._clamp(y, 0, self._SCREEN_H - self._ICON_SIZE)
-
-            icon_path = item.get("icon", "")
-            img = m5ui.M5Image(
-                icon_path,
-                x=x,
-                y=y,
-                parent=self.page,
-            )
-            img.set_scale(1.0, 1.0)
-            img.set_pivot(self._ICON_SIZE // 2, self._ICON_SIZE // 2)
-            img.set_size(self._ICON_SIZE, self._ICON_SIZE)
-            self._icon_slots[i]["img"] = img
-            self._icon_slots[i]["x"] = x
-            self._icon_slots[i]["y"] = y
-            self._icon_slots[i]["angle"] = angle_deg
+        angle_rad = math.radians(self._icon_angle(index))
+        x = int(self._CENTER_X + icon_radius * math.cos(angle_rad) - (self._ICON_SIZE / 2))
+        y = int(self._CENTER_Y + icon_radius * math.sin(angle_rad) - (self._ICON_SIZE / 2))
+        x = self._clamp(x, 0, self._SCREEN_W - self._ICON_SIZE)
+        y = self._clamp(y, 0, self._SCREEN_H - self._ICON_SIZE)
+        return x, y
 
     def _move_indicator_to_selected(self):
         if not self._items:
@@ -188,15 +211,8 @@ class LauncherScreen:
         if self._selected_index >= len(self._icon_slots):
             return
 
-        total = len(self._items)
-        if total > 1:
-            angle_step = float(self._ARC_TOTAL) / float(total - 1)
-        else:
-            angle_step = 0.0
-
         icon_radius = self._get_safe_icon_radius()
-        angle_deg = float(self._ARC_START + self._ARC_TOTAL) - (float(self._selected_index) * angle_step)
-        angle_rad = math.radians(angle_deg)
+        angle_rad = math.radians(self._icon_angle(self._selected_index))
         indicator_radius = icon_radius - (self._ICON_SIZE // 2) - 13
         ix = int(self._CENTER_X + indicator_radius * math.cos(angle_rad) - 5)
         iy = int(self._CENTER_Y + indicator_radius * math.sin(angle_rad) - 5)
