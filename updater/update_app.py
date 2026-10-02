@@ -9,7 +9,7 @@ initial app by firmware/startup code when an update has been requested.
 from apps.base_app import BaseApp
 import runtime_debug
 from ui import screen_ids
-from updater.boot import channel as boot_channel
+from updater.boot import configured_channel as boot_channel
 
 _DEBUG = runtime_debug.DEBUG
 
