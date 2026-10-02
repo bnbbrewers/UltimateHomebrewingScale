@@ -68,7 +68,8 @@ class MinimalWifi:
         return True
 
 
-def _channel():
+def channel():
+    """The configured release channel: "prerelease", or "stable" by default."""
     try:
         import config
 
@@ -212,7 +213,7 @@ def run_update_boot(
     if wifi is None:
         wifi = MinimalWifi()
     if channel is None:
-        channel = _channel()
+        channel = globals()['channel']()
     display = None
     if progress_callback is None:
         display = _DialProgress()
