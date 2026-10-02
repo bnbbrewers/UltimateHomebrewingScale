@@ -16,8 +16,11 @@ import gc
 import sys
 
 import runtime_debug
+import ticks
 
 IDLE_BEFORE_CHECK_MS = 3000
+# DNS and routing are not always ready the instant DHCP completes.
+LINK_SETTLE_MS = 1000
 MIN_PY_FREE = 45 * 1024
 # The TLS handshake's largest allocation fits in 12 KB (firmware/CustomFirmware.MD).
 MIN_C_LARGEST = 12 * 1024
@@ -34,6 +37,7 @@ _EVICTABLE = (
 
 _done = False
 _available = None
+_link_up_ms = None
 
 
 def available():
@@ -43,22 +47,33 @@ def available():
 
 def reset():
     """Forget this boot's attempt. For tests."""
-    global _done, _available
+    global _done, _available, _link_up_ms
     _done = False
     _available = None
+    _link_up_ms = None
 
 
 def tick(wifi, idle_ms):
-    global _done
-    if _done or wifi is None or idle_ms < IDLE_BEFORE_CHECK_MS:
+    global _done, _link_up_ms
+    if _done or wifi is None:
         return
-    connected = getattr(wifi, "connected", None)
-    if connected is None or not connected():
-        return
-    # Spent before the lookup: an exception must never turn into a retry
-    # that freezes the launcher again.
-    _done = True
+    # Everything below stays guarded: a misbehaving wifi object must never
+    # raise into the launcher loop.
     try:
+        connected = getattr(wifi, "connected", None)
+        if connected is None or not connected():
+            _link_up_ms = None
+            return
+        now = ticks.ticks_ms()
+        if _link_up_ms is None:
+            _link_up_ms = now
+        if idle_ms < IDLE_BEFORE_CHECK_MS:
+            return
+        if ticks.ticks_diff(now, _link_up_ms) < LINK_SETTLE_MS:
+            return
+        # Spent before the lookup: an exception must never turn into a retry
+        # that freezes the launcher again.
+        _done = True
         _check()
     except Exception as e:
         runtime_debug.log("[update_notice] check failed: {!r}", e)
