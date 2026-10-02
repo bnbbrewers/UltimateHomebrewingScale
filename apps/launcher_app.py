@@ -16,7 +16,7 @@ LAUNCHER_ITEMS = app_registry.launcher_items()
 
 UPDATE_ICON = "/flash/assets/icons/Update.png"
 # LV_SYMBOL_RIGHT: the built-in Montserrat fonts carry LVGL's symbols but no "→".
-_ARROW = ""
+_ARROW = "\uf054"
 
 
 class LauncherApp(BaseApp):
