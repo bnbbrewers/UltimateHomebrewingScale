@@ -378,9 +378,9 @@ Image en `border-radius: --uhs-radius`, bordure 1px `--uhs-border`,
 **Tout `<img>` porte un `alt` descriptif et des attributs `width`/`height`** pour
 éviter le décalage de mise en page — les captures du Dial sont lourdes.
 
-Ne pas retoucher `img/PortalPage.png` : elle est régénérée par
-`tools/render_portal_screenshot.py`. Si son cadrage change, corriger le script,
-pas le fichier.
+Ne pas retoucher les `img/PortalPage-<onglet>.png` : elles sont régénérées par
+`tools/render_portal_screenshot.py`. Si leur cadrage change, corriger le script,
+pas les fichiers.
 
 ### 5.8 Callouts (`.uhs-note`)
 

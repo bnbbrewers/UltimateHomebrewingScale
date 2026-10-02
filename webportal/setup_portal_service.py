@@ -163,18 +163,19 @@ def _portal_content():
     return __import__("webportal.portal_html", None, None, ("*",))
 
 
-def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None):
+def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None, tab=""):
     return _portal_content().render_form_html(
         values,
         kegs=kegs or [],
         include_kegs=kegs is not None,
         error=error,
         i18n=i18n,
+        tab=tab,
     )
 
 
 def render_kegs_html(kegs, i18n=None):
-    return _portal_content().render_form_html({}, kegs=kegs or [], include_kegs=True, i18n=i18n)
+    return _portal_content().render_form_html({}, kegs=kegs or [], include_kegs=True, i18n=i18n, tab="kegs")
 
 
 def _current_values():
