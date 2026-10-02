@@ -162,6 +162,19 @@ class WifiDevice:
             return False
         return time.ticks_diff(time.ticks_ms(), self._start_ms) >= CONNECT_TIMEOUT_MS
 
+    def connected(self):
+        """True once the saved network has been joined.
+
+        Read by the launcher's update notice, which must not open a socket
+        before the link is up. An abandoned connection is never connected,
+        even if UIFlow's own station is still associated.
+        """
+        if self._abandoned:
+            return False
+        if self._done:
+            return True
+        return self._wlan is not None and bool(self._wlan.isconnected())
+
     def abandon(self):
         """Stop every connection attempt for the rest of this boot.
 

@@ -1083,6 +1083,18 @@ pre code {
 .uhs-applist img,
 .uhs-app-head img { border-radius: 50%; }
 
+/* A paragraph introduced by a launcher icon (the update notice): the icon gets
+   the same round crop as the app icons above and sits beside the text block. */
+.uhs-icon-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--uhs-space-3);
+}
+
+.uhs-icon-note img { flex: none; width: 38px; height: 38px; border-radius: 50%; }
+
+.uhs-icon-note p { margin: 0; }
+
 /* Steps are followed by a callout at section level here, not inside a step. */
 .uhs-steps + .uhs-note { margin-top: var(--uhs-space-6); }
 

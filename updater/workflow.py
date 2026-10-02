@@ -2,9 +2,7 @@ import gc
 import os
 
 from . import http_client
-
-
-VERSION_FILE = "uhs-version.txt"
+from .version import VERSION_FILE, read_local_version
 ARCHIVE_TMP = "uhs-update.tar.tmp"
 ARCHIVE_PATH = "uhs-update.tar"
 
@@ -116,11 +114,7 @@ def _version_path(dest_root):
 
 
 def _read_local_version(dest_root):
-    try:
-        with open(_version_path(dest_root), "r") as f:
-            return f.read().strip()
-    except Exception:
-        return ""
+    return read_local_version(_version_path(dest_root))
 
 
 def _write_local_version(dest_root, version):

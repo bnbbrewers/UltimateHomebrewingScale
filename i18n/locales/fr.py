@@ -143,6 +143,13 @@ TRANSLATIONS = {
         'hop': 'Houblon',
         'keg': 'Fut',
         'settings': 'Config',
+        'update': 'UPDATE',
+    },
+
+    'update_prompt': {
+        'title': 'Mettre a jour ?',
+        'yes': 'Oui',
+        'no': 'Non',
     },
 
     'portal': {
