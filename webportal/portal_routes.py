@@ -15,7 +15,7 @@ def _message(service, client, status, key, default, detail=None):
     if detail is not None:
         text = text.format(detail)
     service._send(client, status, "text/html; charset=utf-8",
-                  html.render_message_html(text, i18n=service._i18n, error=status >= 400))
+                  html.render_message_parts(text, i18n=service._i18n, error=status >= 400))
 
 
 def handle_request(service, client, method, target, body):
@@ -59,7 +59,7 @@ def handle_request(service, client, method, target, body):
         return
 
     if method == "GET" and path == "/kegs":
-        send(client, 200, "text/html; charset=utf-8", portal.render_kegs_html(portal._load_kegs(), i18n=service._i18n))
+        send(client, 200, "text/html; charset=utf-8", portal.render_kegs_parts(portal._load_kegs(), i18n=service._i18n))
         return
 
     if method == "GET" and path == "/backup":
@@ -119,7 +119,7 @@ def handle_request(service, client, method, target, body):
             client,
             200,
             "text/html; charset=utf-8",
-            portal.render_minimal_form_html(
+            portal.render_minimal_form_parts(
                 portal._current_values(),
                 kegs=portal._load_kegs(),
                 i18n=service._i18n,
@@ -142,7 +142,7 @@ def handle_request(service, client, method, target, body):
         kegs = portal._load_kegs()
         updated_kegs = portal._kegs_from_form(kegs, form)
         if updated_kegs is None:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_html(dict(portal._current_values(), **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
             return
         try:
             from storage import config_registry
@@ -150,7 +150,7 @@ def handle_request(service, client, method, target, body):
         except Exception as e:
             ok, errors = False, str(e)
         if not ok:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_html(dict(portal._current_values(), **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
             return
         if updated_kegs is not kegs:
             try:
