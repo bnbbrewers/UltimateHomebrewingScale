@@ -107,6 +107,7 @@ _MESSAGE_CSS = (
     "h1{font-size:18px;margin:0}header p{margin:0;color:var(--mu);font-size:14px}"
     ".e,.k{border-radius:10px;padding:12px 16px;font-weight:600;margin:0 0 16px}"
     ".e{background:var(--eb);color:var(--ef)}.k{background:var(--cd);border:1px solid var(--ln)}"
+    ".m{color:var(--mu)}"
 )
 
 # docs/assets/logo/uhs-logo-dark-small.svg without its metadata.
@@ -163,16 +164,20 @@ def _page_start(parts, i18n, css=_CSS):
         _escape(_t(i18n, "portal.subtitle", "Setup"))))
 
 
-def render_message_parts(text, i18n=None, error=False):
-    """Branded page for the one-line answers of /save, /update and /restore."""
+def render_message_parts(text, i18n=None, error=False, hint=""):
+    """Branded page for the one-line answers of /save, /update and /restore;
+    ``hint`` adds a muted line below, such as what to do while UHS reboots."""
     parts = []
     _page_start(parts, i18n, _MESSAGE_CSS)
-    parts.append("<p class='{}'>{}</p></main></body></html>".format("e" if error else "k", _escape(text)))
+    parts.append("<p class='{}'>{}</p>".format("e" if error else "k", _escape(text)))
+    if hint:
+        parts.append("<p class='m'>{}</p>".format(_escape(hint)))
+    parts.append("</main></body></html>")
     return parts
 
 
-def render_message_html(text, i18n=None, error=False):
-    return "".join(render_message_parts(text, i18n=i18n, error=error))
+def render_message_html(text, i18n=None, error=False, hint=""):
+    return "".join(render_message_parts(text, i18n=i18n, error=error, hint=hint))
 
 
 def _append_field(parts, key, label, typ, choices, value, i18n, form_attr):
