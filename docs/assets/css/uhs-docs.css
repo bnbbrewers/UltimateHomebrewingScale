@@ -812,6 +812,26 @@ strong { font-weight: 700; }
 
 .uhs-figures .uhs-figure { margin-bottom: 0; }
 
+/* Dial screens rendered from the application (img/screen-*.webp): the round
+   device cut out on a transparent background. A frame would draw a square
+   around a round object, so they go without one, at about real size. */
+.uhs-figure--dial { max-width: 300px; }
+
+.uhs-figure--dial img {
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.uhs-figure--dial figcaption { text-align: center; }
+
+.uhs-hero__panel .uhs-figure--dial {
+  max-width: 340px;
+  margin-inline: auto;
+}
+
+.uhs-figures--dial { grid-template-columns: repeat(auto-fill, minmax(200px, 280px)); }
+
 /* ----------------------------------------------------------- §5.8 callouts */
 
 .uhs-note {
