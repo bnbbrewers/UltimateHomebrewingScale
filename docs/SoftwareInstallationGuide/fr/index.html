@@ -78,8 +78,8 @@
           </div>
 
           <aside class="uhs-hero__panel" aria-label="Résumé de l'installation">
-            <figure class="uhs-figure uhs-hero__figure">
-              <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="Écran de réglages de l'UHS affichant le QR code du portail de configuration">
+            <figure class="uhs-figure uhs-figure--dial uhs-hero__figure">
+              <img src="../img/screen-settings-ap-fr.webp" width="560" height="560" alt="Écran Paramètres de l'UHS sur son propre Wi-Fi : le QR code du portail de configuration au-dessus de la ligne Wi-Fi : UHS-Setup">
             </figure>
           </aside>
         </div>
@@ -221,6 +221,10 @@
                 Comme il ne connaît pas encore votre Wi-Fi, il crée son propre réseau Wi-Fi, <code>UHS-Setup</code>,
                 et affiche un QR code sur son écran rond.
               </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-settings-ap-fr.webp" width="560" height="560" alt="Écran Paramètres de l'UHS : titre violet Parametres, le QR code du portail de configuration et la ligne Wi-Fi : UHS-Setup">
+                <figcaption>Rejoignez UHS-Setup, puis scannez le QR code.</figcaption>
+              </figure>
               <p>
                 Rejoignez le Wi-Fi <code>UHS-Setup</code> avec votre smartphone, scannez le QR code, renseignez votre
                 réseau Wi-Fi et vos identifiants API Brewfather, puis appuyez sur <strong>Save and reboot</strong>.
@@ -243,48 +247,101 @@
             </li>
 
             <li id="calibrate" class="uhs-step">
-              <h3>Lancer l'assistant de calibration de la balance</h3>
+              <h3>Brancher le plateau</h3>
               <p>
                 Après ce redémarrage, l'UHS ouvre de lui-même l'assistant de calibration de la balance. Il apprend à
-                l'UHS ce que votre plateau mesure pour des poids connus, et ne se fait qu'une fois.
+                l'UHS ce que votre plateau mesure pour cinq poids connus, 0 g, 100 g, 500 g, 5 kg et 25 kg. Comptez
+                environ cinq minutes ; il ne se fait qu'une fois.
               </p>
-              <ol>
-                <li>Branchez le plateau quand l'UHS le demande, puis appuyez sur le bouton pour continuer.</li>
-                <li>À chaque étape, posez le poids demandé sur le plateau.</li>
-                <li>Si votre poids ne correspond pas exactement à la valeur demandée, tournez la molette pour régler son poids réel.</li>
-                <li>Appuyez sur le bouton pour lancer la mesure, et gardez le poids immobile pendant le compte à rebours de 30 secondes.</li>
-                <li>Recommencez pour chaque poids.</li>
-              </ol>
-              <div class="uhs-figures">
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-connect-scale.jpg" width="2268" height="2194" alt="Écran d'introduction de calibration demandant de connecter la balance">
-                  <figcaption>Connectez la balance et appuyez sur OK.</figcaption>
-                </figure>
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-ajust-weight.jpg" width="2268" height="3004" alt="Écran de calibration de l'UHS pour ajuster le poids cible">
-                  <figcaption>Tournez la molette si votre poids diffère de celui demandé.</figcaption>
-                </figure>
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-process-steo.jpg" width="2268" height="2646" alt="Écran de mesure de calibration avec barre de progression et compte à rebours">
-                  <figcaption>Gardez la balance immobile pendant chaque mesure de 30 secondes.</figcaption>
-                </figure>
+              <p>
+                Le premier écran demande de brancher la balance. Vérifiez que le plateau est branché à l'UHS,
+                posez-le sur une surface plane et stable, laissez-le vide, puis appuyez sur le bouton.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-intro-fr.webp" width="560" height="560" alt="Écran Calibration balance avec le message Branchez votre balance, OK pour continuer, et un bouton OK vert">
+                <figcaption>L'assistant commence par demander le plateau.</figcaption>
+              </figure>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Mesurer le zéro, plateau vide</h3>
+              <p>
+                L'écran affiche <strong>Etape 1/5 - 0g</strong>. La première ligne est le poids demandé par
+                l'assistant, le grand nombre le poids qu'il va enregistrer. Laissez le plateau vide et appuyez sur le
+                bouton <strong>Start</strong>.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-step-fr.webp" width="560" height="560" alt="Étape de calibration 1/5 - 0g affichant 0 g, l'indication Tourner pour ajuster le poids cible et un bouton Start vert">
+                <figcaption>Étape 1 : rien sur le plateau.</figcaption>
+              </figure>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Poser le poids suivant et régler sa valeur réelle</h3>
+              <p>
+                Les étapes 2 à 5 demandent tour à tour 100 g, 500 g, 5 kg et 25 kg. Posez le poids demandé au
+                centre du plateau.
+              </p>
+              <p>
+                Si votre poids ne correspond pas exactement à la valeur demandée, un sachet de sucre de 498 g ou un
+                pack de bouteilles de 4,85 kg, tournez la molette jusqu'à ce que le grand nombre affiche son poids
+                réel. Tournée lentement, la molette avance de 1 g par cran ; tournée franchement dans un sens, elle
+                passe à 10 g puis à 100 g par cran, pour traverser les kilos rapidement. La valeur reste comprise
+                entre 0 et 50 kg.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-adjust-fr.webp" width="560" height="560" alt="Étape de calibration 3/5 - 500g avec le poids enregistré réglé à 498 g et un bouton Start vert">
+                <figcaption>500 g demandés, un poids de 498 g réglé à la molette.</figcaption>
+              </figure>
+              <div class="uhs-note uhs-note--tip">
+                <p><strong class="uhs-note__label">Pas de poids de calibration ?</strong> Tout objet dont vous connaissez le poids
+                fait l'affaire : un sachet de sucre fermé, un pack d'eau en bouteille (1 L pèse 1 kg). Vos pesées ne
+                seront jamais plus justes que les poids saisis ici.</p>
               </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Lancer la mesure et ne plus bouger pendant 30 secondes</h3>
+              <p>
+                Appuyez sur le bouton : <strong>Start</strong> laisse place à <strong>Mesure</strong> et à une barre qui
+                se remplit en 30 secondes, pendant que l'UHS fait la moyenne de ce que mesure le plateau. Ne touchez ni
+                le plateau ni la table sur laquelle il repose.
+              </p>
+              <p>
+                Quand la barre est pleine, l'assistant passe de lui-même au poids suivant. Répétez l'étape précédente et
+                celle-ci pour chaque poids.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-measuring-fr.webp" width="560" height="560" alt="Étape de calibration 3/5 - 500g en cours de mesure de 498 g, à 12/30s avec la barre de progression en partie remplie">
+                <figcaption>12 secondes après le début d'une mesure de 30 secondes.</figcaption>
+              </figure>
               <div class="uhs-note uhs-note--warn">
                 <p><strong class="uhs-note__label">La stabilité compte :</strong> posez le plateau sur une surface plane et n'y touchez
-                pas pendant chaque mesure de 30 secondes. Plus la calibration est soignée, plus vos pesées sont justes.</p>
+                pas pendant chaque mesure de 30 secondes. Plus la calibration est soignée, plus vos pesées sont justes.
+                Si le plateau a été heurté, tournez la molette d'un quart de tour vers la gauche : la mesure s'arrête et
+                la même étape revient, avec le poids que vous aviez réglé, prête à repartir.</p>
               </div>
             </li>
 
             <li id="done" class="uhs-step">
               <h3>Terminer la calibration</h3>
               <p>
-                Après le dernier poids, l'UHS affiche <strong>Calibration terminée, OK pour redémarrer</strong>. Appuyez
-                une fois sur le bouton.
+                Après le dernier poids, l'UHS enregistre la calibration et affiche <strong>Calibration terminée, OK pour
+                redémarrer</strong>. Appuyez une fois sur le bouton.
               </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-restart-fr.webp" width="560" height="560" alt="Écran Calibration balance avec le message Calibration terminee, OK pour redemarrer, et un bouton OK vert">
+                <figcaption>La calibration est enregistrée : appuyez sur OK.</figcaption>
+              </figure>
               <p>
                 L'UHS redémarre une dernière fois et ouvre le launcher, la roue des apps. Il est prêt pour votre premier
                 jour de brassage.
               </p>
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Quitter l'assistant :</strong> un appui de 3 secondes sur le bouton, ou un quart de
+                tour vers la gauche sur son premier écran, ramène au launcher. Rien n'est enregistré avant le dernier
+                poids : l'UHS rouvre donc l'assistant au démarrage suivant, à l'étape 1.</p>
+              </div>
             </li>
           </ol>
         </div>
@@ -302,6 +359,8 @@
           <dl class="uhs-troubleshoot">
             <dt>Le navigateur ne trouve rien à quoi se connecter</dt>
             <dd>Utilisez un câble USB-C qui transmet les données, pas un câble de charge seule, et remettez l'UHS en mode installation avec le bouton BOOT / G0.</dd>
+            <dt>La calibration affiche Erreur, Balance introuvable</dt>
+            <dd>L'UHS ne voit pas l'Unit Weight I2C. Vérifiez le câble du plateau vers l'Unit Weight I2C et celui de l'Unit Weight I2C vers le Port A du Dial, comme le montre le <a href="../../HardwareInstallationGuide/fr/#assembly">guide d'installation matérielle</a>, puis débranchez et rebranchez l'UHS : l'assistant redémarre.</dd>
             <dt>Les poids semblent incorrects</dt>
             <dd>Vérifiez que le plateau est bien à plat et que rien ne le touche, puis tarez dans l'app Balance. Si l'écart persiste, la calibration est à refaire : réinstallez l'application depuis l'étape 2 en acceptant l'effacement de l'appareil.</dd>
           </dl>

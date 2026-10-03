@@ -382,6 +382,16 @@ Ne pas retoucher les `img/PortalPage-<onglet>.png` : elles sont régénérées p
 `tools/render_portal_screenshot.py`. Si leur cadrage change, corriger le script,
 pas les fichiers.
 
+**Écrans du Dial (`.uhs-figure--dial`).** Les écrans de l'UHS ne sont pas
+photographiés : ils sont rendus depuis le code `ui/` avec le LVGL du Dial, puis
+incrustés dans une photo de face du Dial détourée sur fond transparent. Fichiers
+`img/screen-<écran>-<en|fr>.webp`, 560×560, une version par langue avec les
+chaînes de cette langue. Pas de bordure ni de fond : un cadre carré autour d'un
+objet rond. Largeur max 300 px (340 px dans le panneau du hero) ; plusieurs
+écrans côte à côte vont dans `.uhs-figures.uhs-figures--dial`. Quand un écran
+change dans l'application, le rendre à nouveau plutôt que retoucher l'image.
+Seules les vues du matériel (arrière du Dial, câblage) restent des photos.
+
 ### 5.8 Callouts (`.uhs-note`)
 
 Fond teinté, bordure 1px `--uhs-border`, règle gauche 3px en couleur pleine,
