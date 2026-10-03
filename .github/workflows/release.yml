@@ -299,3 +299,12 @@ jobs:
             fi
           done
           [ "$missing" -eq 0 ]
+
+      # Only once the new pre-release is complete: a failed build must never
+      # take the previous one away. The rule lives in the script.
+      - name: Prune older pre-releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 tools/prune_prereleases.py

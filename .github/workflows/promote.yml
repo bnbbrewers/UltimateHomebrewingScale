@@ -42,3 +42,22 @@ jobs:
       # github.event.inputs, not inputs: the inputs context does not exist for
       # a release event, and referencing it stops the run being created at all.
       firmware_tag: ${{ github.event.release.tag_name || github.event.inputs.tag_name }}
+
+  # The promoted release is now the newest version: every pre-release left is
+  # older and no device installs it any more.
+  prune:
+    name: Prune the pre-releases
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prune older pre-releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 tools/prune_prereleases.py
