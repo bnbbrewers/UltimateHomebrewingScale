@@ -78,8 +78,8 @@
           </div>
 
           <aside class="uhs-hero__panel" aria-label="Installation summary">
-            <figure class="uhs-figure uhs-hero__figure">
-              <img src="../img/DialQRCode.jpg" width="2268" height="2479" alt="UHS settings screen showing the QR code of the setup portal">
+            <figure class="uhs-figure uhs-figure--dial uhs-hero__figure">
+              <img src="../img/screen-settings-ap-en.webp" width="560" height="560" alt="UHS settings screen on its own Wi-Fi: the QR code of the setup portal above the line Wi-Fi: UHS-Setup">
             </figure>
           </aside>
         </div>
@@ -221,6 +221,10 @@
                 As it does not know your Wi-Fi yet, it creates its own Wi-Fi network, <code>UHS-Setup</code>, and
                 shows a QR code on its round screen.
               </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-settings-ap-en.webp" width="560" height="560" alt="UHS settings screen: purple Settings title, the QR code of the setup portal and the line Wi-Fi: UHS-Setup">
+                <figcaption>Join UHS-Setup, then scan the QR code.</figcaption>
+              </figure>
               <p>
                 Join the <code>UHS-Setup</code> Wi-Fi with your smartphone, scan the QR code, fill in your Wi-Fi
                 network and your Brewfather API credentials, then tap <strong>Save and reboot</strong>.
@@ -242,48 +246,100 @@
             </li>
 
             <li id="calibrate" class="uhs-step">
-              <h3>Run the scale calibration wizard</h3>
+              <h3>Connect the platform</h3>
               <p>
                 After this restart, UHS opens the scale calibration wizard by itself. It teaches UHS what your
-                platform reads for known weights, and it is only done once.
+                platform reads for five known weights, 0 g, 100 g, 500 g, 5 kg and 25 kg. It takes about five
+                minutes and is only done once.
               </p>
-              <ol>
-                <li>Connect the platform when UHS asks for it, then press the button to continue.</li>
-                <li>For each step, place the requested weight on the platform.</li>
-                <li>If your weight is not exactly the requested value, turn the dial to set its real weight.</li>
-                <li>Press the button to start measuring, and keep the weight still for the 30-second countdown.</li>
-                <li>Repeat for every weight.</li>
-              </ol>
-              <div class="uhs-figures">
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-connect-scale.jpg" width="2268" height="2194" alt="UHS calibration screen asking to connect the scale">
-                  <figcaption>Connect the scale and press OK.</figcaption>
-                </figure>
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-ajust-weight.jpg" width="2268" height="3004" alt="UHS calibration screen for adjusting the target weight">
-                  <figcaption>Turn the dial if your weight differs from the one requested.</figcaption>
-                </figure>
-                <figure class="uhs-figure">
-                  <img src="../img/ScaleCalibration-process-steo.jpg" width="2268" height="2646" alt="UHS calibration measuring screen with progress bar and countdown">
-                  <figcaption>Keep the scale still during each 30 second measurement.</figcaption>
-                </figure>
+              <p>
+                The first screen asks you to connect the scale. Check that the platform is plugged into UHS, set it
+                on a flat and stable surface, leave it empty, then press the button.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-intro-en.webp" width="560" height="560" alt="Scale Calibration screen with the message Connect your scale, OK to continue, and a green OK button">
+                <figcaption>The wizard starts by asking for the platform.</figcaption>
+              </figure>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Measure the zero point, platform empty</h3>
+              <p>
+                The screen reads <strong>Step 1/5 - 0g</strong>. The first line is the weight the wizard asks for,
+                the large number the weight it will record. Leave the platform empty and press the button to
+                <strong>Start</strong>.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-step-en.webp" width="560" height="560" alt="Calibration step 1/5 - 0g showing 0 g, the hint Turn to adjust target weight and a green Start button">
+                <figcaption>Step 1: nothing on the platform.</figcaption>
+              </figure>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Place the next weight and set its real value</h3>
+              <p>
+                Steps 2 to 5 ask for 100 g, 500 g, 5 kg and 25 kg in turn. Place the requested weight in the
+                middle of the platform.
+              </p>
+              <p>
+                If your weight is not exactly the requested value, a 498 g bag of sugar or a 4.85 kg pack of
+                bottles, turn the dial until the large number shows its real weight. Turned slowly, the dial moves
+                1 g per notch; turned briskly in one direction, it moves 10 g then 100 g per notch, to cross the
+                kilograms quickly. The value stays between 0 and 50 kg.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-adjust-en.webp" width="560" height="560" alt="Calibration step 3/5 - 500g with the recorded weight set to 498 g and a green Start button">
+                <figcaption>500 g requested, a 498 g weight set with the dial.</figcaption>
+              </figure>
+              <div class="uhs-note uhs-note--tip">
+                <p><strong class="uhs-note__label">No calibration weights?</strong> Any object whose weight you know will do: a
+                sealed bag of sugar, a pack of bottled water (1 L weighs 1 kg). Your weighings will only be as
+                accurate as the weights you enter here.</p>
               </div>
+            </li>
+
+            <li class="uhs-step">
+              <h3>Start the measurement and keep still for 30 seconds</h3>
+              <p>
+                Press the button: <strong>Start</strong> gives way to <strong>Measuring</strong> and a bar that fills
+                in 30 seconds while UHS averages what the platform reads. Do not touch the platform or the table it
+                stands on.
+              </p>
+              <p>
+                When the bar is full, the wizard moves on to the next weight by itself. Repeat the previous step and
+                this one for every weight.
+              </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-measuring-en.webp" width="560" height="560" alt="Calibration step 3/5 - 500g measuring 498 g, at 12/30s with the progress bar partly filled">
+                <figcaption>12 seconds into a 30-second measurement.</figcaption>
+              </figure>
               <div class="uhs-note uhs-note--warn">
                 <p><strong class="uhs-note__label">Stability matters:</strong> put the platform on a flat surface and do not touch it
-                during each 30-second measurement. The more careful the calibration, the more accurate your weighings.</p>
+                during each 30-second measurement. The more careful the calibration, the more accurate your weighings.
+                If the platform was knocked, turn the dial a quarter turn to the left: the measurement stops and the
+                same step comes back, with the weight you set, ready to start again.</p>
               </div>
             </li>
 
             <li id="done" class="uhs-step">
               <h3>Finish the calibration</h3>
               <p>
-                After the last weight, UHS shows <strong>Calibration complete, OK to restart</strong>. Press the
-                button once.
+                After the last weight, UHS saves the calibration and shows <strong>Calibration complete, OK to
+                restart</strong>. Press the button once.
               </p>
+              <figure class="uhs-figure uhs-figure--dial">
+                <img src="../img/screen-calib-restart-en.webp" width="560" height="560" alt="Scale Calibration screen with the message Calibration complete, OK to restart, and a green OK button">
+                <figcaption>The calibration is saved: press OK.</figcaption>
+              </figure>
               <p>
                 UHS restarts one last time and opens the launcher, the wheel of apps. It is ready for your first
                 brew day.
               </p>
+              <div class="uhs-note uhs-note--info">
+                <p><strong class="uhs-note__label">Leaving the wizard:</strong> holding the button 3 seconds, or a quarter turn to the
+                left on its first screen, goes to the launcher. Nothing is saved before the last weight, so UHS
+                opens the wizard again at the next start-up, from step 1.</p>
+              </div>
             </li>
           </ol>
         </div>
@@ -301,6 +357,8 @@
           <dl class="uhs-troubleshoot">
             <dt>The browser finds nothing to connect to</dt>
             <dd>Use a USB-C cable that carries data, not a charge-only one, and put UHS back in installation mode with the BOOT / G0 button.</dd>
+            <dt>The calibration shows Error, Scale not found</dt>
+            <dd>UHS does not see the Unit Weight I2C. Check the cable from the platform to the Unit Weight I2C and the one from the Unit Weight I2C to Port A of the Dial, as shown in the <a href="../../HardwareInstallationGuide/en/#assembly">Hardware Installation Guide</a>, then unplug and plug UHS back in: the wizard starts again.</dd>
             <dt>Weights look wrong</dt>
             <dd>Check that the platform sits flat and that nothing touches it, then tare in the Scale app. If the error remains, the calibration has to be redone: install the application again from step 2, choosing to erase the device.</dd>
           </dl>
