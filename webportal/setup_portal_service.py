@@ -163,8 +163,8 @@ def _portal_content():
     return __import__("webportal.portal_html", None, None, ("*",))
 
 
-def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None, tab=""):
-    return _portal_content().render_form_html(
+def render_minimal_form_parts(values, saved=False, error="", kegs=None, i18n=None, tab=""):
+    return _portal_content().render_form_parts(
         values,
         kegs=kegs or [],
         include_kegs=kegs is not None,
@@ -174,8 +174,22 @@ def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None
     )
 
 
+def render_minimal_form_html(values, saved=False, error="", kegs=None, i18n=None, tab=""):
+    return "".join(render_minimal_form_parts(values, saved=saved, error=error, kegs=kegs, i18n=i18n, tab=tab))
+
+
+def render_kegs_parts(kegs, i18n=None):
+    return _portal_content().render_form_parts({}, kegs=kegs or [], include_kegs=True, i18n=i18n, tab="kegs")
+
+
 def render_kegs_html(kegs, i18n=None):
-    return _portal_content().render_form_html({}, kegs=kegs or [], include_kegs=True, i18n=i18n, tab="kegs")
+    return "".join(render_kegs_parts(kegs, i18n=i18n))
+
+
+def _utf8_chunks(text):
+    """``text`` encoded a chunk at a time, so no copy outgrows a chunk."""
+    for start in range(0, len(text), WRITE_CHUNK_SIZE):
+        yield text[start : start + WRITE_CHUNK_SIZE].encode("utf-8")
 
 
 def _current_values():
@@ -248,8 +262,12 @@ class SetupPortalService:
         self._client_idle_logged = False
         self._response_data = b""
         self._response_offset = 0
+        self._response_parts = ()
+        self._response_part = 0
+        self._response_chars = 0
         self._response_is_initial_page = False
         self._client_deadline = 0
+        self._reboot_after_response = False
         self._handle_request = handle_request
 
         self._token = self._cfg.get("token", "")
@@ -313,6 +331,21 @@ class SetupPortalService:
             except Exception:
                 pass
 
+    def reboot_after_response(self):
+        """Reboot once the queued answer has left, not before: a reset run
+        from the request handler drops the answer the phone is waiting for."""
+        self._reboot_after_response = True
+
+    def _reboot(self):
+        self._log("reboot after response")
+        try:
+            import machine
+
+            _sleep_ms(200)
+            machine.reset()
+        except Exception:
+            pass
+
     def suspend(self):
         self._paused = True
 
@@ -336,6 +369,7 @@ class SetupPortalService:
             self._request_content_length = 0
             self._response_data = b""
             self._response_offset = 0
+            self._response_parts = ()
             self._response_is_initial_page = False
             # Browsers may open a speculative connection without sending a
             # request. Do not let that idle connection block the single-client
@@ -361,6 +395,10 @@ class SetupPortalService:
         except Exception as e:
             self._log("client error:", e)
             self._close_client()
+        # Also after a failed write: the settings are saved either way.
+        if self._reboot_after_response and self._client is None:
+            self._reboot_after_response = False
+            self._reboot()
 
     def _close_client(self):
         client = self._client
@@ -368,6 +406,7 @@ class SetupPortalService:
         self._client_state = "idle"
         self._response_data = b""
         self._response_offset = 0
+        self._response_parts = ()
         if client:
             try:
                 client.close()
@@ -471,11 +510,17 @@ class SetupPortalService:
 
     def _progress_write(self):
         client = self._client
-        if not self._response_data:
+        if not self._response_data and not self._response_parts:
             self._close_client()
             return
         steps = 0
-        while self._response_offset < len(self._response_data) and steps < MAX_WRITE_STEPS:
+        while steps < MAX_WRITE_STEPS:
+            if self._response_offset >= len(self._response_data):
+                chunk = self._next_response_chunk()
+                if not chunk:
+                    break
+                self._response_data = chunk
+                self._response_offset = 0
             end = min(self._response_offset + WRITE_CHUNK_SIZE, len(self._response_data))
             try:
                 sent = client.write(self._response_data[self._response_offset : end])
@@ -494,7 +539,7 @@ class SetupPortalService:
             self._response_offset += sent
             steps += 1
             self._log("write chunk", sent, "offset", self._response_offset, "size", len(self._response_data))
-        if self._response_offset >= len(self._response_data):
+        if self._response_offset >= len(self._response_data) and not self._response_parts:
             self._log("response sent")
             if self._response_is_initial_page and not self._initial_page_served:
                 self._initial_page_served = True
@@ -506,6 +551,27 @@ class SetupPortalService:
             self._client_state = "drain"
             self._client_deadline = _ticks_add(_ticks_ms(), RESPONSE_DRAIN_MS)
             self._log("response drain", RESPONSE_DRAIN_MS)
+
+    def _next_response_chunk(self):
+        """Up to WRITE_CHUNK_SIZE characters of a response sent in parts,
+        small parts joined together, or b"" once it is all out."""
+        parts = self._response_parts
+        pieces = []
+        room = WRITE_CHUNK_SIZE
+        while room > 0 and self._response_part < len(parts):
+            text = parts[self._response_part]
+            start = self._response_chars
+            piece = text[start : start + room]
+            pieces.append(piece)
+            room -= len(piece)
+            if start + len(piece) >= len(text):
+                self._response_part += 1
+                self._response_chars = 0
+            else:
+                self._response_chars = start + len(piece)
+        if self._response_part >= len(parts):
+            self._response_parts = ()
+        return "".join(pieces).encode("utf-8")
 
     def _run_before_client(self):
         if self._before_client_ran:
@@ -660,11 +726,22 @@ class SetupPortalService:
             404: "Not Found",
             500: "Internal Server Error",
         }.get(status_code, "OK")
-        payload = body.encode("utf-8") if isinstance(body, str) else body
+        # A list of strings is sent part by part, a chunk at a time: the page
+        # is never whole in RAM, which the Dial's fragmented heap cannot hold.
+        parts = body if isinstance(body, list) else ()
+        if parts:
+            length = 0
+            for part in parts:
+                for chunk in _utf8_chunks(part):
+                    length += len(chunk)
+            payload = b""
+        else:
+            payload = body.encode("utf-8") if isinstance(body, str) else body
+            length = len(payload)
         lines = [
             "HTTP/1.1 {} {}".format(status_code, status_txt),
             "Content-Type: {}".format(content_type),
-            "Content-Length: {}".format(len(payload)),
+            "Content-Length: {}".format(length),
             "Connection: close",
         ]
         lines.append("Cache-Control: no-store")
@@ -673,10 +750,18 @@ class SetupPortalService:
                 lines.append("{}: {}".format(k, v))
         lines.append("")
         lines.append("")
-        head = "\r\n".join(lines).encode("utf-8")
-        self._log("response", status_code, "head", len(head), "body", len(payload))
-        self._response_data = head + payload
+        head = "\r\n".join(lines)
+        self._log("response", status_code, "head", len(head), "body", length)
+        if parts:
+            # The head travels as the first part, so it shares a chunk.
+            self._response_data = b""
+            self._response_parts = [head] + parts
+        else:
+            self._response_data = head.encode("utf-8") + payload
+            self._response_parts = ()
         self._response_offset = 0
+        self._response_part = 0
+        self._response_chars = 0
 
     def _token_ok(self, query, form):
         if not self._cfg.get("require_token"):

@@ -6,7 +6,12 @@ allocation required while entering Settings on MicroPython.
 """
 
 
-def _message(service, client, status, key, default, detail=None):
+# Below every answer after which the Dial reboots: the page has nothing more
+# to do, and the operator carries on at the Dial.
+_RESTART_HINT = ("restart_hint", "You can close this page and carry on with UHS once it has restarted.")
+
+
+def _message(service, client, status, key, default, detail=None, hint=None):
     """Answer with a one-line page in the portal's look, translated."""
     import webportal.setup_portal_service as portal
 
@@ -14,8 +19,9 @@ def _message(service, client, status, key, default, detail=None):
     text = html._t(service._i18n, "portal." + key, default)
     if detail is not None:
         text = text.format(detail)
+    hint_text = html._t(service._i18n, "portal." + hint[0], hint[1]) if hint else ""
     service._send(client, status, "text/html; charset=utf-8",
-                  html.render_message_html(text, i18n=service._i18n, error=status >= 400))
+                  html.render_message_parts(text, i18n=service._i18n, error=status >= 400, hint=hint_text))
 
 
 def handle_request(service, client, method, target, body):
@@ -59,7 +65,7 @@ def handle_request(service, client, method, target, body):
         return
 
     if method == "GET" and path == "/kegs":
-        send(client, 200, "text/html; charset=utf-8", portal.render_kegs_html(portal._load_kegs(), i18n=service._i18n))
+        send(client, 200, "text/html; charset=utf-8", portal.render_kegs_parts(portal._load_kegs(), i18n=service._i18n))
         return
 
     if method == "GET" and path == "/backup":
@@ -102,13 +108,8 @@ def handle_request(service, client, method, target, body):
                      "Restore failed: {0}", error)
             return
         _message(service, client, 200, "backup_restored",
-                 "Configuration restored. Rebooting...")
-        try:
-            import machine
-            portal._sleep_ms(200)
-            machine.reset()
-        except Exception:
-            pass
+                 "Configuration restored. UHS is restarting.", hint=_RESTART_HINT)
+        service.reboot_after_response()
         return
 
     if method == "GET" and path == "/":
@@ -119,7 +120,7 @@ def handle_request(service, client, method, target, body):
             client,
             200,
             "text/html; charset=utf-8",
-            portal.render_minimal_form_html(
+            portal.render_minimal_form_parts(
                 portal._current_values(),
                 kegs=portal._load_kegs(),
                 i18n=service._i18n,
@@ -142,7 +143,7 @@ def handle_request(service, client, method, target, body):
         kegs = portal._load_kegs()
         updated_kegs = portal._kegs_from_form(kegs, form)
         if updated_kegs is None:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_html(dict(portal._current_values(), **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
             return
         try:
             from storage import config_registry
@@ -150,7 +151,7 @@ def handle_request(service, client, method, target, body):
         except Exception as e:
             ok, errors = False, str(e)
         if not ok:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_html(dict(portal._current_values(), **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
             return
         if updated_kegs is not kegs:
             try:
@@ -161,13 +162,9 @@ def handle_request(service, client, method, target, body):
             if not kegs_saved:
                 _message(service, client, 500, "keg_save_error", "Keg save error")
                 return
-        _message(service, client, 200, "saved_rebooting", "Saved. Rebooting...")
-        try:
-            import machine
-            portal._sleep_ms(200)
-            machine.reset()
-        except Exception:
-            pass
+        _message(service, client, 200, "saved_rebooting", "Settings saved. UHS is restarting.",
+                 hint=_RESTART_HINT)
+        service.reboot_after_response()
         return
 
     if method == "POST" and path == "/kegs/delete":
@@ -209,13 +206,9 @@ def handle_request(service, client, method, target, body):
             _message(service, client, 500, "update_request_failed",
                      "Update request failed: {0}", error)
             return
-        _message(service, client, 200, "update_rebooting", "Update requested. Rebooting...")
-        try:
-            import machine
-            portal._sleep_ms(200)
-            machine.reset()
-        except Exception:
-            pass
+        _message(service, client, 200, "update_rebooting", "Update requested. UHS is restarting to install it.",
+                 hint=("update_hint", "You can close this page and follow the installation on the UHS screen."))
+        service.reboot_after_response()
         return
 
     send(client, 404, body="Not found")
