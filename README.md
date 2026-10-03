@@ -289,7 +289,9 @@ text.** Store it accordingly.
 The hidden updater downloads a compact TAR diff from the latest GitHub Release.
 `UPDATE_CHANNEL = "stable"` installs the latest stable release. Set
 `UPDATE_CHANNEL = "prerelease"` to install the newest published release, stable
-or pre-release.
+or pre-release. GitHub keeps at most one pre-release: the newest, and only while
+it is newer than the latest release. The release and promote workflows delete
+the others with `tools/prune_prereleases.py`; their tags stay.
 The device never updates directly from branches. It skips docs, firmware,
 Markdown files, examples, `.gitignore`, `LICENSE`, and most example files so the
 device receives only runtime files. Runtime modules are delivered as `.mpy`;

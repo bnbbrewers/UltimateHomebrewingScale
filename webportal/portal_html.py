@@ -107,6 +107,7 @@ _MESSAGE_CSS = (
     "h1{font-size:18px;margin:0}header p{margin:0;color:var(--mu);font-size:14px}"
     ".e,.k{border-radius:10px;padding:12px 16px;font-weight:600;margin:0 0 16px}"
     ".e{background:var(--eb);color:var(--ef)}.k{background:var(--cd);border:1px solid var(--ln)}"
+    ".m{color:var(--mu)}"
 )
 
 # docs/assets/logo/uhs-logo-dark-small.svg without its metadata.
@@ -149,21 +150,34 @@ def _t(i18n, key, default):
 
 
 def _page_start(parts, i18n, css=_CSS):
+    # The stylesheet and the logo go in as their own parts, never formatted
+    # into a larger string: that copy is what the Dial's heap cannot afford.
     parts.append("<!doctype html><html><head><meta charset='utf-8'>"
                  "<meta name='viewport' content='width=device-width,initial-scale=1'>"
                  "<meta name='color-scheme' content='light dark'>")
-    parts.append("<title>{}</title><style>{}</style></head><body><main><header>{}<div>"
-                 "<h1>Ultimate Homebrewing Scale</h1><p>{}</p></div></header>".format(
-                     _escape(_t(i18n, "portal.title", "Ultimate Homebrewing Scale setup")),
-                     css, _LOGO, _escape(_t(i18n, "portal.subtitle", "Setup"))))
+    parts.append("<title>{}</title><style>".format(
+        _escape(_t(i18n, "portal.title", "Ultimate Homebrewing Scale setup"))))
+    parts.append(css)
+    parts.append("</style></head><body><main><header>")
+    parts.append(_LOGO)
+    parts.append("<div><h1>Ultimate Homebrewing Scale</h1><p>{}</p></div></header>".format(
+        _escape(_t(i18n, "portal.subtitle", "Setup"))))
 
 
-def render_message_html(text, i18n=None, error=False):
-    """Branded page for the one-line answers of /save, /update and /restore."""
+def render_message_parts(text, i18n=None, error=False, hint=""):
+    """Branded page for the one-line answers of /save, /update and /restore;
+    ``hint`` adds a muted line below, such as what to do while UHS reboots."""
     parts = []
     _page_start(parts, i18n, _MESSAGE_CSS)
-    parts.append("<p class='{}'>{}</p></main></body></html>".format("e" if error else "k", _escape(text)))
-    return "".join(parts)
+    parts.append("<p class='{}'>{}</p>".format("e" if error else "k", _escape(text)))
+    if hint:
+        parts.append("<p class='m'>{}</p>".format(_escape(hint)))
+    parts.append("</main></body></html>")
+    return parts
+
+
+def render_message_html(text, i18n=None, error=False, hint=""):
+    return "".join(render_message_parts(text, i18n=i18n, error=error, hint=hint))
 
 
 def _append_field(parts, key, label, typ, choices, value, i18n, form_attr):
@@ -237,7 +251,17 @@ def _append_backup(parts, i18n):
 
 
 def render_form_html(values, kegs=None, include_kegs=False, error="", i18n=None, tab=""):
-    """The setup page; ``tab`` is the query key of the tab to open first."""
+    return "".join(render_form_parts(values, kegs=kegs, include_kegs=include_kegs,
+                                     error=error, i18n=i18n, tab=tab))
+
+
+def render_form_parts(values, kegs=None, include_kegs=False, error="", i18n=None, tab=""):
+    """The setup page as a list of strings; ``tab`` is the query key of the
+    tab to open first.
+
+    The Dial sends the parts one after the other: joined, the page is one
+    9 KB block that its fragmented heap cannot allocate.
+    """
     values = values or {}
     fields = {}
     for field in FIELDS:
@@ -275,7 +299,7 @@ def render_form_html(values, kegs=None, include_kegs=False, error="", i18n=None,
     parts.append("</div><div class='bar'><button type='submit' form='{}'>{}</button></div>".format(
         _SAVE_FORM, _escape(_t(i18n, "portal.save_reboot", "Save and reboot"))))
     parts.append("</main></body></html>")
-    return "".join(parts)
+    return parts
 
 
 def kegs_from_form(kegs, form):
