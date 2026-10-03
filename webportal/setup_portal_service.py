@@ -267,6 +267,7 @@ class SetupPortalService:
         self._response_chars = 0
         self._response_is_initial_page = False
         self._client_deadline = 0
+        self._reboot_after_response = False
         self._handle_request = handle_request
 
         self._token = self._cfg.get("token", "")
@@ -330,6 +331,21 @@ class SetupPortalService:
             except Exception:
                 pass
 
+    def reboot_after_response(self):
+        """Reboot once the queued answer has left, not before: a reset run
+        from the request handler drops the answer the phone is waiting for."""
+        self._reboot_after_response = True
+
+    def _reboot(self):
+        self._log("reboot after response")
+        try:
+            import machine
+
+            _sleep_ms(200)
+            machine.reset()
+        except Exception:
+            pass
+
     def suspend(self):
         self._paused = True
 
@@ -379,6 +395,10 @@ class SetupPortalService:
         except Exception as e:
             self._log("client error:", e)
             self._close_client()
+        # Also after a failed write: the settings are saved either way.
+        if self._reboot_after_response and self._client is None:
+            self._reboot_after_response = False
+            self._reboot()
 
     def _close_client(self):
         client = self._client
