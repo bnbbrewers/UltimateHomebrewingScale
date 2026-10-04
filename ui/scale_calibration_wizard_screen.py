@@ -219,9 +219,9 @@ class ScaleCalibrationWizardScreen:
         if key == "scale_calibration.title":
             return "Scale Calibration"
         if key == "scale_calibration.step":
-            return "Step {}/{} - {}g".format(*args)
+            return "Step {}/{} - {}".format(*args)
         if key == "scale_calibration.target":
-            return "{} g".format(*args)
+            return "{}".format(*args)
         if key == "scale_calibration.adjust_target_hint_line1":
             return "Turn"
         if key == "scale_calibration.adjust_target_hint_line2":

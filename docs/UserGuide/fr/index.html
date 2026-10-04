@@ -254,7 +254,7 @@
                 </tr>
                 <tr>
                   <td>Grand nombre</td>
-                  <td>Le poids qu'il reste à ajouter. En grammes sous 1 kg, en kilogrammes à deux décimales au-delà.</td>
+                  <td>Le poids qu'il reste à ajouter. En grammes sous 1 kg, en kilogrammes à deux décimales au-delà. En unités US ou impériales, les houblons se comptent en onces et les malts en livres, à deux décimales.</td>
                 </tr>
                 <tr>
                   <td>Barre de progression et pourcentage</td>
@@ -365,7 +365,8 @@
             <li class="uhs-step">
               <h3>Pesez</h3>
               <p>
-                Le poids s'affiche en direct, en grammes sous 1 kg et en kilogrammes au-delà. La ligne d'état
+                Le poids s'affiche en direct, en grammes sous 1 kg et en kilogrammes au-delà (en unités US ou
+                impériales, en onces sous 1 lb et en livres au-delà). La ligne d'état
                 indique <strong>Appuyer pour tarer</strong>.
               </p>
               <figure class="uhs-figure uhs-figure--dial">
@@ -552,10 +553,16 @@
                 La barre de titre affiche le houblon et le numéro du récipient. Quand <strong>OK</strong> apparaît,
                 appuyez sur le bouton pour valider.
               </p>
-              <figure class="uhs-figure uhs-figure--dial">
-                <img src="../img/screen-hop-weighing-fr.webp" width="560" height="560" alt="Écran de pesée de houblon au titre vert Citra, Recipient : 1 : 7 g restant à verser et une barre verte à 72 %">
-                <figcaption>Encore 7 g de Citra pour le récipient 1.</figcaption>
-              </figure>
+              <div class="uhs-figures uhs-figures--dial">
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-hop-weighing-fr.webp" width="560" height="560" alt="Écran de pesée de houblon au titre vert Citra, Recipient : 1 : 7 g restant à verser et une barre verte à 72 %">
+                  <figcaption>Encore 7 g de Citra pour le récipient 1.</figcaption>
+                </figure>
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-hop-weighing-us-fr.webp" width="560" height="560" alt="Le même écran en unités US : 0.25 oz restant à verser et une barre verte à 75 %">
+                  <figcaption>En unités US : encore 0,25 oz.</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="uhs-step">
               <h3>Terminez le houblon, puis la recette</h3>
@@ -635,7 +642,9 @@
               <h3>Réglez le volume à remplir</h3>
               <p>
                 Sur <strong>Calibration 2/2</strong>, tournez la molette pour régler le volume de bière que le fût doit
-                recevoir, de 0,5 à 60 L par pas de 0,5 L (18 L au départ). Appuyez pour enregistrer.
+                recevoir, de 0,5 à 60 L par pas de 0,5 L (18 L au départ). En unités US, de 0,25 à 15 gal par pas
+                de 0,25 gal (5 gal au départ) ; en unités impériales, de 0,25 à 13 gal (4 gal au départ).
+                Appuyez pour enregistrer.
               </p>
               <figure class="uhs-figure uhs-figure--dial">
                 <img src="../img/screen-keg-volume-fr.webp" width="560" height="560" alt="Écran Calibration 2/2 affichant 19.0 L, l'indication Tourner pour ajuster et un bouton OK vert">
@@ -672,14 +681,21 @@
             <li class="uhs-step">
               <h3>Suivez le remplissage</h3>
               <p>
-                L'écran affiche le volume versé en litres et une barre de progression. L'UHS s'arrête un peu avant
+                L'écran affiche le volume versé en litres (en gallons en unités US ou impériales) et une barre de
+                progression. L'UHS s'arrête un peu avant
                 le volume réglé, de la valeur d'inertie de la spunding valve fixée dans le portail (200 ml par défaut),
                 pour que la bière restée dans le tuyau complète le fût sans débordement.
               </p>
-              <figure class="uhs-figure uhs-figure--dial">
-                <img src="../img/screen-keg-filling-fr.webp" width="560" height="560" alt="Écran remplissage keg0 affichant 11.50 L et une barre de progression verte à 61 %">
-                <figcaption>11,5 L versés pour le moment.</figcaption>
-              </figure>
+              <div class="uhs-figures uhs-figures--dial">
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-keg-filling-fr.webp" width="560" height="560" alt="Écran remplissage keg0 affichant 11.50 L et une barre de progression verte à 61 %">
+                  <figcaption>11,5 L versés pour le moment.</figcaption>
+                </figure>
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-keg-filling-us-fr.webp" width="560" height="560" alt="Le même écran en unités US, affichant 3.04 gal et une barre de progression verte à 61 %">
+                  <figcaption>En unités US : 3,04 gal versés.</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="uhs-step">
               <h3>La vanne se ferme seule</h3>
@@ -803,7 +819,7 @@
 
               <div class="uhs-figures">
                 <figure class="uhs-figure">
-                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1589" alt="Onglet General du portail de configuration : cartes Wi-Fi et Device">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1746" alt="Onglet General du portail de configuration : cartes Wi-Fi et Device">
                   <figcaption><strong>Général</strong> : Wi-Fi et appareil.</figcaption>
                 </figure>
                 <figure class="uhs-figure">
@@ -835,6 +851,15 @@
                     <tr>
                       <td>Langue (Language)</td>
                       <td>Choisissez <code>Anglais</code> ou <code>Français</code> pour l'interface de l'UHS et du portail.</td>
+                    </tr>
+                    <tr>
+                      <td>Unités (Units)</td>
+                      <td>
+                        <code>Métrique (g, L)</code>, <code>US (lb, oz, gal US)</code> ou
+                        <code>Impérial UK (lb, oz, gal UK)</code>. Tous les poids et volumes de l'UHS et du portail
+                        suivent ce choix, comme dans Brewfather : houblons en onces, malts en livres, fûts en gallons.
+                        L'UHS garde ses données en métrique : vous pouvez changer à tout moment sans rien perdre.
+                      </td>
                     </tr>
                     <tr>
                       <td>SSID Wi-Fi (Wi-Fi SSID)</td>
@@ -876,18 +901,18 @@
                       <td>Collez votre clé API Brewfather. Elle est masquée pendant la saisie.</td>
                     </tr>
                     <tr>
-                      <td>Tolérance malt (g) (Grain tolerance)</td>
-                      <td>L'écart à la cible accepté pour qu'un malt affiche <strong>OK</strong>. Par défaut <code>10</code>.</td>
+                      <td>Tolérance malt, g ou oz (Grain tolerance)</td>
+                      <td>L'écart à la cible accepté pour qu'un malt affiche <strong>OK</strong>. Par défaut <code>10</code> g. En unités US ou impériales, elle se saisit en onces, à une décimale.</td>
                     </tr>
                     <tr>
-                      <td>Tolérance houblon (g) (Hop tolerance)</td>
-                      <td>La même chose pour les houblons. Par défaut <code>1</code>.</td>
+                      <td>Tolérance houblon, g ou oz (Hop tolerance)</td>
+                      <td>La même chose pour les houblons. Par défaut <code>1</code> g.</td>
                     </tr>
                     <tr>
                       <th colspan="2" scope="rowgroup">Fûts (Kegs)</th>
                     </tr>
                     <tr>
-                      <td>Inertie spunding valve (ml) (Spunding valve inertia)</td>
+                      <td>Inertie spunding valve, ml ou fl oz (Spunding valve inertia)</td>
                       <td>
                         La marge avant le volume réglé à laquelle le remplisseur ferme la vanne, pour laisser la place à
                         la bière restée dans le tuyau. Gardez <code>200</code> ml par défaut ; augmentez-la si vos fûts
@@ -936,8 +961,8 @@
           <h3 class="uhs-subhead">Fûts</h3>
           <p>
             Chaque fût enregistré depuis l'app <a href="#keg">Fût</a> apparaît dans l'onglet <strong>Fûts</strong>,
-            sous les réglages de <strong>Remplissage</strong>, avec son <strong>Nom du keg</strong>, son <strong>Poids vide (g)</strong>
-            et son <strong>Volume max (L)</strong>. Modifiez-les, puis appuyez sur <strong>Enregistrer et redémarrer</strong>.
+            sous les réglages de <strong>Remplissage</strong>, avec son <strong>Nom du keg</strong>, son <strong>Poids vide</strong>
+            (g, ou lb en unités US ou impériales) et son <strong>Volume max</strong> (L, ou gal). Modifiez-les, puis appuyez sur <strong>Enregistrer et redémarrer</strong>.
             Le bouton rouge <strong>Supprimer</strong> sous un fût, suivi de son nom, le retire immédiatement, sans
             redémarrer l'UHS, et la page se rouvre sur l'onglet <strong>Fûts</strong>.
           </p>

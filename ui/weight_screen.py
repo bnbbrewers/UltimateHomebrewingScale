@@ -7,12 +7,12 @@ import m5ui
 import lvgl as lv
 
 from .ui_helper import ACTION_BUTTON_Y, UIHelper
-from .units import LIQUID_DENSITY
+import units
+from units import LIQUID_DENSITY, ZERO_WEIGHT_DISPLAY_THRESHOLD_G
 
 import runtime_debug
 
 CUSTOM_WEIGHT_FONT_PATH = "S:/flash/assets/montserrat_40.bin"
-ZERO_WEIGHT_DISPLAY_THRESHOLD_G = 1
 PERCENT_TEXT_H = 16
 PERCENT_BUTTON_GAP = 2
 PERCENT_LABEL_Y = ACTION_BUTTON_Y - PERCENT_TEXT_H - PERCENT_BUTTON_GAP
@@ -23,6 +23,7 @@ class WeightScreen:
     MODE_SIMPLE = "simple"
     MODE_COUNTDOWN_G = "countdown_g"
     MODE_FILLING_L = "filling_l"
+    _weight_kind = "auto"
 
     def __init__(self, i18n=None):
         runtime_debug.snapshot("weight.init.start", collect=True)
@@ -57,7 +58,7 @@ class WeightScreen:
         runtime_debug.snapshot("weight.after_title", collect=True)
 
         self._value = m5ui.M5Label(
-            "0 g",
+            units.format_weight(0),
             x=0,
             y=96,
             text_c=0xFFFFFF,
@@ -174,8 +175,11 @@ class WeightScreen:
         tolerance=0,
         empty_weight_g=0,
         progress_target=0,
+        weight_kind="auto",
     ):
+        """``weight_kind`` ("auto", "grain" or "hop") picks the imperial unit."""
         self._mode = mode
+        self._weight_kind = weight_kind
         self._target = target
         self._progress_target = progress_target if progress_target > 0 else target
         self._tolerance = tolerance
@@ -196,7 +200,7 @@ class WeightScreen:
             self._status.set_pos(0, 162)
             self._status.set_flag(lv.obj.FLAG.HIDDEN, False)
             self.set_status("")
-            self.set_weight_text("0 g")
+            self.set_weight_text(units.format_weight(0, weight_kind))
         else:
             self._progress.set_flag(lv.obj.FLAG.HIDDEN, False)
             self._percent.set_flag(lv.obj.FLAG.HIDDEN, False)
@@ -205,9 +209,9 @@ class WeightScreen:
             self._status.set_flag(lv.obj.FLAG.HIDDEN, True)
             self.set_progress(0, overloaded=False)
             if mode == self.MODE_FILLING_L:
-                self.set_weight_text("0.00 L")
+                self.set_weight_text(units.format_volume(0))
             else:
-                self.set_weight_text("0 g")
+                self.set_weight_text(units.format_weight(0, weight_kind))
 
     def set_title(self, text):
         if text == self._last_title_text:
@@ -278,21 +282,9 @@ class WeightScreen:
         )
 
     @staticmethod
-    def _format_weight(weight):
-        """Format weight as kg (>=1000g) or g (<1000g)."""
-        if weight is None:
-            return "---"
-        abs_w = abs(weight)
-        if abs_w <= ZERO_WEIGHT_DISPLAY_THRESHOLD_G:
-            return "0 g"
-        if abs_w >= 1000:
-            if weight < 0:
-                return "-{:.2f} kg".format(abs_w / 1000.0)
-            return "{:.2f} kg".format(abs_w / 1000.0)
-        g = int(round(abs_w))
-        if weight < 0:
-            return "-{} g".format(g)
-        return "{} g".format(g)
+    def _format_weight(weight, kind="auto"):
+        """g/kg in metric; oz/lb by ``kind`` in the us and imperial systems."""
+        return units.format_weight(weight, kind)
 
     def update_from_weight(self, weight):
         if weight == self._last_raw_weight:
@@ -300,7 +292,7 @@ class WeightScreen:
         self._last_raw_weight = weight
 
         if self._mode == self.MODE_SIMPLE:
-            self.set_weight_text(self._format_weight(weight))
+            self.set_weight_text(self._format_weight(weight, self._weight_kind))
             self._set_percent_text("")
             self.set_ok_visible(False)
             return
@@ -309,9 +301,9 @@ class WeightScreen:
             remaining = self._target - weight
             overloaded = remaining < -ZERO_WEIGHT_DISPLAY_THRESHOLD_G
             if overloaded:
-                self.set_weight_text("+" + self._format_weight(-remaining))
+                self.set_weight_text("+" + self._format_weight(-remaining, self._weight_kind))
             else:
-                self.set_weight_text(self._format_weight(remaining))
+                self.set_weight_text(self._format_weight(remaining, self._weight_kind))
             if self._target > 0:
                 progress = int((weight * 100) / self._target)
             else:
@@ -349,6 +341,6 @@ class WeightScreen:
             progress = 0
         if progress > 100:
             progress = 100
-        self.set_weight_text("{:.2f} L".format(volume))
+        self.set_weight_text(units.format_volume(volume))
         self.set_progress(progress, overloaded=False)
         self.set_ok_visible(False)

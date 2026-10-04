@@ -26,7 +26,8 @@ weight.
   kegs, updates and configuration backup.
 
 Everything is driven from the dial and its button; the application updates
-itself over Wi-Fi, and an optional LiPo cell makes the scale portable.
+itself over Wi-Fi, and an optional LiPo cell makes the scale portable. It speaks
+English or French, in metric, US or Imperial units.
 
 ## Documentation
 

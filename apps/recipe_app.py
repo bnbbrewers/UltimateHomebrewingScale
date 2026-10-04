@@ -28,6 +28,8 @@ class RecipeApp(BaseApp):
     TITLE_KEY = ""
     #: Tag prefix for the memory traces, e.g. "grain" or "hop".
     TRACE_PREFIX = "recipe"
+    #: Unit habit on the weight screen outside metric: "grain" (lb) or "hop" (oz).
+    WEIGHT_KIND = "auto"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
@@ -118,6 +120,7 @@ class RecipeApp(BaseApp):
             target=target_g,
             title_bg_color=self.COLOR,
             tolerance=tolerance,
+            weight_kind=self.WEIGHT_KIND,
         )
         self.screen_manager.show(screen_ids.WEIGHT)
         screen.set_status(self.t("scale.tare_ready"))

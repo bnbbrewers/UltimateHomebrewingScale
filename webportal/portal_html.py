@@ -1,15 +1,18 @@
 """Small dependency-free setup form renderer."""
 
+import units
+
 FIELDS = (
     ("LANGUAGE", "Language", "select", ("fr", "en")),
+    ("UNITS", "Units", "select", ("metric", "us", "imperial")),
     ("WIFI_SSID", "Wi-Fi SSID", "text", ()),
     ("WIFI_PASSWORD", "Wi-Fi password", "password", ()),
     ("BREWING_SOFTWARE", "Brewing software", "select", ("brewfather",)),
     ("BREWFATHER_USER_ID", "Brewfather user id", "text", ()),
     ("BREWFATHER_API_KEY", "Brewfather API key", "password", ()),
-    ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance (g)", "number", ()),
-    ("HOP_WEIGHT_TOLERANCE", "Hop tolerance (g)", "number", ()),
-    ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding valve inertia (ml)", "number", ()),
+    ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance", "number", ()),
+    ("HOP_WEIGHT_TOLERANCE", "Hop tolerance", "number", ()),
+    ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding valve inertia", "number", ()),
     ("KEG_FILL_STALL_TIMEOUT_S", "Fill stall safety (s)", "number", ()),
     ("STANDBY_TIMEOUT_MIN", "Standby after (min, 0 = off)", "number", ()),
     ("BATTERY", "Battery powered", "checkbox", ()),
@@ -17,13 +20,21 @@ FIELDS = (
     ("UPDATE_CHANNEL", "Release channel", "select", ("stable", "prerelease")),
 )
 
+# Settings stored in metric (g, ml) and shown in the configured unit system:
+# key -> units setting kind. The unit is appended to the label by the portal.
+CONVERTED_FIELDS = {
+    "GRAIN_WEIGHT_TOLERANCE": "tolerance",
+    "HOP_WEIGHT_TOLERANCE": "tolerance",
+    "KEG_SPUNDING_VALVE_INERTIA_ML": "inertia",
+}
+
 # Tabs of the page: (query key, i18n key, default title, cards), and each card
 # is (i18n key, default title, dot colour class, fields). Every FIELDS key
 # belongs to exactly one card. The kegs and the backup box are appended by
 # _append_kegs and _append_maintenance.
 TABS = (
     ("general", "portal.tabs.general", "General", (
-        ("portal.sections.wifi", "Wi-Fi", "", ("LANGUAGE", "WIFI_SSID", "WIFI_PASSWORD")),
+        ("portal.sections.wifi", "Wi-Fi", "", ("LANGUAGE", "UNITS", "WIFI_SSID", "WIFI_PASSWORD")),
         ("portal.sections.device", "Device", "", ("STANDBY_TIMEOUT_MIN", "BATTERY", "DEBUG")),
     )),
     ("brewing", "portal.tabs.brewing", "Brewing", (
@@ -180,8 +191,25 @@ def render_message_html(text, i18n=None, error=False, hint=""):
     return "".join(render_message_parts(text, i18n=i18n, error=error, hint=hint))
 
 
+def _shown_setting(kind, value):
+    """A stored setting as the form shows it. A string is what the user
+    typed into a form that failed validation: it goes back untouched."""
+    if isinstance(value, str):
+        return value
+    try:
+        return units.setting_to_text(kind, value)
+    except Exception:
+        return value
+
+
 def _append_field(parts, key, label, typ, choices, value, i18n, form_attr):
     text = _escape(_t(i18n, "portal.fields." + key, label))
+    kind = CONVERTED_FIELDS.get(key)
+    step = ""
+    if kind:
+        text = "{} ({})".format(text, _escape(units.setting_unit(kind)))
+        value = _shown_setting(kind, value)
+        step = " step='{}'".format(units.setting_step(kind))
     if typ == "checkbox":
         parts.append("<label class='c'>{}<input type='checkbox' name='{}' value='on'{}{}></label>".format(
             text, key, " checked" if bool(value) else "", form_attr))
@@ -194,7 +222,7 @@ def _append_field(parts, key, label, typ, choices, value, i18n, form_attr):
             parts.append("<option value='{}'{}>{}</option>".format(choice, " selected" if str(value) == choice else "", label_choice))
         parts.append("</select>")
     elif typ == "number":
-        parts.append("<input type='number' name='{}' value='{}' min='0' inputmode='decimal'{}>".format(key, _escape(value), form_attr))
+        parts.append("<input type='number' name='{}' value='{}' min='0'{} inputmode='decimal'{}>".format(key, _escape(value), step, form_attr))
     else:
         parts.append("<input type='{}' name='{}' value='{}' autocomplete='off'{}>".format(typ, key, _escape(value), form_attr))
     parts.append("</label>")
@@ -213,6 +241,12 @@ def _append_cards(parts, cards, fields, values, i18n, form_attr="", tail=None):
         parts.append("</fieldset>")
 
 
+def _keg_text(kind, value):
+    if units.is_metric():
+        return _number(value)
+    return units.setting_to_text(kind, value)
+
+
 def _append_kegs(parts, kegs, i18n):
     parts.append("<fieldset class='s'><legend>{}</legend>".format(_escape(_t(i18n, "portal.kegs", "Kegs"))))
     if not kegs:
@@ -221,8 +255,8 @@ def _append_kegs(parts, kegs, i18n):
         name = keg.get("name", "")
         parts.append("<fieldset><legend>{}</legend>".format(_escape(name)))
         parts.append("<label>{}<input type='text' name='keg_name_{}' value='{}' maxlength='32'></label>".format(_escape(_t(i18n, "portal.keg_name", "Keg name")), idx, _escape(name)))
-        parts.append("<div class='u'><label>{} (g)<input type='number' name='keg_empty_weight_g_{}' value='{}' min='0.1' step='0.1' inputmode='decimal'></label>".format(_escape(_t(i18n, "portal.keg_empty_weight", "Empty weight")), idx, _escape(_number(keg.get("empty_weight_g", 0)))))
-        parts.append("<label>{} (L)<input type='number' name='keg_max_volume_l_{}' value='{}' min='0.1' step='0.1' inputmode='decimal'></label></div>".format(_escape(_t(i18n, "portal.keg_max_volume", "Max volume")), idx, _escape(_number(keg.get("max_volume_l", 0)))))
+        parts.append("<div class='u'><label>{} ({})<input type='number' name='keg_empty_weight_g_{}' value='{}' min='{}' step='{}' inputmode='decimal'></label>".format(_escape(_t(i18n, "portal.keg_empty_weight", "Empty weight")), _escape(units.setting_unit("keg_weight")), idx, _escape(_keg_text("keg_weight", keg.get("empty_weight_g", 0))), units.setting_step("keg_weight"), units.setting_step("keg_weight")))
+        parts.append("<label>{} ({})<input type='number' name='keg_max_volume_l_{}' value='{}' min='{}' step='{}' inputmode='decimal'></label></div>".format(_escape(_t(i18n, "portal.keg_max_volume", "Max volume")), _escape(units.setting_unit("keg_volume")), idx, _escape(_keg_text("keg_volume", keg.get("max_volume_l", 0))), units.setting_step("keg_volume"), units.setting_step("keg_volume")))
         parts.append("<button class='x' type='submit' formaction='/kegs/delete' name='idx' value='{}'>{} {}</button></fieldset>".format(idx, _escape(_t(i18n, "portal.keg_delete", "Delete")), _escape(name)))
     parts.append("</fieldset>")
 
@@ -302,6 +336,48 @@ def render_form_parts(values, kegs=None, include_kegs=False, error="", i18n=None
     return parts
 
 
+def _keg_value(form, key, kind, stored):
+    """A keg field back in grams or litres. Outside metric, a field left as
+    displayed keeps its stored value, so saving never drifts it by rounding."""
+    if key not in form:
+        return float(stored)
+    text = str(form.get(key)).strip()
+    if units.is_metric():
+        return float(text)
+    if text == units.setting_to_text(kind, stored):
+        return float(stored)
+    return float(units.setting_from_text(kind, text))
+
+
+def metric_settings(updates, current):
+    """The /save fields with the converted settings back in g or ml.
+
+    The page was rendered in the system the Dial booted with, which is also
+    the one units reads: a UNITS change saved in the same form only applies
+    after the reboot. A field left as displayed is dropped, so the stored
+    value stays exact; text that is not a number is left for config_registry
+    to reject.
+    """
+    if units.is_metric():
+        return updates
+    out = dict(updates)
+    for key, kind in CONVERTED_FIELDS.items():
+        if key not in out:
+            continue
+        text = str(out[key]).strip()
+        try:
+            if text == units.setting_to_text(kind, current.get(key)):
+                del out[key]
+                continue
+        except Exception:
+            pass
+        try:
+            out[key] = units.setting_from_text(kind, text)
+        except ValueError:
+            pass
+    return out
+
+
 def kegs_from_form(kegs, form):
     updated = list(kegs)
     changed = False
@@ -313,8 +389,8 @@ def kegs_from_form(kegs, form):
             continue
         name = str(form.get(nk, updated[idx].get("name", "")) or "").strip()
         try:
-            weight = float(form.get(wk, updated[idx].get("empty_weight_g", 0)))
-            volume = float(form.get(vk, updated[idx].get("max_volume_l", 0)))
+            weight = _keg_value(form, wk, "keg_weight", updated[idx].get("empty_weight_g", 0))
+            volume = _keg_value(form, vk, "keg_volume", updated[idx].get("max_volume_l", 0))
         except Exception:
             return None
         if not name or weight <= 0 or volume <= 0:

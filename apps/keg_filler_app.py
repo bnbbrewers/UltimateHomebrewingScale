@@ -19,9 +19,11 @@ from storage.keg_registry import (
     save_kegs,
 )
 from ui import screen_ids
-from ui.units import volume_l_to_weight_g
+import units
 
 
+# The metric picker. units.keg_volume_settings() holds the same values for
+# every system, in its display unit; these stay for the metric flow and tests.
 DEFAULT_VOLUME_L = 18.0
 MIN_VOLUME_L = 0.5
 MAX_VOLUME_L = 60.0
@@ -289,7 +291,7 @@ class KegFillerApp(BaseApp):
         self.screen_manager.show(screen_ids.SIMPLE_MESSAGE)
 
     def _show_volume_select(self):
-        self._selected_volume_l = DEFAULT_VOLUME_L
+        self._selected_volume_l = units.volume_display_to_l(units.keg_volume_settings()[0])
         self._volume().configure(
             title=self.t("keg.calibration_step_2_title"),
             volume_l=self._selected_volume_l,
@@ -407,7 +409,7 @@ class KegFillerApp(BaseApp):
     def _tick_volume_select(self):
         delta = self._consume_rotary_delta()
         if delta:
-            self._set_selected_volume(self._selected_volume_l + (delta * VOLUME_STEP_L))
+            self._step_selected_volume(delta)
         if not self.hardware.button.was_short_pressed():
             return
         updated = append_keg(
@@ -443,7 +445,7 @@ class KegFillerApp(BaseApp):
             self._show_select()
             return
         empty_weight_g = float(self._selected_keg["empty_weight_g"])
-        target_weight_g = volume_l_to_weight_g(self._selected_keg["max_volume_l"])
+        target_weight_g = units.volume_l_to_weight_g(self._selected_keg["max_volume_l"])
         inertia_g = _spunding_valve_inertia_ml()
         self._filling_stop_weight_g = empty_weight_g + target_weight_g - inertia_g
         if self._filling_stop_weight_g < empty_weight_g:
@@ -591,11 +593,20 @@ class KegFillerApp(BaseApp):
             return delta
         return 0
 
+    def _step_selected_volume(self, delta):
+        """Move the picker by ``delta`` notches, in the display unit."""
+        _default, minimum, maximum, step, _decimals = units.keg_volume_settings()
+        # A volume converted from litres never lands exactly on the gallon
+        # grid: snap it first, so the notches stay on round values.
+        shown = round(units.volume_l_to_display(self._selected_volume_l) / step) * step
+        shown += delta * step
+        if shown < minimum:
+            shown = minimum
+        elif shown > maximum:
+            shown = maximum
+        self._set_selected_volume(units.volume_display_to_l(shown))
+
     def _set_selected_volume(self, volume_l):
-        if volume_l < MIN_VOLUME_L:
-            volume_l = MIN_VOLUME_L
-        elif volume_l > MAX_VOLUME_L:
-            volume_l = MAX_VOLUME_L
         if volume_l == self._selected_volume_l:
             return
         self._selected_volume_l = volume_l

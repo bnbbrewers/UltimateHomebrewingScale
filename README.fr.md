@@ -27,7 +27,8 @@ chaque pesée, des malts aux ajouts de houblon, et remplit vos fûts au poids.
   Brewfather, les fûts, les mises à jour et la sauvegarde de la configuration.
 
 Tout se pilote avec la molette et son bouton ; l'application se met à jour par
-le Wi-Fi, et une batterie LiPo optionnelle rend la balance portable.
+le Wi-Fi, et une batterie LiPo optionnelle rend la balance portable. Elle parle
+français ou anglais, en unités métriques, US ou impériales.
 
 ## Documentation
 
