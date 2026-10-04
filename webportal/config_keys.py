@@ -7,26 +7,33 @@ EDITABLE_KEYS = {
         "default": "en",
         "label": "Language",
     },
+    # Display only: every stored value stays metric (see units.py).
+    "UNITS": {
+        "type": "enum",
+        "choices": ["metric", "us", "imperial"],
+        "default": "metric",
+        "label": "Units",
+    },
     "GRAIN_WEIGHT_TOLERANCE": {
         "type": "int",
         "min": 0,
         "max": 500,
         "default": 10,
-        "label": "Grain tolerance (g)",
+        "label": "Grain tolerance",
     },
     "HOP_WEIGHT_TOLERANCE": {
         "type": "int",
         "min": 0,
         "max": 500,
         "default": 1,
-        "label": "Hop tolerance (g)",
+        "label": "Hop tolerance",
     },
     "KEG_SPUNDING_VALVE_INERTIA_ML": {
         "type": "int",
         "min": 0,
         "max": 5000,
         "default": 200,
-        "label": "Spunding valve inertia (ml)",
+        "label": "Spunding valve inertia",
     },
     # Bounds mirror apps.keg_filler_app: the stall guard cannot be disabled.
     "KEG_FILL_STALL_TIMEOUT_S": {
@@ -96,6 +103,7 @@ EDITABLE_KEYS = {
 
 EDITABLE_ORDER = [
     "LANGUAGE",
+    "UNITS",
     "WIFI_SSID",
     "WIFI_PASSWORD",
     "BREWING_SOFTWARE",

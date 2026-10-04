@@ -13,6 +13,11 @@ BREWFATHER_API_KEY = "your_api_key_here"
 # Supported languages: 'en' (English), 'fr' (Francais)
 LANGUAGE = "en"
 
+# Units shown on the Dial and in the setup portal: "metric" (g, L),
+# "us" (lb, oz, US gal) or "imperial" (lb, oz, UK gal). Display only: the
+# values below and every saved file stay in grams, millilitres and litres.
+UNITS = "metric"
+
 # Grain weighing tolerance in grams
 GRAIN_WEIGHT_TOLERANCE = 20
 

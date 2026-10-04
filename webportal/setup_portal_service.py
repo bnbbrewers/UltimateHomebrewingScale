@@ -25,14 +25,15 @@ SETUP_TOKEN = ""
 
 _EDITABLE_FIELDS = (
     ("LANGUAGE", "Language", "select", ("fr", "en")),
+    ("UNITS", "Units", "select", ("metric", "us", "imperial")),
     ("WIFI_SSID", "Wi-Fi SSID", "text", ()),
     ("WIFI_PASSWORD", "Wi-Fi password", "password", ()),
     ("BREWING_SOFTWARE", "Brewing software", "select", ("brewfather",)),
     ("BREWFATHER_USER_ID", "Brewfather user id", "text", ()),
     ("BREWFATHER_API_KEY", "Brewfather API key", "password", ()),
-    ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance (g)", "number", ()),
-    ("HOP_WEIGHT_TOLERANCE", "Hop tolerance (g)", "number", ()),
-    ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding inertia (ml)", "number", ()),
+    ("GRAIN_WEIGHT_TOLERANCE", "Grain tolerance", "number", ()),
+    ("HOP_WEIGHT_TOLERANCE", "Hop tolerance", "number", ()),
+    ("KEG_SPUNDING_VALVE_INERTIA_ML", "Spunding inertia", "number", ()),
     ("KEG_FILL_STALL_TIMEOUT_S", "Fill stall safety (s)", "number", ()),
     ("STANDBY_TIMEOUT_MIN", "Standby after (min, 0 = off)", "number", ()),
     ("BATTERY", "Battery powered", "checkbox", ()),
@@ -225,6 +226,10 @@ def _load_kegs():
 
 def _kegs_from_form(kegs, form):
     return _portal_content().kegs_from_form(kegs, form)
+
+
+def _metric_settings(updates, current):
+    return _portal_content().metric_settings(updates, current)
 
 
 class SetupPortalService:

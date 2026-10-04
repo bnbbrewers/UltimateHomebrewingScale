@@ -7,6 +7,7 @@ import lvgl as lv
 
 from .ui_helper import UIHelper
 import runtime_debug
+import units
 
 
 class KegVolumeScreen:
@@ -22,7 +23,7 @@ class KegVolumeScreen:
         )
 
         self._volume_label = m5ui.M5Label(
-            "0.0 L",
+            units.format_volume(0, decimals=units.keg_volume_settings()[4]),
             x=0,
             y=86,
             text_c=0xFFFFFF,
@@ -71,4 +72,5 @@ class KegVolumeScreen:
         self.set_volume(volume_l)
 
     def set_volume(self, volume_l):
-        self._volume_label.set_text("{:.1f} L".format(volume_l))
+        self._volume_label.set_text(
+            units.format_volume(volume_l, decimals=units.keg_volume_settings()[4]))

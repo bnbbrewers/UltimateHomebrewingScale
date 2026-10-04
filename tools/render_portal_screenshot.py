@@ -49,6 +49,7 @@ BROWSER_CANDIDATES = (
 # real credentials: the guide tells the reader to substitute their own.
 SAMPLE_VALUES = {
     "LANGUAGE": "en",
+    "UNITS": "metric",
     "WIFI_SSID": "MyBrewery",
     "WIFI_PASSWORD": "wifi-password",
     "BREWING_SOFTWARE": "brewfather",
@@ -92,7 +93,12 @@ def build_page(tab):
     "English" and "Stable" rather than their raw values.
     """
     from i18n import I18n
+    import units
     from webportal.portal_html import render_form_html
+
+    # The portal converts with the system the Dial booted with; pin it to the
+    # sample's, not to whatever config.py the machine rendering this has.
+    units._current = SAMPLE_VALUES["UNITS"]
 
     page = render_form_html(SAMPLE_VALUES, kegs=SAMPLE_KEGS, include_kegs=True,
                             i18n=I18n("en"), tab=tab)

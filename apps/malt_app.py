@@ -40,6 +40,7 @@ class GrainAssistantApp(RecipeApp):
     COLOR = _COLOR_MALT
     TITLE_KEY = "grain.title"
     TRACE_PREFIX = "grain"
+    WEIGHT_KIND = "grain"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)

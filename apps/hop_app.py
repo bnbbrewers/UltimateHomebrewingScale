@@ -5,6 +5,7 @@ Memory-safe hop assistant app (business logic only).
 import gc
 
 import runtime_debug
+import units
 
 from .recipe_app import RecipeApp
 from ui import screen_ids
@@ -64,6 +65,7 @@ class HopAssistantApp(RecipeApp):
     COLOR = _COLOR_HOP
     TITLE_KEY = "hop.title"
     TRACE_PREFIX = "hop"
+    WEIGHT_KIND = "hop"
 
     def __init__(self, screen_manager, hardware, apis, i18n=None):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
@@ -219,16 +221,8 @@ class HopAssistantApp(RecipeApp):
 
     # ── display helpers ────────────────────────────────────────────
 
-    @staticmethod
-    def _fmt_g(amount):
-        a = float(amount)
-        if abs(a - round(a)) < 0.05:
-            return str(int(round(a)))
-        t = "{:.1f}".format(a)
-        return t[:-2] if t.endswith(".0") else t
-
     def _step_line(self, vessel_number, sn, amt):
-        return self.t("hop.step_line", vessel_number, sn, self._fmt_g(amt))
+        return self.t("hop.step_line", vessel_number, sn, units.format_hop_amount(amt))
 
     @staticmethod
     def _to_target_g(amount):
