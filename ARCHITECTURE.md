@@ -129,6 +129,7 @@ BREWING_SOFTWARE = "brewfather"
 BREWFATHER_USER_ID = "your_user_id_here"
 BREWFATHER_API_KEY = "your_api_key_here"
 LANGUAGE = "en"  # "en" or "fr"
+UNITS = "metric"  # "metric", "us" or "imperial"
 GRAIN_WEIGHT_TOLERANCE = 10
 HOP_WEIGHT_TOLERANCE = 1
 KEG_SPUNDING_VALVE_INERTIA_ML = 200
@@ -139,6 +140,18 @@ UPDATE_CHANNEL = "stable"
 # Optional: uncomment to enable a 15-second runtime watchdog.
 # WATCHDOG_TIMEOUT_MS = 15000
 ```
+
+`UNITS` only changes what the user sees. Every stored value stays metric:
+the tolerances and the inertia in `config.py` (g, ml), `kegs.json` (g, L),
+`scale_calibration.json` (g), the backup file, and the Brewfather amounts. All
+comparisons are made in grams. [units.py](units.py) converts for display and
+parses what the portal user types back; outside `metric` no metric unit is
+shown. Weights follow Brewfather's habit: hops always in ounces, malts always in
+pounds, the Scale app and the calibration in ounces below a pound and pounds
+above. `us` and `imperial` share the pound and the ounce and differ by the
+gallon and the fluid ounce. The portal converts with the system the Dial
+booted with, and keeps a stored value untouched when its field is saved as
+displayed, so rounding never drifts it.
 
 The Wi-Fi manager first tries UIFlow NVS credentials (`uiflow:ssid0` /
 `uiflow:pswd0`), then falls back to `WIFI_SSID` and `WIFI_PASSWORD` in

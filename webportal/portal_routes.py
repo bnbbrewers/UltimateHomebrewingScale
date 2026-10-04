@@ -140,10 +140,12 @@ def handle_request(service, client, method, target, body):
                 updates[key] = key in form and str(form.get(key, "")).lower() in ("1", "true", "on", "yes")
             elif key in form:
                 updates[key] = form.get(key)
+        current = portal._current_values()
+        updates = portal._metric_settings(updates, current)
         kegs = portal._load_kegs()
         updated_kegs = portal._kegs_from_form(kegs, form)
         if updated_kegs is None:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(current, **updates), error="Invalid fields", kegs=kegs, i18n=service._i18n))
             return
         try:
             from storage import config_registry
@@ -151,7 +153,7 @@ def handle_request(service, client, method, target, body):
         except Exception as e:
             ok, errors = False, str(e)
         if not ok:
-            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(portal._current_values(), **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
+            send(client, 400, "text/html; charset=utf-8", portal.render_minimal_form_parts(dict(current, **updates), error=errors, kegs=updated_kegs, i18n=service._i18n))
             return
         if updated_kegs is not kegs:
             try:

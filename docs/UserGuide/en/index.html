@@ -252,7 +252,7 @@
                 </tr>
                 <tr>
                   <td>Large number</td>
-                  <td>The weight still to add. It shows grams below 1 kg and kilograms with two decimals above.</td>
+                  <td>The weight still to add. It shows grams below 1 kg and kilograms with two decimals above. With US or Imperial units, hops count down in ounces and malts in pounds, both with two decimals.</td>
                 </tr>
                 <tr>
                   <td>Progress bar and percentage</td>
@@ -361,7 +361,8 @@
             <li class="uhs-step">
               <h3>Weigh</h3>
               <p>
-                The weight is shown live, in grams below 1 kg and in kilograms above. The status line reads
+                The weight is shown live, in grams below 1 kg and in kilograms above (with US or Imperial units,
+                in ounces below 1 lb and in pounds above). The status line reads
                 <strong>Press to tare</strong>.
               </p>
               <figure class="uhs-figure uhs-figure--dial">
@@ -547,10 +548,16 @@
                 The title bar shows the hop and the container number. When <strong>OK</strong> appears, press the
                 button to validate.
               </p>
-              <figure class="uhs-figure uhs-figure--dial">
-                <img src="../img/screen-hop-weighing-en.webp" width="560" height="560" alt="Hop weighing screen with the green title Citra, Recipient : 1: 7 g left to pour and a green bar at 72%">
-                <figcaption>7 g of Citra left for container 1.</figcaption>
-              </figure>
+              <div class="uhs-figures uhs-figures--dial">
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-hop-weighing-en.webp" width="560" height="560" alt="Hop weighing screen with the green title Citra, Recipient : 1: 7 g left to pour and a green bar at 72%">
+                  <figcaption>7 g of Citra left for container 1.</figcaption>
+                </figure>
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-hop-weighing-us-en.webp" width="560" height="560" alt="The same screen in US units: 0.25 oz left to pour and a green bar at 75%">
+                  <figcaption>With US units: 0.25 oz left.</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="uhs-step">
               <h3>Finish the hop, then the recipe</h3>
@@ -630,7 +637,9 @@
               <h3>Set the volume to fill</h3>
               <p>
                 On <strong>Calibration 2/2</strong>, turn the dial to set the volume of beer the keg should receive,
-                from 0.5 to 60 L in 0.5 L steps (18 L to start with). Press to save.
+                from 0.5 to 60 L in 0.5 L steps (18 L to start with). With US units it goes from 0.25 to 15 gal in
+                0.25 gal steps (5 gal to start with), with Imperial units from 0.25 to 13 gal (4 gal to start with).
+                Press to save.
               </p>
               <figure class="uhs-figure uhs-figure--dial">
                 <img src="../img/screen-keg-volume-en.webp" width="560" height="560" alt="Calibration 2/2 screen showing 19.0 L, the hint Turn to adjust and a green OK button">
@@ -667,14 +676,21 @@
             <li class="uhs-step">
               <h3>Watch the fill</h3>
               <p>
-                The screen shows the volume poured in litres and a progress bar. UHS stops a little before
+                The screen shows the volume poured in litres (in gallons with US or Imperial units) and a progress
+                bar. UHS stops a little before
                 the set volume, by the spunding valve inertia set in the portal (200 ml by default), so the beer
                 still in the line tops the keg up without overflowing.
               </p>
-              <figure class="uhs-figure uhs-figure--dial">
-                <img src="../img/screen-keg-filling-en.webp" width="560" height="560" alt="filling keg0 screen showing 11.50 L and a green progress bar at 61%">
-                <figcaption>11.5 L poured so far.</figcaption>
-              </figure>
+              <div class="uhs-figures uhs-figures--dial">
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-keg-filling-en.webp" width="560" height="560" alt="filling keg0 screen showing 11.50 L and a green progress bar at 61%">
+                  <figcaption>11.5 L poured so far.</figcaption>
+                </figure>
+                <figure class="uhs-figure uhs-figure--dial">
+                  <img src="../img/screen-keg-filling-us-en.webp" width="560" height="560" alt="The same screen in US units, showing 3.04 gal and a green progress bar at 61%">
+                  <figcaption>With US units: 3.04 gal poured.</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="uhs-step">
               <h3>The valve closes by itself</h3>
@@ -792,7 +808,7 @@
 
               <div class="uhs-figures">
                 <figure class="uhs-figure">
-                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1589" alt="General tab of the setup portal: Wi-Fi and Device cards">
+                  <img src="../../SoftwareInstallationGuide/img/PortalPage-general.png" width="720" height="1746" alt="General tab of the setup portal: Wi-Fi and Device cards">
                   <figcaption><strong>General</strong>: Wi-Fi and device.</figcaption>
                 </figure>
                 <figure class="uhs-figure">
@@ -824,6 +840,15 @@
                     <tr>
                       <td>Language</td>
                       <td>Choose <code>English</code> or <code>French</code> for the interface of UHS and of the portal.</td>
+                    </tr>
+                    <tr>
+                      <td>Units</td>
+                      <td>
+                        <code>Metric (g, L)</code>, <code>US (lb, oz, US gal)</code> or
+                        <code>Imperial UK (lb, oz, UK gal)</code>. Every weight and volume on UHS and in the portal
+                        follows it, the way Brewfather shows them: hops in ounces, malts in pounds, kegs in gallons.
+                        UHS keeps its data in metric, so you can switch at any time without losing anything.
+                      </td>
                     </tr>
                     <tr>
                       <td>Wi-Fi SSID</td>
@@ -865,22 +890,22 @@
                       <td>Paste your Brewfather API key. It is hidden as you type.</td>
                     </tr>
                     <tr>
-                      <td>Grain tolerance (g)</td>
-                      <td>How close to the target a malt must be for <strong>OK</strong> to appear. Default <code>10</code>.</td>
+                      <td>Grain tolerance (g or oz)</td>
+                      <td>How close to the target a malt must be for <strong>OK</strong> to appear. Default <code>10</code> g. With US or Imperial units it is in ounces, to one decimal.</td>
                     </tr>
                     <tr>
-                      <td>Hop tolerance (g)</td>
-                      <td>The same for hops. Default <code>1</code>.</td>
+                      <td>Hop tolerance (g or oz)</td>
+                      <td>The same for hops. Default <code>1</code> g.</td>
                     </tr>
                     <tr>
                       <th colspan="2" scope="rowgroup">Kegs</th>
                     </tr>
                     <tr>
-                      <td>Spunding valve inertia (ml)</td>
+                      <td>Spunding valve inertia (ml or fl oz)</td>
                       <td>
                         How far before the set volume the keg filler closes the valve, to leave room for the beer still
-                        in the line. Keep the default <code>200</code> ml; raise it if your kegs overflow, lower it if they
-                        end up short.
+                        in the line. Keep the default <code>200</code> ml (<code>7</code> fl oz); raise it if your kegs
+                        overflow, lower it if they end up short.
                       </td>
                     </tr>
                     <tr>
@@ -923,8 +948,8 @@
           <h3 class="uhs-subhead">Kegs</h3>
           <p>
             Every keg registered from the <a href="#keg">Keg</a> app is listed in the <strong>Kegs</strong> tab,
-            below the <strong>Filling</strong> settings, with its <strong>Keg name</strong>, its <strong>Empty weight (g)</strong> and
-            its <strong>Max volume (L)</strong>. Edit them, then tap <strong>Save and reboot</strong>. The
+            below the <strong>Filling</strong> settings, with its <strong>Keg name</strong>, its <strong>Empty weight</strong> (g, or lb with US or Imperial units) and
+            its <strong>Max volume</strong> (L, or gal). Edit them, then tap <strong>Save and reboot</strong>. The
             red <strong>Delete</strong> button under a keg, followed by its name, removes it at once, without restarting
             UHS, and the page reopens on the <strong>Kegs</strong> tab.
           </p>

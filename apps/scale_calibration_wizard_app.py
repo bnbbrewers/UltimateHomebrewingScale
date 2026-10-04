@@ -9,10 +9,13 @@ import json
 import time
 
 import runtime_debug
+import units
 
 from .base_app import BaseApp
 from ui import screen_ids
 
+# The metric reference weights; units.calibration_points_g() gives the ones
+# of the configured system, all in grams.
 CALIBRATION_POINTS = [0, 100, 500, 5000, 25000]
 CALIBRATION_DURATION = 30
 CALIBRATION_FILE = "scale_calibration.json"
@@ -37,6 +40,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._intro_acknowledged = False
 
         self._current_step = 0
+        self._points = list(CALIBRATION_POINTS)
         self._adjusted_weights = list(CALIBRATION_POINTS)
         self._calibration_data = {}
 
@@ -70,7 +74,8 @@ class ScaleCalibrationWizardApp(BaseApp):
     def _reset_state(self):
         self._intro_acknowledged = False
         self._current_step = 0
-        self._adjusted_weights = list(CALIBRATION_POINTS)
+        self._points = units.calibration_points_g()
+        self._adjusted_weights = list(self._points)
         self._calibration_data = {}
         self._encoder_speed_multiplier = 1
         self._encoder_last_direction = 0
@@ -118,7 +123,7 @@ class ScaleCalibrationWizardApp(BaseApp):
             self._tick_measurement()
             return None
 
-        if self._current_step >= len(CALIBRATION_POINTS):
+        if self._current_step >= len(self._points):
             return None
 
         self._handle_encoder()
@@ -174,14 +179,14 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._render()
 
     def _render(self):
-        if self._current_step < len(CALIBRATION_POINTS):
+        if self._current_step < len(self._points):
             target = self._adjusted_weights[self._current_step]
-            point = CALIBRATION_POINTS[self._current_step]
+            point = self._points[self._current_step]
             self._screen.render_step(
                 self._current_step,
-                len(CALIBRATION_POINTS),
-                point,
-                target,
+                len(self._points),
+                units.format_calibration_weight(point, compact=True),
+                units.format_calibration_weight(target),
             )
             return
 
@@ -218,8 +223,10 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._encoder_last_direction = current_direction
         self._last_encoder_change_time = current_time
 
-        weight = self._adjusted_weights[self._current_step]
-        weight += delta * self._encoder_speed_multiplier
+        weight = units.adjust_calibration_weight(
+            self._adjusted_weights[self._current_step],
+            delta * self._encoder_speed_multiplier,
+        )
         self._adjusted_weights[self._current_step] = min(50000, max(0, weight))
         self._render()
 
@@ -274,7 +281,7 @@ class ScaleCalibrationWizardApp(BaseApp):
         self._screen.render_average(average)
 
         self._current_step += 1
-        if self._current_step < len(CALIBRATION_POINTS):
+        if self._current_step < len(self._points):
             self._render()
             return
 
@@ -306,15 +313,15 @@ class ScaleCalibrationWizardApp(BaseApp):
             sorted_data = sorted(self._calibration_data.items(), key=lambda item: item[0])
             for step_index, item in enumerate(sorted_data):
                 weight, adc_value = item
-                if step_index < len(CALIBRATION_POINTS):
-                    calibration_point = CALIBRATION_POINTS[step_index]
+                if step_index < len(self._points):
+                    calibration_point = int(round(self._points[step_index]))
                 else:
                     calibration_point = 0
                 calibration_points.append(
                     {
                         "step": step_index,
                         "calibration_point": calibration_point,
-                        "weight": int(weight),
+                        "weight": int(round(weight)),
                         "adc_average": float(adc_value),
                     }
                 )
