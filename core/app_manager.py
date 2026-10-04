@@ -14,7 +14,19 @@ CALIBRATION_WIZARD_APP_ID = app_registry.CALIBRATION_WIZARD
 # Imported by whichever recipe app runs, and by neither one afterwards. It is
 # evicted with them so the base class does not stay resident for a session
 # that never opens Malt or Hop again.
-_COMPANION_MODULES = ("apps.recipe_app",)
+# The setup portal is the same case for Settings: its HTML and routes stay on
+# the heap otherwise, and the launcher has to rebuild its screen next to them
+# when Settings was the boot app. webportal.config_keys is left alone, as
+# storage.config_registry loads it at boot and keeps it.
+_COMPANION_MODULES = (
+    "apps.recipe_app",
+    "webportal.setup_portal_service",
+    "webportal.portal_routes",
+    "webportal.portal_html",
+    "webportal.request_limits",
+    "webportal.multipart",
+    "storage.config_backup",
+)
 
 
 def _evict_module(module_name):
