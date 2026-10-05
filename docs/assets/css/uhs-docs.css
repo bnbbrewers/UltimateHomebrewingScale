@@ -37,6 +37,10 @@
   --uhs-amber-ink:  #8A6200;
   --uhs-steel-ink:  #5A6270;
 
+  /* availability warning: the portal's delete red */
+  --uhs-red:        #A8463F;
+  --uhs-red-ink:    #8A1C12;
+
   /* surfaces */
   --uhs-bg:         #F4F4F2;
   --uhs-surface:    #FFFFFF;
@@ -58,6 +62,7 @@
   --uhs-tint-green: #F1FAF2;
   --uhs-tint-amber: #FFF8E6;
   --uhs-tint-steel: #F2F4F7;
+  --uhs-tint-red:   #FDECEA;
 
   /* code */
   --uhs-code-bg:    #0D0F12;
@@ -107,10 +112,12 @@
     --uhs-green-ink:  #3FD152;
     --uhs-amber-ink:  #FFC633;
     --uhs-steel-ink:  #A8B0BB;
+    --uhs-red-ink:    #FFB4A9;
 
     --uhs-tint-green: #101E13;
     --uhs-tint-amber: #211A08;
     --uhs-tint-steel: #161A20;
+    --uhs-tint-red:   #3A1512;
 
     --uhs-code-bg:    #05070A;
 
@@ -857,6 +864,9 @@ strong { font-weight: 700; }
 
 .uhs-note--info { background: var(--uhs-tint-steel); border-left-color: var(--uhs-steel-ink); }
 .uhs-note--info .uhs-note__label { color: var(--uhs-steel-ink); }
+
+.uhs-note--danger { background: var(--uhs-tint-red); border-left-color: var(--uhs-red); }
+.uhs-note--danger .uhs-note__label { color: var(--uhs-red-ink); }
 
 /* ------------------------------------------------------------- §5.9 tables */
 

@@ -404,8 +404,10 @@ variante `-ink`, suivi du texte.
 | `.uhs-note--tip` | `--uhs-tint-green` | `--uhs-green` / `--uhs-green-ink` | astuce, raccourci |
 | `.uhs-note--warn` | `--uhs-tint-amber` | `--uhs-amber` / `--uhs-amber-ink` | avertissement, risque de perte de données |
 | `.uhs-note--info` | `--uhs-tint-steel` | `--uhs-steel-ink` | contexte, compatibilité navigateur |
+| `.uhs-note--danger` | `--uhs-tint-red` | `--uhs-red` / `--uhs-red-ink` | fonction pas encore disponible dans la version stable |
 
-Trois variantes, pas plus. La couleur ne porte jamais seule le sens : le libellé
+Quatre variantes, pas plus. Le rouge reprend celui du bouton Supprimer du
+portail et reste réservé à la disponibilité d'une fonction. La couleur ne porte jamais seule le sens : le libellé
 textuel est obligatoire.
 
 ### 5.9 Tableaux (`.uhs-table`)
