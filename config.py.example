@@ -53,3 +53,12 @@ UPDATE_CHANNEL = "stable"
 
 # Hidden debug flag: try the updater on boot.
 UPDATE_ON_BOOT = False
+
+# Generic SCALE_API v1 provider, or webhooks alongside Brewfather.
+# Select BREWING_SOFTWARE = "generic_http" for guided HTTP weighing.
+HTTP_INTEGRATION_ENABLED = False
+HTTP_API_BASE_URL = ''
+HTTP_WEBHOOK_URL = ''
+HTTP_API_TOKEN = ''
+HTTP_LIVE_ENABLED = False
+HTTP_MEASUREMENT_INTERVAL_MS = 1000

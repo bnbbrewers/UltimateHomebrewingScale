@@ -29,6 +29,8 @@ class LauncherApp(BaseApp):
         self._items = LAUNCHER_ITEMS
         self._selected = 0
         self._shown_notice = None
+        self._shown_http_error = None
+        self._http_notice_open = False
         self._last_input_ms = 0
 
     def on_exit(self):
@@ -37,6 +39,7 @@ class LauncherApp(BaseApp):
 
     def on_enter(self):
         super().on_enter()
+        self._http_notice_open = False
         self._screen = self.screen_manager.get(screen_ids.LAUNCHER)
         runtime_debug.log("[MEM] launcher.on_enter free={}", runtime_debug.mem_free())
         self.screen_manager.show(screen_ids.LAUNCHER)
@@ -55,6 +58,17 @@ class LauncherApp(BaseApp):
         wifi = getattr(self.hardware, "wifi", None)
         if wifi is not None and wifi.connection_failed():
             return app_registry.WIFI_PROBLEM
+        if self._events and self._events.error != self._shown_http_error:
+            self._shown_http_error = self._events.error
+            if self._shown_http_error:
+                self._http_notice_open = True
+                self._show_msg("HTTP integration", self._shown_http_error, show_ok=True)
+                return None
+        if self._http_notice_open:
+            if self.hardware.button.was_short_pressed():
+                self._http_notice_open = False
+                self.screen_manager.show(screen_ids.LAUNCHER)
+            return None
         now = ticks.ticks_ms()
         touched = False
         if self._rotary:

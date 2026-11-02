@@ -55,6 +55,8 @@ _STATE_FILLING = 9
 _STATE_FILLING_DONE_ACK = 10
 _STATE_FILLING_DONE_SELECT = 11
 _STATE_FILLING_STALLED_ACK = 12
+_STATE_BATCH_SELECT = 13
+_STATE_WAIT_HTTP = 14
 
 # States where the dial has no other role, so it carries the back gesture.
 # The fill and its two prompts are among them only so the dial is drained:
@@ -119,6 +121,12 @@ class KegFillerApp(BaseApp):
     def __init__(self, screen_manager, hardware, apis, i18n=None, keg_file=KEG_FILE):
         super().__init__(screen_manager, hardware, apis, i18n=i18n)
         self._keg_file = keg_file
+        self._http_batches = []
+        self._http_batch_idx = 0
+        self._fill_context = None
+        self._fill_session_active = False
+        self._fill_result_saved = False
+        self._fill_net_g = 0
         self._simple_screen = None
         self._select_screen = None
         self._volume_screen = None
@@ -172,6 +180,10 @@ class KegFillerApp(BaseApp):
     def on_exit(self):
         super().on_exit()
         self._close_relay()
+        if self._events:
+            if self._fill_session_active and not self._fill_result_saved:
+                self._save_fill_result("filling.completed" if self._state == _STATE_FILLING_DONE_ACK else "filling.cancelled")
+            self._events.resume()
         self._reset_state()
         self._kegs = []
         self._scale = None
@@ -197,7 +209,13 @@ class KegFillerApp(BaseApp):
         self._reset_state()
         self._kegs = load_kegs(self._keg_file)
         gc.collect()
-        self._show_empty_platform()
+        self._fill_context = None
+        self._fill_session_active = False
+        self._fill_result_saved = False
+        if self._events:
+            self._show_http_batches()
+        else:
+            self._show_empty_platform()
         runtime_debug.snapshot("keg.on_enter", collect=False)
 
     def inhibits_standby(self):
@@ -220,7 +238,11 @@ class KegFillerApp(BaseApp):
                 and self._state not in _BACK_IGNORED_STATES):
             return self._on_back()
 
-        if self._state == _STATE_EMPTY_PLATFORM_ACK:
+        if self._state == _STATE_BATCH_SELECT:
+            return self._tick_http_batch()
+        elif self._state == _STATE_WAIT_HTTP:
+            self._start_filling()
+        elif self._state == _STATE_EMPTY_PLATFORM_ACK:
             self._tick_empty_platform_ack()
         elif self._state == _STATE_KEG_SELECT:
             self._tick_keg_select()
@@ -245,6 +267,56 @@ class KegFillerApp(BaseApp):
         elif self._state == _STATE_FILLING_DONE_SELECT:
             return self._tick_filling_done_select()
         return None
+
+    def _show_http_batches(self):
+        api = self.apis.get("brewing")
+        if not hasattr(api, "get_plan"):
+            # A webhook-only setup has no valid batch context for filling events.
+            # Keep the local filler available; SCALE_API forbids unbound results.
+            self._show_empty_platform()
+            return
+        self._http_batches = api.get_batches(phases=("packaging",))
+        self._select().configure(
+            title=str(api.last_error) if api.last_error else "Select packaging batch",
+            items=[b.name for b in self._http_batches] or ["No packaging batches - return"],
+            accent_color=_COLOR_KEG, selected_index=0)
+        self.screen_manager.show(screen_ids.SELECT_ITEM)
+        self._http_batch_idx = 0
+        self._state = _STATE_BATCH_SELECT
+
+    def _tick_http_batch(self):
+        if not self._http_batches:
+            if self.hardware.button.was_short_pressed():
+                return "launcher"
+            return
+        self._http_batch_idx, changed = self._rotary_navigate(self._http_batch_idx, len(self._http_batches))
+        if changed:
+            self._select().set_selected_index(self._http_batch_idx)
+        if not self.hardware.button.was_short_pressed():
+            return
+        api = self.apis.get("brewing")
+        try:
+            plan = api.get_plan(self._http_batches[self._http_batch_idx].batch_id)
+            self._fill_context = api.context(plan)
+        except Exception as error:
+            self._show_error(str(error), _STATE_EMPTY_PLATFORM_ACK)
+            return
+        self._http_batches = []
+        self._show_empty_platform()
+
+    def _event_weight(self, weight):
+        if self._selected_keg:
+            return weight - float(self._selected_keg["empty_weight_g"])
+        return weight
+
+    def _save_fill_result(self, kind):
+        if not self._events or not self._fill_context or self._fill_result_saved:
+            return True
+        if self._events.complete(kind, self._fill_net_g, self._weight_stable()):
+            self._fill_result_saved = True
+            self._fill_session_active = False
+            return True
+        return False
 
     def _show_empty_platform(self):
         self._simple().configure(
@@ -435,6 +507,15 @@ class KegFillerApp(BaseApp):
             self._start_filling()
 
     def _start_filling(self):
+        if self._events:
+            if not self._events.suspend():
+                self._state = _STATE_WAIT_HTTP
+                return
+        if self._events and self._fill_context and not self._fill_session_active:
+            if not self._events.can_record():
+                self._events.resume()
+                self._show_error(self._events.error, _STATE_KEG_SELECT)
+                return
         if not self._scale:
             self._show_error("keg.scale_not_found", _STATE_KEG_SELECT)
             return
@@ -463,6 +544,11 @@ class KegFillerApp(BaseApp):
         self._fill_reference_weight_g = None
         self._fill_reference_at = _ticks_ms()
         self._fill_stall_timeout_s = _fill_stall_timeout_s()
+        if self._events and self._fill_context and not self._fill_session_active:
+            self._events.begin(self._fill_context)
+            self._fill_session_active = True
+            self._fill_result_saved = False
+            self._fill_net_g = 0
         self._open_relay()
         runtime_debug.snapshot("keg.filling_started", collect=False)
         self._state = _STATE_FILLING
@@ -471,8 +557,14 @@ class KegFillerApp(BaseApp):
         weight = self._read_and_update_weight(self._weight())
         if weight is None:
             return
+        if self._selected_keg:
+            self._fill_net_g = max(0, weight - float(self._selected_keg["empty_weight_g"]))
         if weight >= self._filling_stop_weight_g:
             self._close_relay()
+            # The valve is closed before persistence or any network work resumes.
+            if self._events:
+                self._save_fill_result("filling.completed")
+                self._events.resume()
             self._weight().set_ok_visible(True)
             self._state = _STATE_FILLING_DONE_ACK
             return
@@ -534,6 +626,9 @@ class KegFillerApp(BaseApp):
 
     def _tick_filling_done_ack(self):
         if self.hardware.button.was_short_pressed():
+            if not self._save_fill_result("filling.completed"):
+                self._weight().set_status(self._events.error or "Result save failed")
+                return
             self._show_filling_done_select()
 
     def _tick_filling_done_select(self):

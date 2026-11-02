@@ -17,6 +17,8 @@ class BaseApp:
         self.screen_manager = screen_manager
         self.hardware = hardware
         self.apis = apis
+        self._events = apis.get("events")
+        self._last_weight_g = None
         self.i18n = i18n
 
         self._active = False
@@ -36,6 +38,8 @@ class BaseApp:
 
     def on_exit(self):
         self._active = False
+        if self._events:
+            self._events.end()
 
     def inhibits_standby(self):
         """True while this app must not be interrupted by standby.
@@ -115,6 +119,14 @@ class BaseApp:
             return idx, False
         return r.navigate_index(idx, count, wrap=False, invert=False)
 
+    def _event_weight(self, weight):
+        return weight
+
+    def _weight_stable(self):
+        scale = self.hardware.scale
+        check = getattr(scale, "is_stable", None)
+        return bool(check and check())
+
     def _read_and_update_weight(self, screen):
         scale = self.hardware.scale
         if scale is None:
@@ -126,6 +138,9 @@ class BaseApp:
         if weight is None:
             return None
 
+        self._last_weight_g = weight
+        if self._events:
+            self._events.sample(self._event_weight(weight), self._weight_stable())
         if screen:
             screen.update_from_weight(weight)
         return weight

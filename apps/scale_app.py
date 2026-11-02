@@ -26,6 +26,8 @@ class ScaleApp(BaseApp):
     def on_enter(self):
         super().on_enter()
         self._screen = None
+        if self._events:
+            self._events.begin()
         screen = self._weight()
         screen.configure(
             title=self.t("scale.title"),
@@ -59,6 +61,8 @@ class ScaleApp(BaseApp):
             self._weight().set_status(self.t("scale.taring"))
             ok = self._scale.tare()
             if ok:
+                if self._events:
+                    self._events.begin()
                 self._weight().set_status(self.t("scale.tare_done"))
             else:
                 self._weight().set_status(self.t("scale.tare_error"))

@@ -36,6 +36,7 @@ class RecipeApp(BaseApp):
         # False when a single batch skipped the recipe list: stepping back
         # from the recipe then has no list to return to.
         self._batch_picker_shown = False
+        self._event_context = None
 
     def _select(self):
         if self._select_screen is None:
@@ -112,6 +113,8 @@ class RecipeApp(BaseApp):
 
     def _begin_weighing(self, title, target_g, tolerance, weight_state):
         """Configure the weight screen and tare, the way both apps do it."""
+        if self._events:
+            self._events.begin(self._event_context)
         self._target_g = target_g
         screen = self._weight()
         screen.configure(
@@ -147,4 +150,14 @@ class RecipeApp(BaseApp):
             self._weight().set_status(self.t("common.ok") if in_range else "")
         if not (in_range or runtime_debug.DEBUG):
             return False
-        return bool(self.hardware.button.was_short_pressed())
+        if not self.hardware.button.was_short_pressed():
+            return False
+        if self._events and self._event_context:
+            # Current mass must be stable and in range, even if the UI latched OK earlier.
+            if abs(self._target_g - weight) > tolerance or not self._weight_stable():
+                self._weight().set_status("Wait for stable target weight")
+                return False
+            if not self._events.complete("weighing.completed", weight, stable=True):
+                self._weight().set_status(self._events.error or "Result could not be saved")
+                return False
+        return True

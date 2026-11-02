@@ -313,9 +313,10 @@ class HopAssistantApp(RecipeApp):
         hop = self._hops_list[self._current_hop_idx]
         step = hop["steps"][self._step_idx]
         vessel_number = self._vessel_number_for_step(step[0])
+        self._event_context = hop.get("context")
         self._begin_weighing(
             self.t("hop.weigh_title", hop["name"], vessel_number),
-            self._to_target_g(step[1]),
+            (step[1] if hop.get("context") else self._to_target_g(step[1])),
             _hop_weight_tolerance(),
             _STATE_WEIGHT,
         )
@@ -363,7 +364,7 @@ class HopAssistantApp(RecipeApp):
 
     def _show_network_error(self):
         self._show_msg(
-            self.t("hop.title"), self.t("common.network_error"),
+            self.t("hop.title"), str(self._api.last_error) if self._api and self._api.last_error else self.t("common.network_error"),
             _COLOR_HOP, show_ok=True)
         self._prep_flow_active = False
         self._state = _STATE_PREP_ACK
