@@ -39,6 +39,8 @@ def _safe_path(path):
     for segment in text.split("/"):
         if segment in (".", ".."):
             raise RuntimeError("unsafe path: %s" % text)
+    if text.startswith("storage/scale_events/"):
+        raise RuntimeError("unsafe path: %s" % text)
     if text == "config.py" or text.startswith("storage/") and text.endswith(".json"):
         raise RuntimeError("unsafe path: %s" % text)
     return text

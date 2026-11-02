@@ -166,7 +166,7 @@ class GrainAssistantApp(RecipeApp):
 
     def _show_network_error(self):
         if self._show_msg(
-                self.t("grain.title"), self.t("common.network_error"),
+                self.t("grain.title"), str(self._api.last_error) if self._api and self._api.last_error else self.t("common.network_error"),
                 _COLOR_MALT, show_ok=True):
             self._state = _STATE_MESSAGE_ACK
 
@@ -231,9 +231,10 @@ class GrainAssistantApp(RecipeApp):
 
     def _start_weighing(self):
         malt = self._malts[self._malt_idx]
+        self._event_context = getattr(malt, "context", None)
         self._begin_weighing(
             malt.name,
-            int(malt.amount * 1000),
+            getattr(malt, "target_weight_g", int(malt.amount * 1000)),
             _grain_weight_tolerance(),
             _STATE_WEIGHT,
         )

@@ -129,7 +129,7 @@ class ApiBase:
             except Exception as e:
                 last_exc = e
                 if _DEBUG:
-                    print(f"[HTTP] attempt {attempt + 1} failed: {e}")
+                    print("[HTTP] attempt {} failed".format(attempt + 1))
                 if self._is_memory_error(e):
                     self.close_http()
                     raise

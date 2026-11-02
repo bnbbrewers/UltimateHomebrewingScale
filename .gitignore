@@ -1,3 +1,9 @@
+# Host bytecode and device event outbox
+__pycache__/
+*.pyc
+storage/scale_events/
+*.tmp
+
 # Configuration files with credentials
 config.py
 .worktrees/

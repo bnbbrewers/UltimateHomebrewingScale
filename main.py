@@ -212,6 +212,7 @@ def main():
         # healthy. Its import used to happen at boot; deferring it until the
         # first Malt/Hop transition leaves too little contiguous heap for TLS.
         api_factory.get("brewing")
+    api_factory.get("events")
     apis = api_factory.as_dict()
     runtime_debug.snapshot("boot.after_api_factory", collect=True)
     runtime_debug.log("[BOOTCFG] initial_app_id={}", initial_app_id)

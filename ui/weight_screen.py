@@ -230,8 +230,7 @@ class WeightScreen:
             return
         self._last_status_text = text
         self._status.set_text(text)
-        if self._mode == self.MODE_SIMPLE:
-            self._status.set_flag(lv.obj.FLAG.HIDDEN, False)
+        self._status.set_flag(lv.obj.FLAG.HIDDEN, not bool(text))
 
     def set_weight_text(self, text):
         if text == self._last_value_text:

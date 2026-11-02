@@ -15,11 +15,17 @@ class ApiFactory:
         self._connectors = {}
         self._builders = {
             "brewing": self._build_brewing,
+            "events": self._build_events,
         }
         runtime_debug.collect()
         runtime_debug.snapshot("api_factory.init.done", collect=True)
 
     def _build_brewing(self):
+        if _BREWING_SOFTWARE == "generic_http":
+            if not runtime_debug.setting("HTTP_INTEGRATION_ENABLED", False):
+                return None
+            from api.generic_http_api import GenericHttpAPI
+            return GenericHttpAPI(wifi_device=self._wifi_device)
         if _BREWING_SOFTWARE != "brewfather":
             return None
         runtime_debug.collect()
@@ -30,6 +36,14 @@ class ApiFactory:
         runtime_debug.collect()
         runtime_debug.snapshot("api_factory.brewfather.created", collect=True)
         return connector
+
+    def _build_events(self):
+        if not runtime_debug.setting("HTTP_INTEGRATION_ENABLED", False):
+            return None
+        from api.scale_events import ScaleEvents
+        service = ScaleEvents()
+        service.start()
+        return service
 
     def get(self, name):
         if name in self._connectors:

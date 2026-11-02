@@ -35,6 +35,8 @@ def include_runtime_path(path):
         return False
     if lower.endswith(".md"):
         return False
+    if lower.startswith("storage/scale_events/") or "/__pycache__/" in lower or lower.endswith(".pyc"):
+        return False
     if lower.startswith(EXCLUDED_PREFIXES):
         return False
     if "/examples/" in lower or lower.startswith("examples/") or lower.endswith("/examples"):
