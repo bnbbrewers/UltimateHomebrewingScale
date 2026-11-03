@@ -139,3 +139,24 @@ observable startup failure paths; successful DHCP and portal operation on the
 reported device still require a hardware check.
 
 Additional regressions: `python tools/verify_portal_recovery.py`.
+
+### HTTP headers arrive, but the HTML body stalls
+
+If `/health` returns its complete JSON while `/recovery` returns only headers,
+the setup connection and listener work; changing IP configuration will not
+address the HTML response path. The response sender now keeps headers separate
+from HTML fragments and sends one bounded slice per main-loop tick. It retains
+partially accepted bytes for retry, yields to the UIFlow/Wi-Fi event loop after
+each write, and uses a stall timeout reset on actual progress instead of a
+fixed deadline for the entire page. TCP_NODELAY is requested when supported.
+
+`python tools/verify_portal_transport.py` checks complete recovery/full-settings
+bodies, exact UTF-8 Content-Length, short writes, EAGAIN, long transfers that
+still make progress, consecutive responses and permanent socket backpressure.
+These host-side checks cannot reproduce every native UIFlow socket behavior.
+
+After attempting a failing page in a newly built firmware, the small endpoint
+`/health?transfer=1` returns the previous response's `state`, expected
+`bodyBytes`/`headerBytes`, `sentBytes` and any write error type. It follows the
+portal's token policy. `sentBytes` means accepted by the socket API, not a
+remote browser acknowledgement. `/health` without the parameter stays unchanged.

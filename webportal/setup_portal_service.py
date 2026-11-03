@@ -16,7 +16,7 @@ CLIENT_TIMEOUT_MS = 5000
 CLIENT_IDLE_TIMEOUT_MS = 1000
 RESPONSE_DRAIN_MS = 200
 WRITE_CHUNK_SIZE = 256
-MAX_WRITE_STEPS = 16
+MAX_WRITE_STEPS = 1
 
 SETUP_AP_SSID = "UHS-Setup"
 SETUP_AP_PASSWORD = ""
@@ -277,6 +277,7 @@ class SetupPortalService:
         self._request_target = ""
         self._request_body = ""
         self._client_idle_logged = False
+        self._last_transfer = {}
         self._response_data = b""
         self._response_offset = 0
         self._response_parts = ()
@@ -401,6 +402,11 @@ class SetupPortalService:
                 self._log("client nonblocking setup failed")
                 self._close_client()
                 return
+            try:
+                import socket
+                client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            except Exception:
+                pass
             self._log("client nonblocking")
             self._log("accept", addr)
 
@@ -549,18 +555,26 @@ class SetupPortalService:
                 if _is_transient_socket_error(e) and _ticks_diff(self._client_deadline, _ticks_ms()) > 0:
                     self._log("write pending", type(e).__name__, e, "offset", self._response_offset)
                     return
+                self._last_transfer["state"] = "write_error"
+                self._last_transfer["errorType"] = type(e).__name__
                 self._log("write error", type(e).__name__, e, "offset", self._response_offset)
                 self._close_client()
                 return
             if sent is None or sent <= 0:
                 if _ticks_diff(self._client_deadline, _ticks_ms()) <= 0:
+                    self._last_transfer["state"] = "write_timeout"
                     self._log("write timeout", "offset", self._response_offset)
                     self._close_client()
                 return
             self._response_offset += sent
+            self._last_transfer["sentBytes"] = self._last_transfer.get("sentBytes", 0) + sent
+            # This is a stall timeout, not a total response deadline. Yield
+            # after each write so UIFlow/LVGL and the Wi-Fi stack can run.
+            self._client_deadline = _ticks_add(_ticks_ms(), CLIENT_TIMEOUT_MS)
             steps += 1
             self._log("write chunk", sent, "offset", self._response_offset, "size", len(self._response_data))
         if self._response_offset >= len(self._response_data) and not self._response_parts:
+            self._last_transfer["state"] = "complete"
             self._log("response sent")
             if self._response_is_initial_page and not self._initial_page_served:
                 self._initial_page_served = True
@@ -574,25 +588,32 @@ class SetupPortalService:
             self._log("response drain", RESPONSE_DRAIN_MS)
 
     def _next_response_chunk(self):
-        """Up to WRITE_CHUNK_SIZE characters of a response sent in parts,
-        small parts joined together, or b"" once it is all out."""
+        """Encode one small slice of one part, never join header/body parts.
+
+        Progress stays on the encoded bytes until the socket accepts them;
+        short writes/EAGAIN must not advance to a new text slice.
+        """
         parts = self._response_parts
-        pieces = []
-        room = WRITE_CHUNK_SIZE
-        while room > 0 and self._response_part < len(parts):
+        while self._response_part < len(parts):
             text = parts[self._response_part]
             start = self._response_chars
-            piece = text[start : start + room]
-            pieces.append(piece)
-            room -= len(piece)
-            if start + len(piece) >= len(text):
+            if start >= len(text):
                 self._response_part += 1
                 self._response_chars = 0
-            else:
-                self._response_chars = start + len(piece)
-        if self._response_part >= len(parts):
-            self._response_parts = ()
-        return "".join(pieces).encode("utf-8")
+                continue
+            # A Unicode codepoint needs at most four UTF-8 bytes. This keeps
+            # the encoded allocation <= WRITE_CHUNK_SIZE on MicroPython.
+            end = min(start + max(1, WRITE_CHUNK_SIZE // 4), len(text))
+            chunk = text[start:end].encode("utf-8")
+            self._response_chars = end
+            if end >= len(text):
+                self._response_part += 1
+                self._response_chars = 0
+            if self._response_part >= len(parts):
+                self._response_parts = ()
+            return chunk
+        self._response_parts = ()
+        return b""
 
     def _run_before_client(self):
         if self._before_client_ran:
@@ -793,10 +814,13 @@ class SetupPortalService:
         lines.append("")
         head = "\r\n".join(lines)
         self._log("response", status_code, "head", len(head), "body", length)
+        self._last_transfer = {"state": "sending", "bodyBytes": length,
+                               "headerBytes": len(head.encode("utf-8")), "sentBytes": 0}
         if parts:
-            # The head travels as the first part, so it shares a chunk.
-            self._response_data = b""
-            self._response_parts = [head] + parts
+            # Send the header directly, then one bounded body slice per tick.
+            # Do not concatenate HTML fragments on the nonblocking path.
+            self._response_data = head.encode("utf-8")
+            self._response_parts = parts
         else:
             self._response_data = head.encode("utf-8") + payload
             self._response_parts = ()

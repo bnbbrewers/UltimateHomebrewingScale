@@ -42,6 +42,13 @@ def handle_request(service, client, method, target, body):
         return
 
     if path == "/health":
+        if query.get("transfer") == "1":
+            if not service._token_ok(query, {}):
+                send(client, 403, body="Forbidden")
+                return
+            import json
+            send(client, 200, "application/json", json.dumps(dict(service._last_transfer)))
+            return
         send(client, 200, "application/json", '{"ok":true}')
         return
 
