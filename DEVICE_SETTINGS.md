@@ -109,3 +109,33 @@ Validate on an actual M5Dial before use: DHCP hostname behavior, AP+STA channel
 switching, WLAN error-code support, memory headroom with the expanded setup
 page and screen readability depend on the installed UIFlow2 build. The portable
 suite and MicroPython syntax compilation do not replace those checks.
+
+## If the setup AP responds to ping but the portal does not open
+
+The setup listener now starts without loading the full HTML renderer. The QR
+screen is released before loading the full settings page on the first request.
+If that page cannot be imported or rendered due to memory pressure, a minimal
+recovery form is returned instead. `/recovery` always offers that small form
+without importing the full renderer; it edits only Wi-Fi, hostname and the
+simulation switch and preserves unrelated settings.
+
+The AP startup stops unsuccessful STA retries, reinitializes an inherited AP
+once, requests the `192.168.4.1/24` subnet, and checks the actual interface IP.
+An AP failure no longer returns a fictitious success/address. Unsupported
+hostname operations cannot prevent portal startup. A startup failure is shown
+on the Dial with a short-press retry action and logged over USB.
+
+With a rebuilt firmware, connect to `UHS-Setup` and try:
+
+- `http://192.168.4.1:8080/health` — a small JSON liveness check.
+- `http://192.168.4.1:8080/recovery` — minimal setup without the full page.
+- `http://192.168.4.1:8080/` — full settings, with automatic low-memory fallback.
+
+Use HTTP, not HTTPS. The server is active while the Dial is in Settings. A ping
+response alone does not prove that the HTTP listener has started. If the issue
+persists, collect the USB output while entering Settings; `[settings] portal
+init error` includes the exception that stopped startup. These changes address
+observable startup failure paths; successful DHCP and portal operation on the
+reported device still require a hardware check.
+
+Additional regressions: `python tools/verify_portal_recovery.py`.

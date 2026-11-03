@@ -23,6 +23,7 @@ _COMPANION_MODULES = (
     "webportal.setup_portal_service",
     "webportal.portal_routes",
     "webportal.device_routes",
+    "webportal.recovery",
     "webportal.device_script",
     "webportal.portal_html",
     "webportal.request_limits",

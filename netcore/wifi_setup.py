@@ -18,14 +18,14 @@ def apply_hostname(network_module=None, wlan=None):
     try:
         network_module.hostname(name)
         return True
-    except (AttributeError, TypeError, ValueError, OSError):
+    except Exception:
         pass
     if wlan is not None:
         for key in ('dhcp_hostname', 'hostname'):
             try:
                 wlan.config(**{key: name})
                 return True
-            except (AttributeError, TypeError, ValueError, OSError):
+            except Exception:
                 pass
     return False
 

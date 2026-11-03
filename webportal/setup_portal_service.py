@@ -246,11 +246,9 @@ def _metric_settings(updates, current):
 
 class SetupPortalService:
     def __init__(self, wifi_device=None, debug=False, i18n=None, before_client=None, scale_device=None):
-        # Load the small route dispatcher while Settings is being created.
-        # Delaying this import until the first browser request is too late on
-        # M5Dial: the QR screen has then consumed the remaining C heap.
+        # Start networking without importing the large HTML renderer. The
+        # first browser request releases the QR screen before loading it.
         from webportal.portal_routes import handle_request
-        _portal_content()
 
         self._wifi = wifi_device
         self._scale = scale_device
@@ -638,6 +636,10 @@ class SetupPortalService:
             self._url = build_portal_url(sta_ip=sta_ip, port=PORTAL_HTTP_PORT, token=self._token if self._cfg.get("require_token") else "")
             return
 
+        # Stop STA retries before bringing up the setup AP: they share a radio
+        # and can prevent clients from completing DHCP on UIFlow2.
+        if self._wifi:
+            self._wifi.abandon()
         ap_ip = self._ensure_ap()
         self._mode = "ap"
         self._sta_ip = ""
@@ -667,37 +669,47 @@ class SetupPortalService:
         return ""
 
     def _ensure_ap(self):
-        try:
-            import network
+        import network
 
+        ap = network.WLAN(network.AP_IF)
+        # Reinitialize an AP inherited from UIFlow once, including its DHCP
+        # service. Later calls (e.g. connection testing) keep clients attached.
+        if self._ap is None and ap.active():
+            ap.active(False)
+            _sleep_ms(100)
+        try:
             from netcore.wifi_setup import apply_hostname
-            apply_hostname(network)
-            ap = network.WLAN(network.AP_IF)
-            if not ap.active():
-                ap.active(True)
-            self._ap = ap
-            ssid = self._cfg.get("ap_ssid", "UHB-Scale-Setup")
-            password = self._cfg.get("ap_password", "")
-            if password and len(password) >= 8:
-                try:
-                    ap.config(essid=ssid, password=password)
-                except Exception:
-                    try:
-                        ap.config(essid=ssid, authmode=network.AUTH_WPA_WPA2_PSK, password=password)
-                    except Exception:
-                        pass
-            else:
-                try:
-                    ap.config(essid=ssid)
-                except Exception:
-                    pass
-            _sleep_ms(AP_SETTLE_MS)
-            try:
-                return ap.ifconfig()[0]
-            except Exception:
-                return "192.168.4.1"
+            apply_hostname(network, ap)
         except Exception:
-            return "192.168.4.1"
+            pass  # A hostname is optional; it must never block setup.
+        ssid = self._cfg.get("ap_ssid", "UHS-Setup")
+        password = self._cfg.get("ap_password", "")
+        ap.active(True)
+        self._ap = ap
+        try:
+            if password and len(password) >= 8:
+                ap.config(essid=ssid, password=password)
+            else:
+                ap.config(essid=ssid, authmode=getattr(network, "AUTH_OPEN", 0))
+        except Exception:
+            # Older UIFlow builds expose fewer config keywords.
+            if password and len(password) >= 8:
+                ap.config(essid=ssid, authmode=network.AUTH_WPA_WPA2_PSK, password=password)
+            else:
+                ap.config(essid=ssid)
+        if not getattr(self, "_ap_configured", False):
+            try:
+                # Request a defined AP subnet; retain the actual configured
+                # address if this firmware does not support setting it.
+                ap.ifconfig(("192.168.4.1", "255.255.255.0", "192.168.4.1", "192.168.4.1"))
+            except Exception as error:
+                self._log("AP address configuration unavailable", type(error).__name__)
+            self._ap_configured = True
+        _sleep_ms(AP_SETTLE_MS)
+        address = ap.ifconfig()[0]
+        if not ap.active() or not address or address == "0.0.0.0":
+            raise RuntimeError("Setup AP has no usable IP address")
+        return address
 
     def _start_server_if_needed(self):
         if self._listener:

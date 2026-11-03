@@ -20,6 +20,7 @@ class SettingsApp(BaseApp):
         self._debug = runtime_debug.DEBUG
         self._tick_error_logged = False
         self._portal_status_shown = False
+        self._portal_error = False
 
     @staticmethod
     def _print_exception(prefix, exc):
@@ -73,6 +74,13 @@ class SettingsApp(BaseApp):
         self._tick_error_logged = False
         self._portal_status_shown = False
         self._ensure_config_file()
+        self._portal_error = False
+        self._screen = None
+        try:
+            self.screen_manager.memory_cleanup(
+                loading_message="Starting setup portal...", loading_color=0x7E57C2)
+        except Exception:
+            pass
         try:
             import gc
 
@@ -135,10 +143,10 @@ class SettingsApp(BaseApp):
             )
         except Exception as e:
             self._print_exception("[settings] portal init error:", e)
-            # Requested UX: no error message on screen, console only.
+            self._portal_error = True
             try:
-                if self._screen is not None:
-                    self.screen_manager.show(screen_ids.SETTINGS)
+                self._show_msg("Setup portal", "Setup failed. Press to retry.\n" + str(e)[:72],
+                               0xD32F2F, show_ok=True)
             except Exception:
                 pass
 
@@ -193,6 +201,9 @@ class SettingsApp(BaseApp):
             pass
 
     def tick(self):
+        if self._portal_error and self.hardware.button.was_short_pressed():
+            self.on_enter()
+            return None
         if self._check_return_to_launcher():
             return "launcher"
         if self._check_back(None):

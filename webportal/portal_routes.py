@@ -31,6 +31,11 @@ def handle_request(service, client, method, target, body):
     path, query = portal._split_target(target)
     send = service._send
 
+    if path in ("/recovery", "/recovery/save"):
+        from webportal.recovery import handle
+        handle(service, client, method, path, query, body, portal)
+        return
+
     if path.startswith(("/wifi/", "/simulation/")):
         from webportal.device_routes import handle
         handle(service, client, method, path, query, body, portal)
@@ -125,17 +130,18 @@ def handle_request(service, client, method, target, body):
         test = service._wifi_test
         if test and test.changed:
             values.update(WIFI_SSID=test.ssid, WIFI_PASSWORD=test.password)
-        send(
-            client,
-            200,
-            "text/html; charset=utf-8",
-            portal.render_minimal_form_parts(
-                values,
-                kegs=portal._load_kegs(),
-                i18n=service._i18n,
-                tab=query.get("tab", ""),
-            ),
-        )
+        try:
+            parts = portal.render_minimal_form_parts(
+                values, kegs=portal._load_kegs(), i18n=service._i18n,
+                tab=query.get("tab", ""))
+        except (MemoryError, ImportError) as error:
+            import gc
+            gc.collect()
+            from webportal.recovery import page
+            parts = page(values, service._token if service._cfg.get("require_token") else "",
+                         "Full settings unavailable. Use this minimal setup or retry after restart.")
+            print("[portal] full settings unavailable:", type(error).__name__)
+        send(client, 200, "text/html; charset=utf-8", parts)
         return
 
     if method == "POST" and path == "/save":
