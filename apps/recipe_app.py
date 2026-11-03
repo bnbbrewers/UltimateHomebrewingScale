@@ -115,6 +115,8 @@ class RecipeApp(BaseApp):
         """Configure the weight screen and tare, the way both apps do it."""
         if self._events:
             self._events.begin(self._event_context)
+        if getattr(self._scale, "simulated", False):
+            self._scale.set_target(target_g)
         self._target_g = target_g
         screen = self._weight()
         screen.configure(

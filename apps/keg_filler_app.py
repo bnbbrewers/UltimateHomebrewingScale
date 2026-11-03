@@ -549,6 +549,9 @@ class KegFillerApp(BaseApp):
             self._fill_session_active = True
             self._fill_result_saved = False
             self._fill_net_g = 0
+        if getattr(self._scale, "simulated", False):
+            self._scale.prepare_fill(empty_weight_g, target_weight_g,
+                                     resume=self._state == _STATE_FILLING_STALLED_ACK)
         self._open_relay()
         runtime_debug.snapshot("keg.filling_started", collect=False)
         self._state = _STATE_FILLING

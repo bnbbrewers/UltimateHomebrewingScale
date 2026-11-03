@@ -190,6 +190,9 @@ class WeightScreen:
         self._last_overloaded = None
         self._last_indicator_overloaded = None
         self._ensure_weight_font()
+        import runtime_debug
+        if runtime_debug.setting("SIMULATION_ENABLED", False):
+            title = "[SIM] " + title
         self.set_title(title)
         self.set_title_color(title_bg_color)
         self.set_ok_visible(False)

@@ -95,6 +95,7 @@ class SettingsApp(BaseApp):
 
                 self._portal = SetupPortalService(
                     wifi_device=self.hardware.wifi,
+                    scale_device=self.hardware.scale,
                     debug=debug_portal,
                     i18n=self.i18n,
                     before_client=self._release_screen_for_portal_client,

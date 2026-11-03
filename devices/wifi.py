@@ -6,6 +6,7 @@ import time
 
 import runtime_debug
 import runtime_watchdog
+from ticks import ticks_ms, ticks_diff, ticks_add, sleep_ms
 
 # memory_debug used to be imported here even in a production build; the shared
 # helper only loads it when DEBUG is set.
@@ -58,8 +59,14 @@ class WifiDevice:
         self._wlan = None
         self._last_log_ms = 0
         self._start_ms = 0
+        self._portal_test = False
 
     def tick(self):
+        if self._portal_test:
+            return
+        if self._done and not self.connected():
+            self._done = False
+            self._started = False
         if self._done or self._failed:
             return
         if not self._connect_requested:
@@ -76,8 +83,8 @@ class WifiDevice:
                 print("[WiFi] Connected:", self._wlan.ifconfig()[0])
             return
         if self._debug:
-            now = time.ticks_ms()
-            if time.ticks_diff(now, self._last_log_ms) > 3000:
+            now = ticks_ms()
+            if ticks_diff(now, self._last_log_ms) > 3000:
                 self._last_log_ms = now
                 print("[WiFi] Connecting...")
 
@@ -89,7 +96,9 @@ class WifiDevice:
         The interface is never cycled down so the UIFlow2 cloud WebSocket stays
         alive throughout.  Returns True if connected, False on timeout/error.
         """
-        if self._done:
+        if self._portal_test:
+            return self.connected()
+        if self.connected():
             _mem_snapshot("wifi.ensure.already_done", enabled=self._debug)
             return True
         if self._failed:
@@ -111,16 +120,16 @@ class WifiDevice:
         _mem_snapshot("wifi.ensure.wait_start", enabled=self._debug)
         if self._debug:
             print("[WiFi] ensure wait: {}".format(_wlan_state(self._wlan)))
-        deadline = time.ticks_add(time.ticks_ms(), timeout_s * 1000)
+        deadline = ticks_add(ticks_ms(), timeout_s * 1000)
         last_log_ms = 0
         while not self._wlan.isconnected():
             if self._debug:
-                now = time.ticks_ms()
-                if last_log_ms == 0 or time.ticks_diff(now, last_log_ms) > 3000:
+                now = ticks_ms()
+                if last_log_ms == 0 or ticks_diff(now, last_log_ms) > 3000:
                     last_log_ms = now
                     _mem_snapshot("wifi.ensure.waiting", enabled=True)
                     print("[WiFi] ensure waiting: {}".format(_wlan_state(self._wlan)))
-            if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+            if ticks_diff(deadline, ticks_ms()) <= 0:
                 if self._debug:
                     _mem_snapshot("wifi.ensure.timeout", enabled=True)
                     print("[WiFi] Timeout after {}s".format(timeout_s))
@@ -132,10 +141,10 @@ class WifiDevice:
             except Exception:
                 pass
             runtime_watchdog.feed()
-            time.sleep_ms(200)
+            sleep_ms(200)
         self._done = True
         # DNS/routing may not be ready immediately after DHCP; 500 ms is enough.
-        time.sleep_ms(500)
+        sleep_ms(500)
         _mem_snapshot("wifi.ensure.connected", enabled=self._debug)
         if self._debug:
             print("[WiFi] Connected:", self._wlan.ifconfig()[0])
@@ -153,14 +162,14 @@ class WifiDevice:
         back late, after a power cut, never gets reported. A connection that
         was abandoned on purpose, or never requested, has not failed.
         """
-        if self._abandoned or self._done or not self._started:
+        if self._abandoned or not self._started:
             return False
         if self._failed:
             return True
         if self._wlan is not None and self._wlan.isconnected():
             self._done = True
             return False
-        return time.ticks_diff(time.ticks_ms(), self._start_ms) >= CONNECT_TIMEOUT_MS
+        return ticks_diff(ticks_ms(), self._start_ms) >= CONNECT_TIMEOUT_MS
 
     def connected(self):
         """True once the saved network has been joined.
@@ -171,9 +180,19 @@ class WifiDevice:
         """
         if self._abandoned:
             return False
-        if self._done:
-            return True
-        return self._wlan is not None and bool(self._wlan.isconnected())
+        self._done = self._wlan is not None and bool(self._wlan.isconnected())
+        return self._done
+
+    def use_station(self, wlan):
+        """Adopt the station after a portal test, without persisting credentials."""
+        self._wlan = wlan
+        self._portal_test = False
+        self._abandoned = False
+        self._failed = False
+        self._started = True
+        self._start_ms = ticks_ms()
+        self._connect_requested = True
+        self._done = bool(wlan.isconnected())
 
     def abandon(self):
         """Stop every connection attempt for the rest of this boot.
@@ -200,12 +219,14 @@ class WifiDevice:
     def _start_connect(self):
         self._connect_requested = True
         self._started = True
-        self._start_ms = time.ticks_ms()
+        self._start_ms = ticks_ms()
         _mem_snapshot("wifi.start.begin", enabled=self._debug)
         try:
             import network
 
             self._wlan = network.WLAN(network.STA_IF)
+            from netcore.wifi_setup import apply_hostname
+            apply_hostname(network, self._wlan)
             if self._wlan.isconnected():
                 self._done = True
                 _mem_snapshot("wifi.start.already_connected", enabled=self._debug)

@@ -26,6 +26,12 @@ SETUP_TOKEN = ""
 _EDITABLE_FIELDS = (
     ("LANGUAGE", "Language", "select", ("fr", "en")),
     ("UNITS", "Units", "select", ("metric", "us", "imperial")),
+    ('HOSTNAME', 'Device hostname', 'text', ()),
+    ('SIMULATION_ENABLED', 'Simulate scale (physical relay disabled)', 'checkbox', ()),
+    ('SIMULATION_MODE', 'Simulation mode', 'select', ('ramp', 'fixed')),
+    ('SIMULATION_WEIGHT_G', 'Simulation target (g)', 'number', ()),
+    ('SIMULATION_RATE_G_S', 'Simulation speed (g/s)', 'number', ()),
+    ('SIMULATION_SEND_EVENTS', 'Send simulated data to API (creates real history)', 'checkbox', ()),
     ("WIFI_SSID", "Wi-Fi SSID", "text", ()),
     ("WIFI_PASSWORD", "Wi-Fi password", "password", ()),
     ("BREWING_SOFTWARE", "Brewing software", "select", ("brewfather", "generic_http")),
@@ -239,7 +245,7 @@ def _metric_settings(updates, current):
 
 
 class SetupPortalService:
-    def __init__(self, wifi_device=None, debug=False, i18n=None, before_client=None):
+    def __init__(self, wifi_device=None, debug=False, i18n=None, before_client=None, scale_device=None):
         # Load the small route dispatcher while Settings is being created.
         # Delaying this import until the first browser request is too late on
         # M5Dial: the QR screen has then consumed the remaining C heap.
@@ -247,6 +253,8 @@ class SetupPortalService:
         _portal_content()
 
         self._wifi = wifi_device
+        self._scale = scale_device
+        self._wifi_test = None
         self._debug = bool(debug)
         self._i18n = i18n
         self._before_client = before_client
@@ -321,6 +329,8 @@ class SetupPortalService:
         }
 
     def stop(self):
+        if self._wifi_test:
+            self._wifi_test.restore()
         self._paused = True
         self._close_client()
         listener = self._listener
@@ -368,6 +378,8 @@ class SetupPortalService:
     def tick(self):
         if self._paused or not self._listener:
             return
+        if self._wifi_test:
+            self._wifi_test.tick()
         if self._client is None:
             try:
                 client, addr = self._listener.accept()
@@ -636,7 +648,9 @@ class SetupPortalService:
         try:
             import network
 
+            from netcore.wifi_setup import apply_hostname
             sta = network.WLAN(network.STA_IF)
+            apply_hostname(network, sta)
             if sta.isconnected():
                 return sta.ifconfig()[0]
         except Exception:
@@ -656,6 +670,8 @@ class SetupPortalService:
         try:
             import network
 
+            from netcore.wifi_setup import apply_hostname
+            apply_hostname(network)
             ap = network.WLAN(network.AP_IF)
             if not ap.active():
                 ap.active(True)
@@ -735,6 +751,8 @@ class SetupPortalService:
             400: "Bad Request",
             403: "Forbidden",
             404: "Not Found",
+            409: "Conflict",
+            503: "Service Unavailable",
             500: "Internal Server Error",
         }.get(status_code, "OK")
         # A list of strings is sent part by part, a chunk at a time: the page

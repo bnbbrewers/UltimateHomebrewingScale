@@ -31,6 +31,11 @@ def handle_request(service, client, method, target, body):
     path, query = portal._split_target(target)
     send = service._send
 
+    if path.startswith(("/wifi/", "/simulation/")):
+        from webportal.device_routes import handle
+        handle(service, client, method, path, query, body, portal)
+        return
+
     if path == "/health":
         send(client, 200, "application/json", '{"ok":true}')
         return
@@ -116,12 +121,16 @@ def handle_request(service, client, method, target, body):
         if not service._token_ok(query, {}):
             send(client, 403, body="Forbidden")
             return
+        values = portal._current_values()
+        test = service._wifi_test
+        if test and test.changed:
+            values.update(WIFI_SSID=test.ssid, WIFI_PASSWORD=test.password)
         send(
             client,
             200,
             "text/html; charset=utf-8",
             portal.render_minimal_form_parts(
-                portal._current_values(),
+                values,
                 kegs=portal._load_kegs(),
                 i18n=service._i18n,
                 tab=query.get("tab", ""),

@@ -1,6 +1,13 @@
 """Editable config schema for web portal."""
 
 EDITABLE_KEYS = {
+    'HOSTNAME': {'type': 'str', 'default': 'uhs-scale', 'label': 'Device hostname', 'max_len': 32},
+    'SIMULATION_ENABLED': {'type': 'bool', 'default': False, 'label': 'Simulate scale (physical relay disabled)'},
+    'SIMULATION_MODE': {'type': 'enum', 'default': 'ramp', 'label': 'Simulation mode', 'choices': ['ramp', 'fixed']},
+    'SIMULATION_WEIGHT_G': {'type': 'int', 'default': 1000, 'label': 'Simulation target (g)', 'min': 0, 'max': 10000000},
+    'SIMULATION_RATE_G_S': {'type': 'int', 'default': 100, 'label': 'Simulation speed (g/s)', 'min': 1, 'max': 10000},
+    'SIMULATION_SEND_EVENTS': {'type': 'bool', 'default': False, 'label': 'Send simulated data to API (creates real history)'},
+
     "LANGUAGE": {
         "type": "enum",
         "choices": ["fr", "en"],
@@ -108,6 +115,13 @@ EDITABLE_KEYS = {
 }
 
 EDITABLE_ORDER = [
+    'HOSTNAME',
+    'SIMULATION_ENABLED',
+    'SIMULATION_MODE',
+    'SIMULATION_WEIGHT_G',
+    'SIMULATION_RATE_G_S',
+    'SIMULATION_SEND_EVENTS',
+
     "LANGUAGE",
     "UNITS",
     "WIFI_SSID",

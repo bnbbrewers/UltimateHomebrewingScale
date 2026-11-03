@@ -363,6 +363,20 @@ def validate_payload(payload):
             if _has_control_characters(parsed):
                 errors[key] = "invalid characters"
                 continue
+            if key == "HOSTNAME":
+                from netcore.wifi_setup import valid_hostname
+                if not valid_hostname(parsed):
+                    errors[key] = "Use 1-32 letters, digits or hyphens; no leading/trailing hyphen"
+                    continue
+                parsed = parsed.lower()
+            if key == "WIFI_SSID" and len(parsed.encode("utf-8")) > 32:
+                errors[key] = "SSID must be at most 32 UTF-8 bytes"
+                continue
+            if key == "WIFI_PASSWORD" and parsed:
+                is_hex = len(parsed) == 64 and all(c in "0123456789abcdefABCDEF" for c in parsed)
+                if not is_hex and not 8 <= len(parsed.encode("utf-8")) <= 63:
+                    errors[key] = "Password must be 8-63 bytes, 64 hex digits, or empty for open Wi-Fi"
+                    continue
             clean[key] = parsed
 
         else:

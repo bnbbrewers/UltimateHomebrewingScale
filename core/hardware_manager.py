@@ -36,7 +36,11 @@ class HardwareManager:
 
         self.scale = None
         try:
-            self.scale = CalibratedScale()
+            if runtime_debug.setting("SIMULATION_ENABLED", False):
+                from simulation import SimulatedScale
+                self.scale = SimulatedScale()
+            else:
+                self.scale = CalibratedScale()
         except Exception:
             self.scale = None
         runtime_debug.collect()
@@ -51,9 +55,12 @@ class HardwareManager:
         if not self._relay_loaded:
             self._relay_loaded = True
             try:
-                from devices.relay import RelayDevice
-
-                self._relay = RelayDevice()
+                if runtime_debug.setting("SIMULATION_ENABLED", False):
+                    from simulation import SimulatedRelay
+                    self._relay = SimulatedRelay(self.scale)
+                else:
+                    from devices.relay import RelayDevice
+                    self._relay = RelayDevice()
                 runtime_debug.collect()
                 runtime_debug.snapshot("hardware.relay", collect=True)
             except Exception as e:

@@ -5,6 +5,12 @@ import units
 FIELDS = (
     ("LANGUAGE", "Language", "select", ("fr", "en")),
     ("UNITS", "Units", "select", ("metric", "us", "imperial")),
+    ('HOSTNAME', 'Device hostname', 'text', ()),
+    ('SIMULATION_ENABLED', 'Simulate scale (physical relay disabled)', 'checkbox', ()),
+    ('SIMULATION_MODE', 'Simulation mode', 'select', ('ramp', 'fixed')),
+    ('SIMULATION_WEIGHT_G', 'Simulation target (g)', 'number', ()),
+    ('SIMULATION_RATE_G_S', 'Simulation speed (g/s)', 'number', ()),
+    ('SIMULATION_SEND_EVENTS', 'Send simulated data to API (creates real history)', 'checkbox', ()),
     ("WIFI_SSID", "Wi-Fi SSID", "text", ()),
     ("WIFI_PASSWORD", "Wi-Fi password", "password", ()),
     ("BREWING_SOFTWARE", "Brewing software", "select", ("brewfather", "generic_http")),
@@ -40,7 +46,8 @@ CONVERTED_FIELDS = {
 # _append_kegs and _append_maintenance.
 TABS = (
     ("general", "portal.tabs.general", "General", (
-        ("portal.sections.wifi", "Wi-Fi", "", ("LANGUAGE", "UNITS", "WIFI_SSID", "WIFI_PASSWORD")),
+        ("portal.sections.wifi", "Wi-Fi", "", ("LANGUAGE", "UNITS", "HOSTNAME", "WIFI_SSID", "WIFI_PASSWORD")),
+        ("portal.sections.simulation", "Test mode / simulated scale", "a", ('SIMULATION_ENABLED', 'SIMULATION_MODE', 'SIMULATION_WEIGHT_G', 'SIMULATION_RATE_G_S', 'SIMULATION_SEND_EVENTS')),
         ("portal.sections.device", "Device", "", ("STANDBY_TIMEOUT_MIN", "BATTERY", "DEBUG")),
     )),
     ("brewing", "portal.tabs.brewing", "Brewing", (
@@ -231,7 +238,7 @@ def _append_field(parts, key, label, typ, choices, value, i18n, form_attr):
     elif typ == "number":
         parts.append("<input type='number' name='{}' value='{}' min='0'{} inputmode='decimal'{}>".format(key, _escape(value), step, form_attr))
     else:
-        parts.append("<input type='{}' name='{}' value='{}' autocomplete='off'{}>".format(typ, key, _escape(value), form_attr))
+        parts.append("<input type='{}' name='{}' value='{}' autocomplete='off'{}{}>".format(typ, key, _escape(value), form_attr, " list='wifi-list'" if key == "WIFI_SSID" else ""))
     parts.append("</label>")
 
 
@@ -243,6 +250,19 @@ def _append_cards(parts, cards, fields, values, i18n, form_attr="", tail=None):
         for key in keys:
             _key, label, typ, choices = fields[key]
             _append_field(parts, key, label, typ, choices, values.get(key, ""), i18n, form_attr)
+        if "WIFI_SSID" in keys:
+            parts.append("<datalist id='wifi-list'></datalist><button type='button' id='wifi-scan'>Find Wi-Fi networks</button>"
+                         "<p class='h'>2.4 GHz networks only. Hidden networks can be entered manually.</p>"
+                         "<button type='button' id='wifi-test'>Test connection without saving</button>"
+                         "<p class='h'>The current connection may disconnect during a test. Reconnect via UHS-Setup at http://192.168.4.1:8080 if needed. Save after a successful test.</p>"
+                         "<p id='wifi-status' role='status'>Checking Wi-Fi...</p>")
+        if "SIMULATION_ENABLED" in keys:
+            parts.append("<p class='h'>Save and restart to change hardware mode. The physical relay is disabled during simulation.</p>"
+                         "<p id='sim-status' role='status'></p>"
+                         "<label>Live test weight (g)<input id='sim-weight' type='number' min='-100000' max='10000000' step='0.1' value='1000'></label>"
+                         "<button type='button' id='sim-set'>Set test weight</button>"
+                         "<button type='button' id='sim-target'>Ramp to target</button>"
+                         "<button type='button' id='sim-tare'>Tare simulated scale</button>")
         if tail is not None and idx == len(cards) - 1:
             tail(parts, i18n)
         parts.append("</fieldset>")
@@ -314,7 +334,7 @@ def render_form_parts(values, kegs=None, include_kegs=False, error="", i18n=None
     parts = []
     _page_start(parts, i18n)
     if error:
-        parts.append("<p class='e'>{}</p>".format(_escape(_t(i18n, "portal.invalid_fields", "Invalid fields"))))
+        parts.append("<p class='e'>{}</p>".format(_escape(str(error))))
     # Radios outside every form: they only drive the CSS and are never sent.
     for idx in range(len(TABS)):
         parts.append("<input class='r' type='radio' name='tab' id='t{}'{}>".format(idx, " checked" if idx == opened else ""))
@@ -339,6 +359,8 @@ def render_form_parts(values, kegs=None, include_kegs=False, error="", i18n=None
     _append_backup(parts, i18n)
     parts.append("</div><div class='bar'><button type='submit' form='{}'>{}</button></div>".format(
         _SAVE_FORM, _escape(_t(i18n, "portal.save_reboot", "Save and reboot"))))
+    from webportal.device_script import SCRIPT
+    parts.append(SCRIPT)
     parts.append("</main></body></html>")
     return parts
 

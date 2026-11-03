@@ -171,6 +171,11 @@ def main():
     # and fail on a native allocation during screen transitions.
     from core import ScreenManager, HardwareManager, AppManager, ApiFactory
 
+    try:
+        from netcore.wifi_setup import apply_hostname
+        apply_hostname()
+    except Exception:
+        pass
     M5.begin()
     runtime_debug.snapshot("boot.after_m5_begin", collect=True)
     m5ui.init()

@@ -40,6 +40,8 @@ class ApiFactory:
     def _build_events(self):
         if not runtime_debug.setting("HTTP_INTEGRATION_ENABLED", False):
             return None
+        if runtime_debug.setting("SIMULATION_ENABLED", False) and not runtime_debug.setting("SIMULATION_SEND_EVENTS", False):
+            return None
         from api.scale_events import ScaleEvents
         service = ScaleEvents()
         service.start()

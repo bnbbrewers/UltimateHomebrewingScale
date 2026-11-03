@@ -22,6 +22,8 @@ _COMPANION_MODULES = (
     "apps.recipe_app",
     "webportal.setup_portal_service",
     "webportal.portal_routes",
+    "webportal.device_routes",
+    "webportal.device_script",
     "webportal.portal_html",
     "webportal.request_limits",
     "webportal.multipart",
@@ -60,7 +62,7 @@ def _file_exists(path):
 def _initial_app_id(initial_app_id=None):
     if initial_app_id:
         return initial_app_id
-    if _file_exists(CALIBRATION_FILE):
+    if runtime_debug.setting("SIMULATION_ENABLED", False) or _file_exists(CALIBRATION_FILE):
         return app_registry.LAUNCHER
     return CALIBRATION_WIZARD_APP_ID
 
